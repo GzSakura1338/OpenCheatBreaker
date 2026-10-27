@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="OpenCheatBreaker" type="Application" factoryName="Application">
+    <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+    <option name="MAIN_CLASS_NAME" value="Start" />
+    <module name="OpenCheatBreaker.main" />
+    <option name="PROGRAM_PARAMETERS" value="--username Developer --gameDir $PROJECT_DIR$/run/mc --assetsDir $PROJECT_DIR$/run/assets --uuid 00000000000000000000000000000001 --accessToken 0 --userType legacy --width 854 --height 480 --installationID 00000000-0000-0000-0000-000000000000 --websocketToken 0 --launcherVersion 2026.10.0" />
+    <option name="VM_PARAMETERS" value="-XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Xmx4096M -Xms1024M -Djava.locale.providers=JRE --enable-native-access=ALL-UNNAMED -Djava.library.path=$PROJECT_DIR$/run/natives -Dorg.lwjgl.librarypath=$PROJECT_DIR$/run/natives -Dnet.java.games.input.librarypath=$PROJECT_DIR$/run/natives" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/run" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+      <option name="Gradle.BeforeRunTask" enabled="true" tasks="prepareGameRun" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="" />
+    </method>
+  </configuration>
+</component>

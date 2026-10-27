@@ -1,0 +1,56 @@
+package net.minecraft.network.status.server;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import java.io.IOException;
+import net.minecraft.network.Packet;
+import net.minecraft.network.PacketBuffer;
+import net.minecraft.network.ServerStatusResponse;
+import net.minecraft.network.ServerStatusResponse.MinecraftProtocolVersionIdentifier;
+import net.minecraft.network.ServerStatusResponse.PlayerCountData;
+
+import net.minecraft.network.status.INetHandlerStatusClient;
+import net.minecraft.util.ChatStyle;
+
+import net.minecraft.util.EnumTypeAdapterFactory;
+import net.minecraft.util.IChatComponent;
+
+
+public class S00PacketServerInfo implements Packet<INetHandlerStatusClient> {
+   public static Gson GSON = new GsonBuilder()
+      .registerTypeAdapter(
+         MinecraftProtocolVersionIdentifier.class, new MinecraftProtocolVersionIdentifier.Serializer()
+      )
+      .registerTypeAdapter(PlayerCountData.class, new PlayerCountData.Serializer())
+      .registerTypeAdapter(ServerStatusResponse.class, new ServerStatusResponse.Serializer())
+      .registerTypeHierarchyAdapter(IChatComponent.class, new IChatComponent.Serializer())
+      .registerTypeHierarchyAdapter(ChatStyle.class, new ChatStyle.Serializer())
+      .registerTypeAdapterFactory(new EnumTypeAdapterFactory())
+      .create();
+   public ServerStatusResponse response;
+
+   public S00PacketServerInfo() {
+   }
+
+   public S00PacketServerInfo(ServerStatusResponse responseIn) {
+      this.response = responseIn;
+   }
+
+   @Override
+   public void readPacketData(PacketBuffer buf) throws IOException {
+      this.response = (ServerStatusResponse)GSON.fromJson(buf.readStringFromBuffer(32767), ServerStatusResponse.class);
+   }
+
+   @Override
+   public void writePacketData(PacketBuffer buf) throws IOException {
+      buf.writeString(GSON.toJson(this.response));
+   }
+
+   public void processPacket(INetHandlerStatusClient handler) {
+      handler.handleServerInfo(this);
+   }
+
+   public ServerStatusResponse getResponse() {
+      return this.response;
+   }
+}

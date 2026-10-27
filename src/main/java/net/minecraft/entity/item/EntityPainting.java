@@ -1,0 +1,156 @@
+package net.minecraft.entity.item;
+
+import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityHanging;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.BlockPos;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.world.World;
+
+public class EntityPainting extends EntityHanging {
+   public EntityPainting.EnumArt art;
+
+   public EntityPainting(World worldIn) {
+      super(worldIn);
+   }
+
+   public EntityPainting(World worldIn, BlockPos pos, EnumFacing facing) {
+      super(worldIn, pos);
+      ArrayList newArrayList = Lists.newArrayList();
+
+      for (EntityPainting.EnumArt enumArt : EntityPainting.EnumArt.values()) {
+         this.art = enumArt;
+         this.updateFacingWithBoundingBox(facing);
+         if (this.onValidSurface()) {
+            newArrayList.add(enumArt);
+         }
+      }
+
+      if (!newArrayList.isEmpty()) {
+         this.art = (EntityPainting.EnumArt)newArrayList.get(this.rand.nextInt(newArrayList.size()));
+      }
+
+      this.updateFacingWithBoundingBox(facing);
+   }
+
+   public EntityPainting(World worldIn, BlockPos pos, EnumFacing facing, String title) {
+      this(worldIn, pos, facing);
+
+      for (EntityPainting.EnumArt enumArt : EntityPainting.EnumArt.values()) {
+         if (enumArt.title.equals(title)) {
+            this.art = enumArt;
+            break;
+         }
+      }
+
+      this.updateFacingWithBoundingBox(facing);
+   }
+
+   @Override
+   public void writeEntityToNBT(NBTTagCompound tagCompound) {
+      tagCompound.setString("Motive", this.art.title);
+      super.writeEntityToNBT(tagCompound);
+   }
+
+   @Override
+   public void readEntityFromNBT(NBTTagCompound tagCompund) {
+      String string = tagCompund.getString("Motive");
+
+      for (EntityPainting.EnumArt enumArt : EntityPainting.EnumArt.values()) {
+         if (enumArt.title.equals(string)) {
+            this.art = enumArt;
+         }
+      }
+
+      if (this.art == null) {
+         this.art = EntityPainting.EnumArt.KEBAB;
+      }
+
+      super.readEntityFromNBT(tagCompund);
+   }
+
+   @Override
+   public int getWidthPixels() {
+      return this.art.sizeX;
+   }
+
+   @Override
+   public int getHeightPixels() {
+      return this.art.sizeY;
+   }
+
+   @Override
+   public void onBroken(Entity brokenEntity) {
+      if (this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
+         if (brokenEntity instanceof EntityPlayer) {
+            EntityPlayer brokenEntity2 = (EntityPlayer)brokenEntity;
+            if (brokenEntity2.capabilities.isCreativeMode) {
+               return;
+            }
+         }
+
+         this.entityDropItem(new ItemStack(Items.painting), 0.0F);
+      }
+   }
+
+   @Override
+   public void setLocationAndAngles(double x, double y, double z, float yaw, float pitch) {
+      BlockPos blockPos = this.hangingPosition.add(x - this.posX, y - this.posY, z - this.posZ);
+      this.setPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+   }
+
+   @Override
+   public void setPositionAndRotation2(double x, double y, double z, float yaw, float pitch, int posRotationIncrements, boolean flag) {
+      BlockPos blockPos = this.hangingPosition.add(x - this.posX, y - this.posY, z - this.posZ);
+      this.setPosition(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+   }
+
+   public enum EnumArt {
+      KEBAB("Kebab", 16, 16, 0, 0),
+      AZTEC("Aztec", 16, 16, 16, 0),
+      ALBAN("Alban", 16, 16, 32, 0),
+      AZTEC_2("Aztec2", 16, 16, 48, 0),
+      BOMB("Bomb", 16, 16, 64, 0),
+      PLANT("Plant", 16, 16, 80, 0),
+      WASTELAND("Wasteland", 16, 16, 96, 0),
+      POOL("Pool", 32, 16, 0, 32),
+      COURBET("Courbet", 32, 16, 32, 32),
+      SEA("Sea", 32, 16, 64, 32),
+      SUNSET("Sunset", 32, 16, 96, 32),
+      CREEBET("Creebet", 32, 16, 128, 32),
+      WANDERER("Wanderer", 16, 32, 0, 64),
+      GRAHAM("Graham", 16, 32, 16, 64),
+      MATCH("Match", 32, 32, 0, 128),
+      BUST("Bust", 32, 32, 32, 128),
+      STAGE("Stage", 32, 32, 64, 128),
+      VOID("Void", 32, 32, 96, 128),
+      SKULL_AND_ROSES("SkullAndRoses", 32, 32, 128, 128),
+      WITHER("Wither", 32, 32, 160, 128),
+      FIGHTERS("Fighters", 64, 32, 0, 96),
+      POINTER("Pointer", 64, 64, 0, 192),
+      PIGSCENE("Pigscene", 64, 64, 64, 192),
+      BURNING_SKULL("BurningSkull", 64, 64, 128, 192),
+      SKELETON("Skeleton", 64, 48, 192, 64),
+      DONKEY_KONG("DonkeyKong", 64, 48, 192, 112);
+
+      public String title;
+      public int sizeX;
+      public int sizeY;
+      public int offsetX;
+      public int offsetY;
+      public static int LENGTH = "SkullAndRoses".length();
+
+      EnumArt(String titleIn, int width, int height, int textureU, int textureV) {
+         this.title = titleIn;
+         this.sizeX = width;
+         this.sizeY = height;
+         this.offsetX = textureU;
+         this.offsetY = textureV;
+      }
+   }
+}
