@@ -1,0 +1,839 @@
+{
+  "id": "OpenCheatBreaker-1.8.9",
+  "type": "release",
+  "mainClass": "Start",
+  "minimumLauncherVersion": 21,
+  "time": "2026-10-27T00:00:00+00:00",
+  "releaseTime": "2026-10-27T00:00:00+00:00",
+  "assets": "1.8",
+  "assetIndex": {
+    "id": "1.8",
+    "sha1": "f6ad102bcaa53b1a58358f16e376d548d44933ec",
+    "size": 78494,
+    "totalSize": 114885064,
+    "url": "https://launchermeta.mojang.com/v1/packages/f6ad102bcaa53b1a58358f16e376d548d44933ec/1.8.json"
+  },
+  "logging": {
+    "client": {
+      "argument": "-Dlog4j.configurationFile=${path}",
+      "file": {
+        "id": "client-1.7.xml",
+        "sha1": "50c9cc4af6d853d9fc137c84bcd153e2bd3a9a82",
+        "size": 966,
+        "url": "https://launcher.mojang.com/v1/objects/50c9cc4af6d853d9fc137c84bcd153e2bd3a9a82/client-1.7.xml"
+      },
+      "type": "log4j2-xml"
+    }
+  },
+  "arguments": {
+    "game": [
+      "--username",
+      "${auth_player_name}",
+      "--gameDir",
+      "${game_directory}",
+      "--assetsDir",
+      "${assets_root}",
+      "--uuid",
+      "${auth_uuid}",
+      "--accessToken",
+      "${auth_access_token}",
+      "--userType",
+      "${user_type}",
+      "--installationID",
+      "00000000-0000-0000-0000-000000000000",
+      "--websocketToken",
+      "0",
+      "--launcherVersion",
+      "2026.10.0",
+      {
+        "rules": [
+          {
+            "action": "allow",
+            "features": {
+              "is_demo_user": true
+            }
+          }
+        ],
+        "value": "--demo"
+      },
+      {
+        "rules": [
+          {
+            "action": "allow",
+            "features": {
+              "has_custom_resolution": true
+            }
+          }
+        ],
+        "value": [
+          "--width",
+          "${resolution_width}",
+          "--height",
+          "${resolution_height}"
+        ]
+      }
+    ],
+    "jvm": [
+      "-Djava.library.path=${natives_directory}",
+      "-Dminecraft.launcher.brand=${launcher_name}",
+      "-Dminecraft.launcher.version=${launcher_version}",
+      "-XX:-UseAdaptiveSizePolicy",
+      "-XX:-OmitStackTraceInFastThrow",
+      "-Djava.locale.providers=JRE",
+      "-cp",
+      "${classpath}"
+    ]
+  },
+  "libraries": [
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/cheatbreaker/backup/master/backup-master.jar",
+          "sha1": "3228c90bebeca6059c5f27448434c945dc308e79",
+          "size": 6856,
+          "url": ""
+        }
+      },
+      "name": "net.cheatbreaker:backup:master"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/cheatbreaker/baseAssets/master/baseAssets-master.jar",
+          "sha1": "433910c7c66cb4cd9270923f5d1dee5f1c579f95",
+          "size": 6129762,
+          "url": ""
+        }
+      },
+      "name": "net.cheatbreaker:baseAssets:master"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/cheatbreaker/cbAssets/master/cbAssets-master.jar",
+          "sha1": "e361f46bbbff3dd62f4460bc9a93f60372dbbf99",
+          "size": 9310224,
+          "url": ""
+        }
+      },
+      "name": "net.cheatbreaker:cbAssets:master"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/cheatbreaker/cosmetics/master/cosmetics-master.jar",
+          "sha1": "943e2ab4cb4e62e417f90c36f7c7b7959b5126d1",
+          "size": 49718798,
+          "url": ""
+        }
+      },
+      "name": "net.cheatbreaker:cosmetics:master"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/paulscode/codecwav/20101023/codecwav-20101023.jar",
+          "sha1": "12f031cfe88fef5c1dd36c563c0a3a69bd7261da",
+          "size": 5618,
+          "url": "https://libraries.minecraft.net/com/paulscode/codecwav/20101023/codecwav-20101023.jar"
+        }
+      },
+      "name": "com.paulscode:codecwav:20101023"
+    },
+    {
+      "downloads": {
+        "classifiers": {
+          "natives-windows": {
+            "path": "org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-windows.jar",
+            "sha1": "b84d5102b9dbfabfeb5e43c7e2828d98a7fc80e0",
+            "size": 613748,
+            "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-windows.jar",
+            "files": {
+              "OpenAL64.dll": "97362fba53dfb6d9581b8c64829f4b1d98a97855",
+              "lwjgl64.dll": "f4013116d6750829851370ed19a9eaf8251ad6e1",
+              "OpenAL32.dll": "ede381bf55e7d0cd3a7e058237bbc66a8ff63837",
+              "lwjgl.dll": "6f1661fc6952312a9f34dfa6d3840b46e9c85e63"
+            }
+          },
+          "natives-osx": {
+            "path": "org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-osx.jar",
+            "sha1": "bcab850f8f487c3f4c4dbabde778bb82bd1a40ed",
+            "size": 426822,
+            "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-osx.jar",
+            "files": {
+              "liblwjgl.dylib": "1babc10922b31842a45be9153ffddf94cefaaf29",
+              "openal.dylib": "307015baeed514e579191bbceb9e81f9fbc3e6f8"
+            }
+          },
+          "natives-osx-arm64": {
+            "path": "org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-osx-arm64.jar",
+            "sha1": "eff546c0b319d6ffc7a835652124c18089c67f36",
+            "size": 488316,
+            "url": "",
+            "files": {
+              "liblwjgl.dylib": "fb4696a83c290bb79d52485811e4fbeba08a68fa",
+              "openal.dylib": "034e01a72f66e5200928be84581160bc90a4c56e"
+            }
+          },
+          "natives-linux": {
+            "path": "org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-linux-amd64.jar",
+            "sha1": "1811ba87de6c7f0d39eb6949c100bb4ee640d8dc",
+            "size": 614045,
+            "url": "",
+            "files": {
+              "libopenal64.so": "ebac433b3c88016d16f75e2f71174b3add407f95",
+              "liblwjgl64.so": "69324bf6599b5562f62e0bc3c6382f6483319b69",
+              "libopenal.so": "4fbe4748eef8b07bf2134960d90260482abf3346",
+              "liblwjgl.so": "cf12e4c75cf4839b5d1aa2a5adc2f9672c039c56"
+            }
+          },
+          "natives-linux-arm64": {
+            "path": "org/lwjgl/lwjgl/lwjgl-platform/2.9.4-nightly-20150209/lwjgl-platform-2.9.4-nightly-20150209-natives-linux-arm64.jar",
+            "sha1": "63ac7da0f4a4785c7eadc0f8edc1e9dcc4dd08cb",
+            "size": 579979,
+            "url": "",
+            "files": {
+              "libopenal.so": "f27de8360dcc403b309b9bd0b41850a47205bb8a",
+              "liblwjgl.so": "afec485459d2c9ceaba6ea2a2c484aee539a0e5a"
+            }
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "windows": "natives-windows",
+        "osx": "natives-osx",
+        "osx-arm64": "natives-osx-arm64",
+        "linux": "natives-linux",
+        "linux-arm64": "natives-linux-arm64"
+      },
+      "name": "org.lwjgl.lwjgl:lwjgl-platform:2.9.4-nightly-20150209"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/paulscode/libraryjavasound/20101123/libraryjavasound-20101123.jar",
+          "sha1": "5c5e304366f75f9eaa2e8cca546a1fb6109348b3",
+          "size": 21679,
+          "url": "https://libraries.minecraft.net/com/paulscode/libraryjavasound/20101123/libraryjavasound-20101123.jar"
+        }
+      },
+      "name": "com.paulscode:libraryjavasound:20101123"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/paulscode/soundsystem/20120107/soundsystem-20120107.jar",
+          "sha1": "419c05fe9be71f792b2d76cfc9b67f1ed0fec7f6",
+          "size": 65020,
+          "url": "https://libraries.minecraft.net/com/paulscode/soundsystem/20120107/soundsystem-20120107.jar"
+        }
+      },
+      "name": "com.paulscode:soundsystem:20120107"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-transport-native-unix-common/4.1.139.Final/netty-transport-native-unix-common-4.1.139.Final-linux-x86_64.jar",
+          "sha1": "ea454d325b655ec8e1ad22444c5efce0de970901",
+          "size": 74476,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-transport-native-unix-common:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/googlecode/soundlibs/jlayer/1.0.1.4/jlayer-1.0.1.4.jar",
+          "sha1": "b8df07ad72b482f7d6e6dee7fed669385e8dd92f",
+          "size": 140987,
+          "url": ""
+        }
+      },
+      "name": "com.googlecode.soundlibs:jlayer:1.0.1.4"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-buffer/4.1.139.Final/netty-buffer-4.1.139.Final.jar",
+          "sha1": "9bf302a4c01d89f42e633f55eb9ffd0bb6a0b92e",
+          "size": 365480,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-buffer:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "it/unimi/dsi/fastutil-core/8.5.19/fastutil-core-8.5.19.jar",
+          "sha1": "e99333d7d770c57df477b08d2d995864918c924d",
+          "size": 6648095,
+          "url": ""
+        }
+      },
+      "name": "it.unimi.dsi:fastutil-core:8.5.19"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-transport/4.1.139.Final/netty-transport-4.1.139.Final.jar",
+          "sha1": "2cf7121cec6ec0b43d406adceec132cfcec6159a",
+          "size": 524190,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-transport:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar",
+          "sha1": "aeaffd00d57023a2c947393ed251f0354f0985fc",
+          "size": 10763,
+          "url": "https://libraries.minecraft.net/com/google/guava/failureaccess/1.0.3/failureaccess-1.0.3.jar"
+        }
+      },
+      "name": "com.google.guava:failureaccess:1.0.3"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/github/oshi/oshi-core/6.12.0/oshi-core-6.12.0.jar",
+          "sha1": "8d3855dd1dfab348bf50031398a7ad69d1c27ef9",
+          "size": 1197137,
+          "url": ""
+        }
+      },
+      "name": "com.github.oshi:oshi-core:6.12.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-codec/4.1.131.Final/netty-codec-4.1.131.Final.jar",
+          "sha1": "1874341f7b29879c6833c17e7305272f0cdc2cb6",
+          "size": 357593,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-codec:4.1.131.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar",
+          "sha1": "ca303052cd617c1af2e2c8d344c98a706fb63143",
+          "size": 1950853,
+          "url": "https://libraries.minecraft.net/net/java/dev/jna/jna/5.19.1/jna-5.19.1.jar"
+        }
+      },
+      "name": "net.java.dev.jna:jna:5.19.1"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1.jar",
+          "sha1": "d1e54d9231da5ca3fa730d52960deaa555475468",
+          "size": 1416385,
+          "url": "https://libraries.minecraft.net/net/java/dev/jna/jna-platform/5.19.1/jna-platform-5.19.1.jar"
+        }
+      },
+      "name": "net.java.dev.jna:jna-platform:5.19.1"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/httpcomponents/httpmime/4.5.14/httpmime-4.5.14.jar",
+          "sha1": "6662758a1f1cb1149cf916bdac28332e0902ec44",
+          "size": 41727,
+          "url": ""
+        }
+      },
+      "name": "org.apache.httpcomponents:httpmime:4.5.14"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/httpcomponents/httpclient/4.5.14/httpclient-4.5.14.jar",
+          "sha1": "1194890e6f56ec29177673f2f12d0b8e627dec98",
+          "size": 785639,
+          "url": "https://libraries.minecraft.net/org/apache/httpcomponents/httpclient/4.5.14/httpclient-4.5.14.jar"
+        }
+      },
+      "name": "org.apache.httpcomponents:httpclient:4.5.14"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/google/guava/guava/33.7.2-jre/guava-33.7.2-jre.jar",
+          "sha1": "e70def5b06cfb109ea050de99870e79c8ce80dbc",
+          "size": 3057659,
+          "url": ""
+        }
+      },
+      "name": "com.google.guava:guava:33.7.2-jre"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-common/4.1.139.Final/netty-common-4.1.139.Final.jar",
+          "sha1": "c3d17ade6f80714ca28078706cbb33c9e8096cf8",
+          "size": 740560,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-common:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/kohlschutter/junixsocket/junixsocket-native-common/2.11.0/junixsocket-native-common-2.11.0.jar",
+          "sha1": "3f851e00fa379457597bedb2d9df114425ef3652",
+          "size": 838423,
+          "url": ""
+        }
+      },
+      "name": "com.kohlschutter.junixsocket:junixsocket-native-common:2.11.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/logging/log4j/log4j-core/2.26.1/log4j-core-2.26.1.jar",
+          "sha1": "1941359537713285d224714f63ca4e5cf004d575",
+          "size": 2015459,
+          "url": ""
+        }
+      },
+      "name": "org.apache.logging.log4j:log4j-core:2.26.1"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-resolver/4.1.139.Final/netty-resolver-4.1.139.Final.jar",
+          "sha1": "b3ad473303b5ccb9d0f22ef31c0306b229620c54",
+          "size": 37907,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-resolver:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-handler/4.1.139.Final/netty-handler-4.1.139.Final.jar",
+          "sha1": "436b4a15bb2fe4608996a08b6d69b22f075286a4",
+          "size": 590894,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-handler:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/kohlschutter/junixsocket/junixsocket-common/2.11.0/junixsocket-common-2.11.0.jar",
+          "sha1": "c03f9dcfc75944de5d9820aebfe268d896f18ca8",
+          "size": 2519394,
+          "url": ""
+        }
+      },
+      "name": "com.kohlschutter.junixsocket:junixsocket-common:2.11.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/logging/log4j/log4j-slf4j2-impl/2.26.1/log4j-slf4j2-impl-2.26.1.jar",
+          "sha1": "12d67a8f362bda35a1b1a5f0b5cd595c16b2d488",
+          "size": 30212,
+          "url": ""
+        }
+      },
+      "name": "org.apache.logging.log4j:log4j-slf4j2-impl:2.26.1"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/cheatbreaker/CheatBreakerAPINetHandler/1.0/CheatBreakerAPINetHandler-1.0.jar",
+          "sha1": "13338b89b475a523b3f5d23f0bb820083507ebf6",
+          "size": 42341,
+          "url": ""
+        }
+      },
+      "name": "com.cheatbreaker:CheatBreakerAPINetHandler:1.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar",
+          "sha1": "42ccaf4761f0dfdfa805c9e340d99a755907e2dd",
+          "size": 2523218,
+          "url": "https://libraries.minecraft.net/net/sf/trove4j/trove4j/3.0.3/trove4j-3.0.3.jar"
+        }
+      },
+      "name": "net.sf.trove4j:trove4j:3.0.3"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/lwjgl/2.9.4-nightly-20150209/lwjgl-2.9.4-nightly-20150209.jar",
+          "sha1": "48781c31072e1f3b239e3af0ffe811e929047aa7",
+          "size": 1057669,
+          "url": ""
+        }
+      },
+      "name": "org.lwjgl.lwjgl:lwjgl:2.9.4-nightly-20150209"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/jagrosh/DiscordIPC/0.11.3/DiscordIPC-0.11.3.jar",
+          "sha1": "2035351334f4ac5a932915fee6dedb87058846e1",
+          "size": 50143,
+          "url": ""
+        }
+      },
+      "name": "com.jagrosh:DiscordIPC:0.11.3"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/lwjgl/lwjgl/lwjgl_util/2.9.4-nightly-20150209/lwjgl_util-2.9.4-nightly-20150209.jar",
+          "sha1": "d51a7c040a721d13efdfbd34f8b257b2df882ad0",
+          "size": 173887,
+          "url": "https://libraries.minecraft.net/org/lwjgl/lwjgl/lwjgl_util/2.9.4-nightly-20150209/lwjgl_util-2.9.4-nightly-20150209.jar"
+        }
+      },
+      "name": "org.lwjgl.lwjgl:lwjgl_util:2.9.4-nightly-20150209"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/slf4j/slf4j-api/2.0.20/slf4j-api-2.0.20.jar",
+          "sha1": "7fea9d92ba67e9b3c8f03515fb202b86a1fe44f6",
+          "size": 70255,
+          "url": "https://libraries.minecraft.net/org/slf4j/slf4j-api/2.0.20/slf4j-api-2.0.20.jar"
+        }
+      },
+      "name": "org.slf4j:slf4j-api:2.0.20"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/ibm/icu/icu4j-core-mojang/51.2/icu4j-core-mojang-51.2.jar",
+          "sha1": "63d216a9311cca6be337c1e458e587f99d382b84",
+          "size": 1634692,
+          "url": "https://libraries.minecraft.net/com/ibm/icu/icu4j-core-mojang/51.2/icu4j-core-mojang-51.2.jar"
+        }
+      },
+      "name": "com.ibm.icu:icu4j-core-mojang:51.2"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/java/jutils/jutils/1.0.0/jutils-1.0.0.jar",
+          "sha1": "e12fe1fda814bd348c1579329c86943d2cd3c6a6",
+          "size": 7508,
+          "url": "https://libraries.minecraft.net/net/java/jutils/jutils/1.0.0/jutils-1.0.0.jar"
+        }
+      },
+      "name": "net.java.jutils:jutils:1.0.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar",
+          "sha1": "4fdac2fbe92dfad86aa6e9301736f6b4342a3f5c",
+          "size": 78146,
+          "url": "https://libraries.minecraft.net/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"
+        }
+      },
+      "name": "net.sf.jopt-simple:jopt-simple:5.0.4"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "javafx/javafx-geom/1.3.0/javafx-geom-1.3.0.jar",
+          "sha1": "878e21a0078eceace9f398bebd7545a8cd681546",
+          "size": 146442,
+          "url": ""
+        }
+      },
+      "name": "javafx:javafx-geom:1.3.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/google/code/gson/gson/2.14.0/gson-2.14.0.jar",
+          "sha1": "efc0e34ede4e3204eaefb84a00e55e8c86634382",
+          "size": 313604,
+          "url": "https://libraries.minecraft.net/com/google/code/gson/gson/2.14.0/gson-2.14.0.jar"
+        }
+      },
+      "name": "com.google.code.gson:gson:2.14.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/httpcomponents/httpcore/4.4.16/httpcore-4.4.16.jar",
+          "sha1": "51cf043c87253c9f58b539c9f7e44c8894223850",
+          "size": 327891,
+          "url": "https://libraries.minecraft.net/org/apache/httpcomponents/httpcore/4.4.16/httpcore-4.4.16.jar"
+        }
+      },
+      "name": "org.apache.httpcomponents:httpcore:4.4.16"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/paulscode/codecjorbis/20101023/codecjorbis-20101023.jar",
+          "sha1": "c73b5636faf089d9f00e8732a829577de25237ee",
+          "size": 103871,
+          "url": "https://libraries.minecraft.net/com/paulscode/codecjorbis/20101023/codecjorbis-20101023.jar"
+        }
+      },
+      "name": "com.paulscode:codecjorbis:20101023"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/mojang/authlib/1.5.21/authlib-1.5.21.jar",
+          "sha1": "aefba0d5b53fbcb70860bc8046ab95d5854c07a5",
+          "size": 64412,
+          "url": "https://libraries.minecraft.net/com/mojang/authlib/1.5.21/authlib-1.5.21.jar"
+        }
+      },
+      "name": "com.mojang:authlib:1.5.21"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-transport-classes-epoll/4.1.139.Final/netty-transport-classes-epoll-4.1.139.Final.jar",
+          "sha1": "0588221b4cd62d3853c8600a004a1b45805c3e71",
+          "size": 147765,
+          "url": ""
+        }
+      },
+      "name": "io.netty:netty-transport-classes-epoll:4.1.139.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/mojang/realms/1.7.59/realms-1.7.59.jar",
+          "sha1": "9c6c59b742d8e038a15f64c1aa273a893a658424",
+          "size": 1198123,
+          "url": "https://libraries.minecraft.net/com/mojang/realms/1.7.59/realms-1.7.59.jar"
+        }
+      },
+      "name": "com.mojang:realms:1.7.59"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar",
+          "sha1": "e482f2c7a88dac3c497e96aa420b6a769f59c8d7",
+          "size": 1117221,
+          "url": "https://libraries.minecraft.net/org/apache/commons/commons-compress/1.28.0/commons-compress-1.28.0.jar"
+        }
+      },
+      "name": "org.apache.commons:commons-compress:1.28.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "com/googlecode/json-simple/json-simple/1.1.1/json-simple-1.1.1.jar",
+          "sha1": "c9ad4a0850ab676c5c64461a05ca524cdfff59f1",
+          "size": 23931,
+          "url": ""
+        }
+      },
+      "name": "com.googlecode.json-simple:json-simple:1.1.1"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/logging/log4j/log4j-api/2.26.1/log4j-api-2.26.1.jar",
+          "sha1": "b9864ed8d0c01f65f3b0bf70f1447e5cc1b49c24",
+          "size": 351428,
+          "url": ""
+        }
+      },
+      "name": "org.apache.logging.log4j:log4j-api:2.26.1"
+    },
+    {
+      "downloads": {
+        "classifiers": {
+          "natives-linux": {
+            "path": "net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-linux.jar",
+            "sha1": "7ff832a6eb9ab6a767f1ade2b548092d0fa64795",
+            "size": 10362,
+            "url": "https://libraries.minecraft.net/net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-linux.jar",
+            "files": {
+              "libjinput-linux.so": "b1fcd93fa6dcd6072078589ee0a68093b4281c57",
+              "libjinput-linux64.so": "9593ad5fb9f8db1fd7a01b32608ec043ff07d195"
+            }
+          },
+          "natives-linux-arm64": {
+            "path": "net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-linux-arm64.jar",
+            "sha1": "42b388ccb7c63cec4e9f24f4dddef33325f8b212",
+            "size": 10932,
+            "url": "",
+            "files": {
+              "libjinput-linux.so": "3244a4d2cf2648c9f3f0399d3a26e5df6c343730",
+              "libjinput-linux64.so": "3244a4d2cf2648c9f3f0399d3a26e5df6c343730"
+            }
+          },
+          "natives-osx": {
+            "path": "net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-osx.jar",
+            "sha1": "53f9c919f34d2ca9de8c51fc4e1e8282029a9232",
+            "size": 12186,
+            "url": "https://libraries.minecraft.net/net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-osx.jar",
+            "files": {
+              "libjinput-osx.jnilib": "6a167f736f8746892665f191e30937c5d96e5e65"
+            }
+          },
+          "natives-osx-arm64": {
+            "path": "net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-osx-arm64.jar",
+            "sha1": "5189eb40db3087fb11ca063b68fa4f4c20b199dd",
+            "size": 10031,
+            "url": "",
+            "files": {
+              "libjinput-osx.jnilib": "4272949ed30480457b63db9487621ede00a5b341"
+            }
+          },
+          "natives-windows": {
+            "path": "net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-windows.jar",
+            "sha1": "385ee093e01f587f30ee1c8a2ee7d408fd732e16",
+            "size": 155179,
+            "url": "https://libraries.minecraft.net/net/java/jinput/jinput-platform/2.0.5/jinput-platform-2.0.5-natives-windows.jar",
+            "files": {
+              "jinput-dx8_64.dll": "5d9a7d3fb6224dab97aaff7bd9430232732d9be8",
+              "jinput-dx8.dll": "50348b2958b017df3bf30d7915ab61a4cb9a2b33",
+              "jinput-raw.dll": "4d982f408e815519c2289cd720c78338392a9887",
+              "jinput-wintab.dll": "e7b9beead279298611d0c4753089d3af07c4c9e9",
+              "jinput-raw_64.dll": "067c11135f9ebeb554d5f80b7a8a5244c0f3b7d7"
+            }
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "natives-linux",
+        "linux-arm64": "natives-linux-arm64",
+        "osx": "natives-osx",
+        "osx-arm64": "natives-osx-arm64",
+        "windows": "natives-windows"
+      },
+      "name": "net.java.jinput:jinput-platform:2.0.5"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "commons-logging/commons-logging/1.4.0/commons-logging-1.4.0.jar",
+          "sha1": "e8f6313365dfa0580e49c58837afc8caa9b4ce05",
+          "size": 75828,
+          "url": ""
+        }
+      },
+      "name": "commons-logging:commons-logging:1.4.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "io/netty/netty-transport-native-epoll/4.1.123.Final/netty-transport-native-epoll-4.1.123.Final-linux-aarch_64.jar",
+          "sha1": "0039f83fcf74e473dbc07278cf702a6960832bbd",
+          "size": 42521,
+          "url": ""
+        },
+        "classifiers": {
+          "linux-x86_64": {
+            "path": "io/netty/netty-transport-native-epoll/4.1.123.Final/netty-transport-native-epoll-4.1.123.Final-linux-x86_64.jar",
+            "sha1": "d81db74b4567903ab051560f3df35d4529b8f1cd",
+            "size": 40825,
+            "url": ""
+          }
+        },
+        "extract": {
+          "exclude": [
+            "META-INF/"
+          ]
+        }
+      },
+      "name": "io.netty:netty-transport-native-epoll:4.1.123.Final"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "java3d/vecmath/1.5.2/vecmath-1.5.2.jar",
+          "sha1": "79846ba34cbd89e2422d74d53752f993dcc2ccaf",
+          "size": 318956,
+          "url": "https://libraries.minecraft.net/java3d/vecmath/1.5.2/vecmath-1.5.2.jar"
+        }
+      },
+      "name": "java3d:vecmath:1.5.2"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/java-websocket/Java-WebSocket/1.6.0/Java-WebSocket-1.6.0.jar",
+          "sha1": "52d7f6dc1b06607d4d12e438c840c25f1a0bb854",
+          "size": 140686,
+          "url": ""
+        }
+      },
+      "name": "org.java-websocket:Java-WebSocket:1.6.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "org/apache/commons/commons-lang3/3.21.0/commons-lang3-3.21.0.jar",
+          "sha1": "7bad013a5acee0a078d75fc352a906baa57acb74",
+          "size": 749083,
+          "url": ""
+        }
+      },
+      "name": "org.apache.commons:commons-lang3:3.21.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "commons-io/commons-io/2.22.0/commons-io-2.22.0.jar",
+          "sha1": "5b1e18bc0ad651ed878029d83f88d9c8189fd51e",
+          "size": 609182,
+          "url": ""
+        }
+      },
+      "name": "commons-io:commons-io:2.22.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "commons-codec/commons-codec/1.23.0/commons-codec-1.23.0.jar",
+          "sha1": "11adf2daaeb941e80599a3e8010d63aed995f509",
+          "size": 440773,
+          "url": ""
+        }
+      },
+      "name": "commons-codec:commons-codec:1.23.0"
+    },
+    {
+      "downloads": {
+        "artifact": {
+          "path": "net/java/jinput/jinput/2.0.9/jinput-2.0.9.jar",
+          "sha1": "5c05470d6ede64e77b1f24a052ea2650aecf4036",
+          "size": 207250,
+          "url": ""
+        }
+      },
+      "name": "net.java.jinput:jinput:2.0.9"
+    }
+  ]
+}

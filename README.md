@@ -11,6 +11,7 @@ Requires JDK 25 and network access to Maven Central (test dependencies). The gam
 ```
 ./gradlew jar          # output is in build/libs/
 ./gradlew test
+./gradlew releaseZip   # standalone version package: build/distributions/OpenCheatBreaker-1.8.9.zip
 ./gradlew runGame      # copies the natives and assets into run/ and starts the game with an offline test account (game data in run/mc/)
 ```
 
