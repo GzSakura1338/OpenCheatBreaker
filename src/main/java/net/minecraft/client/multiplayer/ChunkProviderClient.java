@@ -1,14 +1,13 @@
 package net.minecraft.client.multiplayer;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.IProgressUpdate;
 import net.minecraft.util.LongHashMap;
 import net.minecraft.world.ChunkCoordIntPair;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase.SpawnListEntry;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.EmptyChunk;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -16,110 +15,101 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class ChunkProviderClient implements IChunkProvider {
-   public static Logger logger = LogManager.getLogger();
-   public LongHashMap<Chunk> chunkMapping = new LongHashMap<>();
-   public List<Chunk> chunkListing = Lists.newArrayList();
-   public Chunk blankChunk;
-   public World worldObj;
+    public static Logger logger = LogManager.getLogger();
+    public LongHashMap chunkMapping = new LongHashMap();
+    public List chunkListing = new ArrayList();
+    public Chunk blankChunk;
+    public World worldObj;
 
-   public ChunkProviderClient(World worldIn) {
-      this.blankChunk = new EmptyChunk(worldIn, 0, 0);
-      this.worldObj = worldIn;
-   }
+    public ChunkProviderClient(World world) {
+        this.blankChunk = new EmptyChunk(world, 0, 0);
+        this.worldObj = world;
+    }
 
-   @Override
-   public boolean chunkExists(int x, int z) {
-      return true;
-   }
+    @Override
+    public boolean chunkExists(int n, int n2) {
+        return true;
+    }
 
-   public void unloadChunk(int x, int z) {
-      Chunk provideChunk = this.provideChunk(x, z);
-      if (!provideChunk.isEmpty()) {
-         provideChunk.onChunkUnload();
-      }
+    public void unloadChunk(int n, int n2) {
+        Chunk provideChunk = this.provideChunk(n, n2);
+        if (!provideChunk.isEmpty()) {
+            provideChunk.onChunkUnload();
+        }
 
-      this.chunkMapping.remove(ChunkCoordIntPair.chunkXZ2Int(x, z));
-      this.chunkListing.remove(provideChunk);
-   }
+        this.chunkMapping.remove(ChunkCoordIntPair.chunkXZ2Int(n, n2));
+        this.chunkListing.remove(provideChunk);
+    }
 
-   public Chunk loadChunk(int chunkX, int chunkZ) {
-      Chunk chunk = new Chunk(this.worldObj, chunkX, chunkZ);
-      this.chunkMapping.add(ChunkCoordIntPair.chunkXZ2Int(chunkX, chunkZ), chunk);
-      this.chunkListing.add(chunk);
-      chunk.setChunkLoaded(true);
-      return chunk;
-   }
+    @Override
+    public Chunk loadChunk(int n, int n2) {
+        Chunk chunk = new Chunk(this.worldObj, n, n2);
+        this.chunkMapping.add(ChunkCoordIntPair.chunkXZ2Int(n, n2), chunk);
+        this.chunkListing.add(chunk);
+        chunk.isChunkLoaded = true;
+        return chunk;
+    }
 
-   @Override
-   public Chunk provideChunk(int x, int z) {
-      Chunk valueByKey = this.chunkMapping.getValueByKey(ChunkCoordIntPair.chunkXZ2Int(x, z));
-      return valueByKey == null ? this.blankChunk : valueByKey;
-   }
+    @Override
+    public Chunk provideChunk(int n, int n2) {
+        Chunk valueByKey = (Chunk)this.chunkMapping.getValueByKey(ChunkCoordIntPair.chunkXZ2Int(n, n2));
+        return valueByKey == null ? this.blankChunk : valueByKey;
+    }
 
-   @Override
-   public boolean saveChunks(boolean saveAllChunks, IProgressUpdate progressCallback) {
-      return true;
-   }
+    @Override
+    public boolean saveChunks(boolean flag, IProgressUpdate progressUpdate) {
+        return true;
+    }
 
-   @Override
-   public void saveExtraData() {
-   }
+    @Override
+    public void saveExtraData() {
+    }
 
-   @Override
-   public boolean unloadQueuedChunks() {
-      long currentTimeMillis = System.currentTimeMillis();
+    @Override
+    public boolean unloadQueuedChunks() {
+        long currentTimeMillis = System.currentTimeMillis();
 
-      for (Chunk chunk : this.chunkListing) {
-         chunk.populateBlockEntities(System.currentTimeMillis() - currentTimeMillis > 5L);
-      }
+        for (Chunk chunk : (Iterable<Chunk>)this.chunkListing) {
+            chunk.populateBlockEntities(System.currentTimeMillis() - currentTimeMillis > 5L);
+        }
 
-      if (System.currentTimeMillis() - currentTimeMillis > 100L) {
-         logger.info("Warning: Clientside chunk ticking took {} ms", new Object[]{System.currentTimeMillis() - currentTimeMillis});
-      }
+        if (System.currentTimeMillis() - currentTimeMillis > 100L) {
+            logger.info("Warning: Clientside chunk ticking took {} ms", System.currentTimeMillis() - currentTimeMillis);
+        }
 
-      return false;
-   }
+        return false;
+    }
 
-   @Override
-   public boolean canSave() {
-      return false;
-   }
+    @Override
+    public boolean canSave() {
+        return false;
+    }
 
-   @Override
-   public void populate(IChunkProvider chunkProvider, int x, int z) {
-   }
+    @Override
+    public void populate(IChunkProvider chunkProvider, int n, int n2) {
+    }
 
-   @Override
-   public boolean populateChunk(IChunkProvider chunkProvider, Chunk chunkIn, int x, int z) {
-      return false;
-   }
+    @Override
+    public String makeString() {
+        return "MultiplayerChunkCache: " + this.chunkMapping.getNumHashElements() + ", " + this.chunkListing.size();
+    }
 
-   @Override
-   public String makeString() {
-      return "MultiplayerChunkCache: " + this.chunkMapping.getNumHashElements() + ", " + this.chunkListing.size();
-   }
+    @Override
+    public List getPossibleCreatures(EnumCreatureType enumCreatureType, int n, int n2, int n3) {
+        return null;
+    }
 
-   @Override
-   public List<SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) {
-      return null;
-   }
+    @Override
+    public ChunkPosition findClosestStructure(World world, String str, int n, int n2, int n3) {
+        return null;
+    }
 
-   @Override
-   public BlockPos getStrongholdGen(World worldIn, String structureName, BlockPos position) {
-      return null;
-   }
+    @Override
+    public int getLoadedChunkCount() {
+        return this.chunkListing.size();
+    }
 
-   @Override
-   public int getLoadedChunkCount() {
-      return this.chunkListing.size();
-   }
-
-   @Override
-   public void recreateStructures(Chunk chunkIn, int x, int z) {
-   }
-
-   @Override
-   public Chunk provideChunk(BlockPos blockPosIn) {
-      return this.provideChunk(blockPosIn.getX() >> 4, blockPosIn.getZ() >> 4);
-   }
+    @Override
+    public void recreateStructures(int n, int n2) {
+    }
 }

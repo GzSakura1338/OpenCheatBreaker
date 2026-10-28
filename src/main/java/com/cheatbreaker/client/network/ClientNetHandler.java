@@ -68,7 +68,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Random;
 import java.util.TreeSet;
 import java.util.UUID;
@@ -79,597 +78,587 @@ import net.minecraft.util.EnumChatFormatting;
 import org.lwjgl.input.Keyboard;
 
 public class ClientNetHandler implements ICBNetHandlerClient {
-   public boolean serverHandlesWaypoints;
-   public boolean legacyCombat;
-   public boolean competitiveGamemode;
-   public CheatBreaker cheatBreaker = CheatBreaker.getInstance();
-   public List<UUID> mutedPlayers = new ArrayList<>();
-   public List<UUID> autoMutedPlayers = new ArrayList<>();
-   public Map<UUID, List<String>> nametagOverrides = new HashMap<>();
-   public boolean pluginChannelRegistered = false;
-   public VoiceChannel voiceChannel;
-   public boolean binaryChannelRegistered = false;
-   public List<VoiceChannel> voiceChannels;
-   public String activeChannel = "";
-   public boolean voiceEnabled = false;
-   public String worldName = "";
-   public boolean forceDisableFastMath;
+    public boolean competitiveGamemode;
+    public CheatBreaker cheatBreaker = CheatBreaker.getInstance();
+    public List<UUID> mutedPlayers = new ArrayList<>();
+    public List<UUID> autoMutedPlayers = new ArrayList<>();
+    public VoiceChannel voiceChannel;
+    public Map<UUID, List<String>> nametagOverrides = new HashMap<>();
+    public boolean pluginChannelRegistered = false;
+    public List<VoiceChannel> voiceChannels;
+    public boolean flag;
+    public boolean binaryChannelRegistered = false;
+    public String activeChannel = "";
+    public boolean voiceEnabled = false;
+    public boolean serverHandlesWaypoints;
+    public String worldName = "";
 
-   public VoiceChannel getVoiceChannel() {
-      return this.voiceChannel;
-   }
-
-   public void handleUpdateHologram(CBPacketUpdateHologram cbpacketUpdateHologram) {
-      WorldLabel.getLabels()
-         .stream()
-         .filter(worldLabel -> worldLabel.getPlayerId().equals(cbpacketUpdateHologram.getUuid()))
-         .forEach(worldLabel -> worldLabel.setLines(cbpacketUpdateHologram.getLines().toArray(new String[0])));
-   }
-
-   public void handleAddHologram(CBPacketAddHologram cbpacketAddHologram) {
-      WorldLabel worldLabel = new WorldLabel(cbpacketAddHologram.getUuid(), cbpacketAddHologram.getX(), cbpacketAddHologram.getY(), cbpacketAddHologram.getZ());
-      WorldLabel.getLabels().add(worldLabel);
-      worldLabel.setLines(cbpacketAddHologram.getLines().toArray(new String[0]));
-   }
-
-   public void handleTitle(CBPacketTitle cbpacketTitle) {
-      TitleType titleType = TitleType.SUBTITLE;
-      if (cbpacketTitle.getType().equalsIgnoreCase("subtitle")) {
-         titleType = TitleType.TITLE;
-      }
-
-      this.cheatBreaker
-         .getTitleManager()
-         .getObjectArrayList()
-         .add(new Title(cbpacketTitle.getMessage(), titleType, cbpacketTitle.getScale(), cbpacketTitle.getDisplayTimeMs(), cbpacketTitle.getFadeInTimeMs(), cbpacketTitle.getFadeOutTimeMs()));
-   }
-
-   public void onSimpleEvent26(SimpleEvent26 simpleEvent26) {
-      this.binaryChannelRegistered = false;
-   }
-
-   public void handleAddWaypoint(CBPacketAddWaypoint cbpacketAddWaypoint) {
-      int n = cbpacketAddWaypoint.getX();
-      int n2 = cbpacketAddWaypoint.getY();
-      int n3 = cbpacketAddWaypoint.getZ();
-      VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
-      if (voxelMap.getWaypointManager().getWaypoints().stream().noneMatch(waypoint -> waypoint.name.equals(cbpacketAddWaypoint.getName()) && waypoint.world_6.equals(cbpacketAddWaypoint.getWorld()))) {
-         Color color = new Color(cbpacketAddWaypoint.getColor());
-         float f = color.getRed() / 255.0F;
-         float f2 = color.getGreen() / 255.0F;
-         float f3 = color.getBlue() / 255.0F;
-         TreeSet treeSet = new TreeSet();
-         treeSet.add(-1);
-         treeSet.add(0);
-         treeSet.add(1);
-         Logging.debug("Received waypoint (" + cbpacketAddWaypoint.getName() + ")[x" + n + ",y" + n2 + ",z" + n3 + "][r" + f + ",g" + f2 + ",b" + f3 + "]");
-         Waypoint waypoint = new Waypoint(
-            cbpacketAddWaypoint.getName(), n, n3, n2, true, f, f2, f3, "", voxelMap.getWaypointManager().getCurrentSubworld(), treeSet, true, true
-         );
-         waypoint.forced = cbpacketAddWaypoint.isForced();
-         waypoint.world_6 = cbpacketAddWaypoint.getWorld();
-         waypoint.fromServer = true;
-         voxelMap.getWaypointManager().addWaypoint(waypoint);
-      }
-   }
-
-   public void handleWorldBorderRemove(CBPacketWorldBorderRemove cbpacketWorldBorderRemove) {
-      this.cheatBreaker.getWorldBorderManager().removeIf(cbpacketWorldBorderRemove.getId());
-   }
-
-   public void clearServerData() {
-      this.cheatBreaker.getTitleManager().getObjectArrayList().clear();
-      StaffNametagsMod.setPlayerTags(null);
-   }
-
-   public void handleDeleteVoiceChannel(CBPacketDeleteVoiceChannel cbpacketDeleteVoiceChannel) {
-      this.log("Deleted channel: " + cbpacketDeleteVoiceChannel.getUuid().toString());
-      if (this.voiceChannels != null) {
-         this.voiceChannels.removeIf(voiceChannel -> voiceChannel.getUuid().equals(cbpacketDeleteVoiceChannel.getUuid()));
-      }
-
-      if (this.voiceChannel != null && this.voiceChannel.getUuid().equals(cbpacketDeleteVoiceChannel.getUuid())) {
-         this.voiceChannel = null;
-      }
-   }
-
-   public String getWorldName() {
-      return this.worldName;
-   }
-
-   public void handleUpdateWorld(CBPacketUpdateWorld cbpacketUpdateWorld) {
-      this.log("World Update: " + cbpacketUpdateWorld.getWorld());
-      this.worldName = cbpacketUpdateWorld.getWorld();
-   }
-
-   public Map<UUID, List<String>> getNametagOverrides() {
-      return this.nametagOverrides;
-   }
-
-   public VoiceChatPlayer getVoicePlayer(UUID uuid) {
-      if (this.voiceChannels != null && this.voiceChannel != null) {
-         Iterator iterator = this.voiceChannel.getVoiceChatPlayerList().iterator();
-
-         while (iterator.hasNext()) {
-            VoiceChatPlayer voiceChatPlayer;
-            if ((voiceChatPlayer = (VoiceChatPlayer)iterator.next()).getUuid().equals(uuid)) {
-               return voiceChatPlayer;
-            }
-         }
-
-         return null;
-      } else {
-         return null;
-      }
-   }
-
-   public void onJoinGame(S01PacketJoinGameEvent s01PacketJoinGameEvent) {
-      this.nametagOverrides.clear();
-   }
-
-   public boolean isForceDisableFastMath() {
-      return this.forceDisableFastMath;
-   }
-
-   public boolean isCompetitiveGamemode() {
-      return this.competitiveGamemode;
-   }
-
-   public void handleVoice(CBPacketVoice cbpacketVoice) {
-      this.cheatBreaker.getModManager().voicePushToTalkHandler.handleUUID(cbpacketVoice.getUuid());
-      VoiceEngine.getInstance().play(cbpacketVoice.getUuid(), cbpacketVoice.getData());
-   }
-
-   public boolean isBinaryChannelRegistered() {
-      return this.binaryChannelRegistered;
-   }
-
-   public CheatBreaker getCheatBreaker() {
-      return this.cheatBreaker;
-   }
-
-   public void handleTeammates(CBPacketTeammates cbpacketTeammates) {
-      Map players = cbpacketTeammates.getPlayers();
-      UUID leader = cbpacketTeammates.getLeader();
-      long lastMs = cbpacketTeammates.getLastMs();
-      if ((Boolean)this.cheatBreaker.getKeybindSettings().enableTeamView.getValue()
-         && players != null
-         && !players.isEmpty()
-         && (players.size() != 1 || !players.containsKey(Minecraft.getMinecraft().thePlayer.getUniqueID()))) {
-         int n = 0;
-
-         for (Entry entry : (Iterable<Entry>)players.entrySet()) {
-            TeamMember findTeamMember = this.cheatBreaker.getModManager().teamManager.findTeamMember(((UUID)entry.getKey()).toString());
-            if (findTeamMember == null) {
-               findTeamMember = new TeamMember(((UUID)entry.getKey()).toString(), leader != null && leader.equals(entry.getKey()));
-               this.cheatBreaker.getModManager().teamManager.getTeamMemberList().add(findTeamMember);
-               Random random = new Random();
-               if (n < this.cheatBreaker.getModManager().teamManager.getIntArray().length) {
-                  findTeamMember.setColor(new Color(this.cheatBreaker.getModManager().teamManager.getIntArray()[n]));
-               } else {
-                  float nextFloat = random.nextFloat();
-                  float nextFloat2 = random.nextFloat();
-                  float f = random.nextFloat() / 2.0F;
-                  findTeamMember.setColor(new Color(nextFloat, nextFloat2, f));
-               }
-            }
-
-            try {
-               double d = (Double)((Map)entry.getValue()).get("x");
-               double d2 = (Double)((Map)entry.getValue()).get("y") + 2.0;
-               double d3 = (Double)((Map)entry.getValue()).get("z");
-               findTeamMember.process(d, d2, d3, lastMs);
-            } catch (Exception e) {
-               e.printStackTrace();
-            }
-
-            n++;
-         }
-
-         this.cheatBreaker.getModManager().teamManager.getTeamMemberList().removeIf(teamMember -> !players.containsKey(UUID.fromString(teamMember.getPlayerId())));
-      } else {
-         this.cheatBreaker.getModManager().teamManager.getTeamMemberList().clear();
-      }
-   }
-
-   public void handleOverrideNametags(CBPacketOverrideNametags cbpacketOverrideNametags) {
-      if (cbpacketOverrideNametags.getTags() == null) {
-         this.nametagOverrides.remove(cbpacketOverrideNametags.getPlayer());
-      } else {
-         Collections.reverse(cbpacketOverrideNametags.getTags());
-         this.nametagOverrides.put(cbpacketOverrideNametags.getPlayer(), cbpacketOverrideNametags.getTags());
-      }
-   }
-
-   public boolean isPluginChannelRegistered() {
-      return this.pluginChannelRegistered;
-   }
-
-   public String getActiveChannel() {
-      return this.activeChannel;
-   }
-
-   public void handleVoiceChannelUpdate(CBPacketVoiceChannelUpdate cbpacketVoiceChannelUpdate) {
-      this.log("Channel Update: " + cbpacketVoiceChannelUpdate.getName() + " (" + cbpacketVoiceChannelUpdate.getStatus() + ")");
-      if (this.voiceChannels != null) {
-         VoiceChannel voiceChannel = this.getVoiceChannel(cbpacketVoiceChannelUpdate.getChannelUuid());
-         if (voiceChannel == null) {
-            this.log(cbpacketVoiceChannelUpdate.getChannelUuid().toString());
-         } else {
-            switch (cbpacketVoiceChannelUpdate.getStatus()) {
-               case 0:
-                  VoiceChatPlayer createVoiceChatPlayer = voiceChannel.createVoiceChatPlayer(cbpacketVoiceChannelUpdate.getUuid(), cbpacketVoiceChannelUpdate.getName());
-                  if (createVoiceChatPlayer != null) {
-                     this.muteMissingPlayers(ImmutableList.of(createVoiceChatPlayer));
-                  }
-                  break;
-               case 1:
-                  voiceChannel.removeIf(cbpacketVoiceChannelUpdate.getUuid());
-                  break;
-               case 2:
-                  if (!cbpacketVoiceChannelUpdate.getUuid().toString().equals(Minecraft.getMinecraft().getSession().getPlayerID())) {
-                     if (this.voiceChannel == voiceChannel) {
-                        ChatComponentText chatComponentText = new ChatComponentText(
-                           EnumChatFormatting.AQUA
-                              + cbpacketVoiceChannelUpdate.getName()
-                              + EnumChatFormatting.AQUA
-                              + " joined "
-                              + voiceChannel.getText()
-                              + " channel. Press '"
-                              + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().openVoiceMenu.getKeyCode())
-                              + "'!"
-                              + EnumChatFormatting.RESET
-                        );
-                        Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
-                     }
-                  } else {
-                     this.voiceChannel = voiceChannel;
-
-                     for (VoiceChannel voiceChannel2 : this.voiceChannels) {
-                        voiceChannel2.removeIf2(cbpacketVoiceChannelUpdate.getUuid());
-                     }
-
-                     ChatComponentText chatComponentText = new ChatComponentText(
-                        EnumChatFormatting.AQUA
-                           + "Joined "
-                           + voiceChannel.getText()
-                           + " channel. Press '"
-                           + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().voiceChat.getKeyCode())
-                           + "' to talk!"
-                           + EnumChatFormatting.RESET
-                     );
-                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
-                  }
-
-                  voiceChannel.handleUUID(cbpacketVoiceChannelUpdate.getUuid(), cbpacketVoiceChannelUpdate.getName());
-                  break;
-               case 3:
-                  if (this.voiceChannel == voiceChannel && !cbpacketVoiceChannelUpdate.getUuid().toString().equals(Minecraft.getMinecraft().getSession().getPlayerID())) {
-                     ChatComponentText chatComponentText = new ChatComponentText(
-                        EnumChatFormatting.AQUA
-                           + cbpacketVoiceChannelUpdate.getName()
-                           + EnumChatFormatting.AQUA
-                           + " left "
-                           + voiceChannel.getText()
-                           + " channel. Press '"
-                           + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().openVoiceMenu.getKeyCode())
-                           + "'!"
-                           + EnumChatFormatting.RESET
-                     );
-                     Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
-                  }
-
-                  voiceChannel.removeIf2(cbpacketVoiceChannelUpdate.getUuid());
-            }
-         }
-      }
-   }
-
-   public boolean hasVoiceChannel(UUID uuid) {
-      return this.getVoiceChannel(uuid) != null;
-   }
-
-   public void handleRemoveWaypoint(CBPacketRemoveWaypoint cbpacketRemoveWaypoint) {
-      try {
-         String name = cbpacketRemoveWaypoint.getName();
-         VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
-         voxelMap.getWaypointManager()
-            .getWaypoints()
-            .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
-         ((OldReiWaypointLoader)voxelMap.getWaypointManager())
-            .getDeathpoints()
-            .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
-         ((OldReiWaypointLoader)voxelMap.getWaypointManager())
-            .getEntityWaypointContainer()
-            .waypoints
-            .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
-         MinimapSettings.instance.save();
-         voxelMap.getWaypointManager().updateDeathpoints();
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
-   }
-
-   public void handleServerRule(CBPacketServerRule cbpacketServerRule) {
-      switch (cbpacketServerRule.getRule()) {
-         case VOICE_ENABLED:
-            this.log("Voice is: " + (cbpacketServerRule.isBooleanValue() ? "enabled" : "disabled"));
-            this.voiceEnabled = cbpacketServerRule.isBooleanValue();
-            break;
-         case MINIMAP_STATUS:
-            switch (cbpacketServerRule.getStringValue()) {
-               case "NEUTRAL":
-                  ZansMinimapMod.modForceState = ModForceState.NEUTRAL;
-                  return;
-               case "FORCED_OFF":
-                  ZansMinimapMod.modForceState = ModForceState.FORCED_OFF;
-                  return;
-               default:
-                  return;
-            }
-         case SERVER_HANDLES_WAYPOINTS:
-            this.serverHandlesWaypoints = cbpacketServerRule.isBooleanValue();
-            break;
-         case COMPETITIVE_GAMEMODE:
-            this.competitiveGamemode = cbpacketServerRule.isBooleanValue();
-            break;
-         case LEGACY_COMBAT:
-            this.legacyCombat = cbpacketServerRule.isBooleanValue();
-            break;
-         case FORCE_DISABLE_FAST_MATH:
-            this.forceDisableFastMath = cbpacketServerRule.isBooleanValue();
-      }
-   }
-
-   public void reset() {
-      this.voiceEnabled = false;
-      this.serverHandlesWaypoints = false;
-      this.voiceChannels = null;
-      this.voiceChannel = null;
-      this.competitiveGamemode = false;
-      this.forceDisableFastMath = false;
-      this.legacyCombat = false;
-      this.worldName = "";
-      this.autoMutedPlayers.clear();
-
-      for (AbstractNamedMod abstractNamedMod : this.cheatBreaker.getModManager().abstractNamedModList) {
-         abstractNamedMod.run();
-      }
-
-      this.cheatBreaker.getWorldBorderManager().clear();
-      this.clearServerData();
-      ZansMinimapMod.modForceState = ModForceState.FORCED_OFF;
-      ScoreboardMod.modForceState = ModForceState.NEUTRAL;
-      this.cheatBreaker.getModManager().teamManager.getTeamMemberList().clear();
-      WorldLabel.getLabels().clear();
-      VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
-      if (Minecraft.getMinecraft().thePlayer != null && voxelMap.getWaypointManager() != null) {
-         voxelMap.getWaypointManager().getWaypoints().removeIf(waypoint -> waypoint.fromServer);
-         ((OldReiWaypointLoader)voxelMap.getWaypointManager()).getDeathpoints().removeIf(waypoint -> waypoint.fromServer);
-         if (((OldReiWaypointLoader)voxelMap.getWaypointManager()).getEntityWaypointContainer() != null) {
-            ((OldReiWaypointLoader)voxelMap.getWaypointManager()).getEntityWaypointContainer().waypoints.removeIf(waypoint -> waypoint.fromServer);
+    public void handleRemoveWaypoint(CBPacketRemoveWaypoint cbpacketRemoveWaypoint) {
+        try {
+            String name = cbpacketRemoveWaypoint.getName();
+            VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
+            voxelMap.getWaypointManager()
+                .getWaypoints()
+                .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
+            ((OldReiWaypointLoader)voxelMap.getWaypointManager())
+                .getDeathpoints()
+                .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
+            ((OldReiWaypointLoader)voxelMap.getWaypointManager())
+                .getEntityWaypointContainer()
+                .waypoints
+                .removeIf(waypoint -> waypoint.world_6.equals(cbpacketRemoveWaypoint.getWorld()) && waypoint.deathpoint && waypoint.name.equalsIgnoreCase(name));
             MinimapSettings.instance.save();
             voxelMap.getWaypointManager().updateDeathpoints();
-         }
-      }
-   }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-   public void handleWorldBorderUpdate(CBPacketWorldBorderUpdate cbpacketWorldBorderUpdate) {
-      this.cheatBreaker
-         .getWorldBorderManager()
-         .handleString(cbpacketWorldBorderUpdate.getId(), cbpacketWorldBorderUpdate.getMinX(), cbpacketWorldBorderUpdate.getMinZ(), cbpacketWorldBorderUpdate.getMaxX(), cbpacketWorldBorderUpdate.getMaxZ(), cbpacketWorldBorderUpdate.getDurationTicks());
-   }
-
-   public List<VoiceChannel> getVoiceChannels() {
-      return this.voiceChannels;
-   }
-
-   public void onSimpleEvent3(SimpleEvent3 simpleEvent3) {
-      this.pluginChannelRegistered = false;
-      this.binaryChannelRegistered = false;
-      this.activeChannel = "";
-   }
-
-   public void onWorldClientEvent(WorldClientEvent worldClientEvent) {
-      this.nametagOverrides.clear();
-   }
-
-   public void handleWorldBorder(CBPacketWorldBorder cbpacketWorldBorder) {
-      this.cheatBreaker
-         .getWorldBorderManager()
-         .handleString(
-            cbpacketWorldBorder.getId(),
-            cbpacketWorldBorder.getWorld(),
-            cbpacketWorldBorder.getColor(),
-            cbpacketWorldBorder.getMinX(),
-            cbpacketWorldBorder.getMinZ(),
-            cbpacketWorldBorder.getMaxX(),
-            cbpacketWorldBorder.getMaxZ(),
-            cbpacketWorldBorder.isCanShrinkExpand(),
-            cbpacketWorldBorder.isCancelsExit()
-         );
-   }
-
-   public void sendPacket(CBPacket cbpacket) {
-      if (cbpacket != null) {
-         this.cheatBreaker.getEventBus().handleEvent(new CBPacketEvent2(cbpacket));
-      }
-
-      String str = !this.activeChannel.isEmpty() ? this.activeChannel : this.cheatBreaker.getPluginMessageChannel();
-      net.minecraft.network.PacketBuffer packetBuffer = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
-      packetBuffer.writeBytes(CBPacket.getPacketData(Objects.requireNonNull(cbpacket)));
-      C17PacketCustomPayload c17PacketCustomPayload = new C17PacketCustomPayload(str, packetBuffer);
-      Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(c17PacketCustomPayload);
-   }
-
-   public void handleVoiceChannels(CBPacketVoiceChannel cbpacketVoiceChannel) {
-      this.log("Voice Channel Received: " + cbpacketVoiceChannel.getName());
-      this.log("Channel has " + cbpacketVoiceChannel.getPlayers().size() + " members");
-      if (!this.hasVoiceChannel(cbpacketVoiceChannel.getUuid())) {
-         if (this.voiceChannels == null) {
-            this.voiceChannels = new ArrayList<>();
-         }
-
-         VoiceChannel voiceChannel = new VoiceChannel(cbpacketVoiceChannel.getUuid(), cbpacketVoiceChannel.getName());
-         this.voiceChannels.add(voiceChannel);
-         ArrayList list = new ArrayList();
-
-         for (Entry entry : cbpacketVoiceChannel.getPlayers().entrySet()) {
-            this.log("Added member [" + (String)entry.getValue() + "]");
-            VoiceChatPlayer createVoiceChatPlayer = voiceChannel.createVoiceChatPlayer((UUID)entry.getKey(), (String)entry.getValue());
-            if (createVoiceChatPlayer != null) {
-               list.add(createVoiceChatPlayer);
+    public void handleStaffModState(CBPacketStaffModState cbpacketStaffModState) { try {
+        for (AbstractMod abstractMod : this.cheatBreaker.getModManager().abstractNamedModList) {
+            if (abstractMod.getName().equals(cbpacketStaffModState.getMod().replaceAll("_", "").toLowerCase())) {
+                abstractMod.setStaffModEnabled(cbpacketStaffModState.isState());
             }
-         }
+        }
+    } catch (Exception sneakyEx) { throw com.cheatbreaker.client.util.SneakyThrow.sneakyThrow(sneakyEx); } }
 
-         this.muteMissingPlayers(list);
+    public void handleUpdateWorld(CBPacketUpdateWorld cbpacketUpdateWorld) {
+        this.log("World Update: " + cbpacketUpdateWorld.getWorld());
+        this.worldName = cbpacketUpdateWorld.getWorld();
+    }
 
-         for (Entry entry : cbpacketVoiceChannel.getListening().entrySet()) {
-            this.log("Added listener [" + (String)entry.getValue() + "]");
-            voiceChannel.handleUUID((UUID)entry.getKey(), (String)entry.getValue());
-         }
-      }
-   }
+    public void onSimpleEvent3(SimpleEvent3 simpleEvent3) {
+        this.pluginChannelRegistered = false;
+        this.binaryChannelRegistered = false;
+        this.activeChannel = "";
+    }
 
-   public List<UUID> getMutedPlayers() {
-      return this.mutedPlayers;
-   }
+    public void handleWorldBorderRemove(CBPacketWorldBorderRemove cbpacketWorldBorderRemove) {
+        this.cheatBreaker.getWorldBorderManager().removeIf(cbpacketWorldBorderRemove.getId());
+    }
 
-   public void muteMissingPlayers(List<VoiceChatPlayer> list) {
-      for (VoiceChatPlayer voiceChatPlayer : list) {
-         if (voiceChatPlayer != null && this.mutedPlayers.contains(voiceChatPlayer.getUuid()) && !this.autoMutedPlayers.contains(voiceChatPlayer.getUuid())) {
-            this.autoMutedPlayers.add(voiceChatPlayer.getUuid());
-            this.sendPacket(new CBPacketVoiceMute(voiceChatPlayer.getUuid()));
-         }
-      }
-   }
+    public void log(String str) {
+        Logging.info(str);
+    }
 
-   public List<UUID> getAutoMutedPlayers() {
-      return this.autoMutedPlayers;
-   }
+    public void handleSwingInhibitorUpdate(CBPacketSwingInhibitorUpdate cbpacketSwingInhibitorUpdate) {
+        ClickRateLimiter clickRateLimiter = this.cheatBreaker.getClickRateLimiter();
+        RateLimiter limiter = clickRateLimiter.getLimiter(cbpacketSwingInhibitorUpdate.getType());
+        limiter.setMinInterval(cbpacketSwingInhibitorUpdate.getFrequencyMs());
+        limiter.setBurstRate(cbpacketSwingInhibitorUpdate.getDecayRate());
+        limiter.setMaxPerSecond(cbpacketSwingInhibitorUpdate.getCpsCap());
+    }
 
-   public void handleStaffModState(CBPacketStaffModState cbpacketStaffModState) {
-      for (AbstractMod abstractMod : this.cheatBreaker.getModManager().abstractNamedModList) {
-         if (abstractMod.getName().equals(cbpacketStaffModState.getMod().replaceAll("_", "").toLowerCase())) {
-            abstractMod.setStaffModEnabled(cbpacketStaffModState.isState());
-         }
-      }
-   }
+    public void handleOverrideNametags(CBPacketOverrideNametags cbpacketOverrideNametags) {
+        if (cbpacketOverrideNametags.getTags() == null) {
+            this.nametagOverrides.remove(cbpacketOverrideNametags.getPlayer());
+        } else {
+            Collections.reverse(cbpacketOverrideNametags.getTags());
+            this.nametagOverrides.put(cbpacketOverrideNametags.getPlayer(), cbpacketOverrideNametags.getTags());
+        }
+    }
 
-   public void log(String str) {
-      Logging.info(str);
-   }
+    public boolean isPluginChannelRegistered() {
+        return this.pluginChannelRegistered;
+    }
 
-   public boolean isServerHandlesWaypoints() {
-      return this.serverHandlesWaypoints;
-   }
+    public void handleWorldBorder(CBPacketWorldBorder cbpacketWorldBorder) {
+        this.cheatBreaker
+            .getWorldBorderManager()
+            .addBorder(
+                cbpacketWorldBorder.getId(),
+                cbpacketWorldBorder.getWorld(),
+                cbpacketWorldBorder.getColor(),
+                cbpacketWorldBorder.getMinX(),
+                cbpacketWorldBorder.getMinZ(),
+                cbpacketWorldBorder.getMaxX(),
+                cbpacketWorldBorder.getMaxZ(),
+                cbpacketWorldBorder.isCanShrinkExpand(),
+                cbpacketWorldBorder.isCancelsExit()
+            );
+    }
 
-   public void handleServerUpdate(CBPacketServerUpdate cbpacketServerUpdate) {
-      this.log("Retrieved " + cbpacketServerUpdate.getServer());
-      this.cheatBreaker.getDiscordRpcManager().handleString(cbpacketServerUpdate.getServer());
-   }
+    public List<UUID> getAutoMutedPlayers() {
+        return this.autoMutedPlayers;
+    }
 
-   public VoiceChannel getVoiceChannel(UUID uuid) {
-      if (this.voiceChannels == null) {
-         return null;
-      }
+    public void handleCooldown(CBPacketCooldown cbpacketCooldown) {
+        CooldownsMod.addCooldown(cbpacketCooldown.getMessage(), cbpacketCooldown.getDurationMs(), cbpacketCooldown.getIconId());
+    }
 
-      Iterator iterator = this.voiceChannels.iterator();
+    public VoiceChannel getVoiceChannel(UUID uuid) {
+        if (this.voiceChannels == null) {
+            return null;
+        }
 
-      while (iterator.hasNext()) {
-         VoiceChannel voiceChannel;
-         if ((voiceChannel = (VoiceChannel)iterator.next()).getUuid().equals(uuid)) {
-            return voiceChannel;
-         }
-      }
+        Iterator iterator = this.voiceChannels.iterator();
 
-      return null;
-   }
+        while (iterator.hasNext()) {
+            VoiceChannel voiceChannel;
+            if ((voiceChannel = (VoiceChannel)iterator.next()).getUuid().equals(uuid)) {
+                return voiceChannel;
+            }
+        }
 
-   public void handleCooldown(CBPacketCooldown cbpacketCooldown) {
-      CooldownsMod.handleString(cbpacketCooldown.getMessage(), cbpacketCooldown.getDurationMs(), cbpacketCooldown.getIconId());
-   }
+        return null;
+    }
 
-   public void handleNametagsUpdate(CBPacketUpdateNametags cbpacketUpdateNametags) {
-      if (cbpacketUpdateNametags.getPlayersMap() != null) {
-         StaffNametagsMod.setPlayerTags(new HashMap<>());
+    public void clearServerData() {
+        this.cheatBreaker.getTitleManager().getObjectArrayList().clear();
+        StaffNametagsMod.setPlayerTags(null);
+    }
 
-         for (Entry entry : cbpacketUpdateNametags.getPlayersMap().entrySet()) {
-            StaffNametagsMod.getPlayerTags().put(((UUID)entry.getKey()).toString(), (List<String>)entry.getValue());
-         }
-      } else {
-         StaffNametagsMod.setPlayerTags(null);
-      }
-   }
+    public void handleVoice(CBPacketVoice cbpacketVoice) {
+        this.cheatBreaker.getModManager().voicePushToTalkHandler.handleUUID(cbpacketVoice.getUuid());
+        VoiceEngine.getInstance().play(cbpacketVoice.getUuid(), cbpacketVoice.getData());
+    }
 
-   public boolean isLegacyCombat() {
-      return this.legacyCombat;
-   }
+    public void onBooleanIntEvent(BooleanIntEvent booleanIntEvent) {
+    }
 
-   public void handleRemoveHologram(CBPacketRemoveHologram cbpacketRemoveHologram) {
-      WorldLabel.getLabels().removeIf(worldLabel -> worldLabel.getPlayerId().equals(cbpacketRemoveHologram.getUuid()));
-   }
+    public String getWorldName() {
+        return this.worldName;
+    }
 
-   public void handleNotification(CBPacketNotification cbpacketNotification) {
-      this.cheatBreaker.getModManager().notificationsMod.handleString(cbpacketNotification.getLevel(), cbpacketNotification.getMessage(), cbpacketNotification.getDurationMs());
-   }
+    public void handleDeleteVoiceChannel(CBPacketDeleteVoiceChannel cbpacketDeleteVoiceChannel) {
+        this.log("Deleted channel: " + cbpacketDeleteVoiceChannel.getUuid().toString());
+        if (this.voiceChannels != null) {
+            this.voiceChannels.removeIf(voiceChannel -> voiceChannel.getUuid().equals(cbpacketDeleteVoiceChannel.getUuid()));
+        }
 
-   public void onStringByteArrayEvent(StringByteArrayEvent stringByteArrayEvent) {
-      try {
-         Logging.debug("Custom Payload: " + stringByteArrayEvent.getText());
-         if (stringByteArrayEvent.getText().equals("REGISTER")) {
-            String str = new String(stringByteArrayEvent.getBytes(), Charsets.UTF_8);
-            if (!this.pluginChannelRegistered && str.contains(this.cheatBreaker.getPluginMessageChannel())) {
-               this.activeChannel = this.cheatBreaker.getPluginMessageChannel();
-               this.pluginChannelRegistered = true;
+        if (this.voiceChannel != null && this.voiceChannel.getUuid().equals(cbpacketDeleteVoiceChannel.getUuid())) {
+            this.voiceChannel = null;
+        }
+    }
+
+    public void handleWorldBorderUpdate(CBPacketWorldBorderUpdate cbpacketWorldBorderUpdate) {
+        this.cheatBreaker
+            .getWorldBorderManager()
+            .updateBorder(cbpacketWorldBorderUpdate.getId(), cbpacketWorldBorderUpdate.getMinX(), cbpacketWorldBorderUpdate.getMinZ(), cbpacketWorldBorderUpdate.getMaxX(), cbpacketWorldBorderUpdate.getMaxZ(), cbpacketWorldBorderUpdate.getDurationTicks());
+    }
+
+    public void handleVoiceChannels(CBPacketVoiceChannel cbpacketVoiceChannel) {
+        this.log("Voice Channel Received: " + cbpacketVoiceChannel.getName());
+        this.log("Channel has " + cbpacketVoiceChannel.getPlayers().size() + " members");
+        if (!this.hasVoiceChannel(cbpacketVoiceChannel.getUuid())) {
+            if (this.voiceChannels == null) {
+                this.voiceChannels = new ArrayList<>();
             }
 
-            this.binaryChannelRegistered = str.contains(this.cheatBreaker.getBinaryChannel());
+            VoiceChannel voiceChannel = new VoiceChannel(cbpacketVoiceChannel.getUuid(), cbpacketVoiceChannel.getName());
+            this.voiceChannels.add(voiceChannel);
             ArrayList list = new ArrayList();
-            net.minecraft.network.PacketBuffer packetBuffer = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
-            list.add(!this.activeChannel.isEmpty() ? this.activeChannel : this.cheatBreaker.getPluginMessageChannel());
-            boolean flag = true;
 
-            for (String str2 : (Iterable<String>)list) {
-               if (!flag) {
-                  packetBuffer.writeBytes(new byte[]{0});
-               }
-
-               packetBuffer.writeBytes(str2.getBytes(StandardCharsets.UTF_8));
-               flag = false;
+            for (Entry entry : cbpacketVoiceChannel.getPlayers().entrySet()) {
+                this.log("Added member [" + (String)entry.getValue() + "]");
+                VoiceChatPlayer addPlayer = voiceChannel.addPlayer((UUID)entry.getKey(), (String)entry.getValue());
+                if (addPlayer != null) {
+                    list.add(addPlayer);
+                }
             }
 
-            if (Minecraft.getMinecraft().getNetHandler() != null && this.pluginChannelRegistered) {
-               Minecraft.getMinecraft().getNetHandler().addToSendQueue(new C17PacketCustomPayload("REGISTER", packetBuffer));
+            this.muteMissingPlayers(list);
+
+            for (Entry entry : cbpacketVoiceChannel.getListening().entrySet()) {
+                this.log("Added listener [" + (String)entry.getValue() + "]");
+                voiceChannel.handleUUID((UUID)entry.getKey(), (String)entry.getValue());
+            }
+        }
+    }
+
+    public VoiceChatPlayer getVoicePlayer(UUID uuid) {
+        if (this.voiceChannels != null && this.voiceChannel != null) {
+            Iterator iterator = this.voiceChannel.getVoiceChatPlayerList().iterator();
+
+            while (iterator.hasNext()) {
+                VoiceChatPlayer voiceChatPlayer;
+                if ((voiceChatPlayer = (VoiceChatPlayer)iterator.next()).getUuid().equals(uuid)) {
+                    return voiceChatPlayer;
+                }
             }
 
-            this.reset();
-         } else if (stringByteArrayEvent.getText().equals(this.cheatBreaker.getPluginMessageChannel())) {
-            Logging.debug(stringByteArrayEvent.getText());
-            CBPacket handle = CBPacket.handle(this, stringByteArrayEvent.getBytes());
-            if (handle != null) {
-               handle.process(this);
+            return null;
+        } else {
+            return null;
+        }
+    }
+
+    public void handleVoiceChannelUpdate(CBPacketVoiceChannelUpdate cbpacketVoiceChannelUpdate) {
+        this.log("Channel Update: " + cbpacketVoiceChannelUpdate.getName() + " (" + cbpacketVoiceChannelUpdate.getStatus() + ")");
+        if (this.voiceChannels != null) {
+            VoiceChannel voiceChannel = this.getVoiceChannel(cbpacketVoiceChannelUpdate.getChannelUuid());
+            if (voiceChannel == null) {
+                this.log(cbpacketVoiceChannelUpdate.getChannelUuid().toString());
+            } else {
+                switch (cbpacketVoiceChannelUpdate.getStatus()) {
+                    case 0:
+                        VoiceChatPlayer addPlayer = voiceChannel.addPlayer(cbpacketVoiceChannelUpdate.getUuid(), cbpacketVoiceChannelUpdate.getName());
+                        if (addPlayer != null) {
+                            this.muteMissingPlayers(ImmutableList.of(addPlayer));
+                        }
+                        break;
+                    case 1:
+                        voiceChannel.removeIf2(cbpacketVoiceChannelUpdate.getUuid());
+                        break;
+                    case 2:
+                        if (!cbpacketVoiceChannelUpdate.getUuid().toString().equals(Minecraft.getMinecraft().getSession().getPlayerID())) {
+                            if (this.voiceChannel == voiceChannel) {
+                                ChatComponentText chatComponentText = new ChatComponentText(
+                                    EnumChatFormatting.AQUA
+                                        + cbpacketVoiceChannelUpdate.getName()
+                                        + EnumChatFormatting.AQUA
+                                        + " joined "
+                                        + voiceChannel.getName()
+                                        + " channel. Press '"
+                                        + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().openVoiceMenu.getKeyCode())
+                                        + "'!"
+                                        + EnumChatFormatting.RESET
+                                );
+                                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
+                            }
+                        } else {
+                            this.voiceChannel = voiceChannel;
+
+                            for (VoiceChannel voiceChannel2 : this.voiceChannels) {
+                                voiceChannel2.removeIf(cbpacketVoiceChannelUpdate.getUuid());
+                            }
+
+                            ChatComponentText chatComponentText = new ChatComponentText(
+                                EnumChatFormatting.AQUA
+                                    + "Joined "
+                                    + cbpacketVoiceChannelUpdate.getName()
+                                    + " channel. Press '"
+                                    + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().voiceChat.getKeyCode())
+                                    + "' to talk!"
+                                    + EnumChatFormatting.RESET
+                            );
+                            Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
+                        }
+
+                        voiceChannel.handleUUID(cbpacketVoiceChannelUpdate.getUuid(), cbpacketVoiceChannelUpdate.getName());
+                        break;
+                    case 3:
+                        if (this.voiceChannel == voiceChannel && !cbpacketVoiceChannelUpdate.getUuid().toString().equals(Minecraft.getMinecraft().getSession().getPlayerID())) {
+                            ChatComponentText chatComponentText = new ChatComponentText(
+                                EnumChatFormatting.AQUA
+                                    + cbpacketVoiceChannelUpdate.getName()
+                                    + EnumChatFormatting.AQUA
+                                    + " left "
+                                    + voiceChannel.getName()
+                                    + " channel. Press '"
+                                    + Keyboard.getKeyName(this.cheatBreaker.getKeybindSettings().openVoiceMenu.getKeyCode())
+                                    + "'!"
+                                    + EnumChatFormatting.RESET
+                            );
+                            Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(chatComponentText);
+                        }
+
+                        voiceChannel.removeIf(cbpacketVoiceChannelUpdate.getUuid());
+                }
+            }
+        }
+    }
+
+    public List<UUID> getMutedPlayers() {
+        return this.mutedPlayers;
+    }
+
+    public boolean isBinaryChannelRegistered() {
+        return this.binaryChannelRegistered;
+    }
+
+    public CheatBreaker getCheatBreaker() {
+        return this.cheatBreaker;
+    }
+
+    public boolean isServerHandlesWaypoints() {
+        return this.serverHandlesWaypoints;
+    }
+
+    public String getActiveChannel() {
+        return this.activeChannel;
+    }
+
+    public void sendPacket(CBPacket cbpacket) {
+        if (cbpacket != null) {
+            this.cheatBreaker.getEventBus().handleEvent(new CBPacketEvent2(cbpacket));
+        }
+
+        String str = !this.activeChannel.isEmpty() ? this.activeChannel : this.cheatBreaker.getPluginMessageChannel();
+        C17PacketCustomPayload c17PacketCustomPayload = new C17PacketCustomPayload(str, CBPacket.getPacketData(cbpacket));
+        Minecraft.getMinecraft().thePlayer.sendQueue.addToSendQueue(c17PacketCustomPayload);
+    }
+
+    public void handleNametagsUpdate(CBPacketUpdateNametags cbpacketUpdateNametags) {
+        if (cbpacketUpdateNametags.getPlayersMap() != null) {
+            StaffNametagsMod.setPlayerTags(new HashMap<>());
+
+            for (Entry entry : cbpacketUpdateNametags.getPlayersMap().entrySet()) {
+                StaffNametagsMod.getPlayerTags().put(((UUID)entry.getKey()).toString(), (List<String>)entry.getValue());
+            }
+        } else {
+            StaffNametagsMod.setPlayerTags(null);
+        }
+    }
+
+    public void handleAddWaypoint(CBPacketAddWaypoint cbpacketAddWaypoint) {
+        int n = cbpacketAddWaypoint.getX();
+        int n2 = cbpacketAddWaypoint.getY();
+        int n3 = cbpacketAddWaypoint.getZ();
+        VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
+        if (!voxelMap.getWaypointManager().getWaypoints().stream().anyMatch(waypoint -> waypoint.name.equals(cbpacketAddWaypoint.getName()) && waypoint.world_6.equals(cbpacketAddWaypoint.getWorld()))) {
+            Color color = new Color(cbpacketAddWaypoint.getColor());
+            float f = color.getRed() / 255.0F;
+            float f2 = color.getGreen() / 255.0F;
+            float f3 = color.getBlue() / 255.0F;
+            TreeSet treeSet = new TreeSet();
+            treeSet.add(-1);
+            treeSet.add(0);
+            treeSet.add(1);
+            Logging.debug("Received waypoint (" + cbpacketAddWaypoint.getName() + ")[x" + n + ",y" + n2 + ",z" + n3 + "][r" + f + ",g" + f2 + ",b" + f3 + "]");
+            Waypoint waypoint = new Waypoint(
+                cbpacketAddWaypoint.getName(), n, n3, n2, true, f, f2, f3, "", voxelMap.getWaypointManager().getCurrentSubworld(), treeSet, true, true
+            );
+            waypoint.forced = cbpacketAddWaypoint.isForced();
+            waypoint.world_6 = cbpacketAddWaypoint.getWorld();
+            waypoint.fromServer = true;
+            voxelMap.getWaypointManager().addWaypoint(waypoint);
+        }
+    }
+
+    public void handleTeammates(CBPacketTeammates cbpacketTeammates) {
+        Map players = cbpacketTeammates.getPlayers();
+        UUID leader = cbpacketTeammates.getLeader();
+        long lastMs = cbpacketTeammates.getLastMs();
+        if ((Boolean)this.cheatBreaker.getKeybindSettings().enableTeamView.getValue()
+            && players != null
+            && !players.isEmpty()
+            && (players.size() != 1 || !players.containsKey(Minecraft.getMinecraft().thePlayer.getUniqueID()))) {
+            int n = 0;
+
+            for (Entry entry : (Iterable<Entry>)players.entrySet()) {
+                TeamMember findTeamMember = this.cheatBreaker.getModManager().teamManager.findTeamMember(((UUID)entry.getKey()).toString());
+                if (findTeamMember == null) {
+                    findTeamMember = new TeamMember(((UUID)entry.getKey()).toString(), leader != null && leader.equals(entry.getKey()));
+                    this.cheatBreaker.getModManager().teamManager.getTeamMemberList().add(findTeamMember);
+                    Random random = new Random();
+                    if (n < this.cheatBreaker.getModManager().teamManager.getIntArray().length) {
+                        findTeamMember.setColor(new Color(this.cheatBreaker.getModManager().teamManager.getIntArray()[n]));
+                    } else {
+                        float nextFloat = random.nextFloat();
+                        float nextFloat2 = random.nextFloat();
+                        float f = random.nextFloat() / 2.0F;
+                        findTeamMember.setColor(new Color(nextFloat, nextFloat2, f));
+                    }
+                }
+
+                try {
+                    double d = (Double)((Map)entry.getValue()).get("x");
+                    double d2 = (Double)((Map)entry.getValue()).get("y") + 2.0;
+                    double d3 = (Double)((Map)entry.getValue()).get("z");
+                    findTeamMember.updatePosition(d, d2, d3, lastMs);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                n++;
             }
 
-            this.cheatBreaker.getEventBus().handleEvent(new CBPacketEvent1(handle));
-         }
-      } catch (AssertionError | Exception e) {
-         e.printStackTrace();
-      }
-   }
+            this.cheatBreaker.getModManager().teamManager.getTeamMemberList().removeIf(teamMember -> !players.containsKey(UUID.fromString(teamMember.getPlayerId())));
+        } else {
+            this.cheatBreaker.getModManager().teamManager.getTeamMemberList().clear();
+        }
+    }
 
-   public void onBooleanIntEvent(BooleanIntEvent booleanIntEvent) {
-   }
+    public void handleServerRule(CBPacketServerRule cbpacketServerRule) {
+        switch (cbpacketServerRule.getRule()) {
+            case VOICE_ENABLED:
+                this.log("Voice is: " + (cbpacketServerRule.isBooleanValue() ? "enabled" : "disabled"));
+                this.voiceEnabled = cbpacketServerRule.isBooleanValue();
+                break;
+            case MINIMAP_STATUS:
+                switch (cbpacketServerRule.getStringValue()) {
+                    case "NEUTRAL":
+                        ZansMinimapMod.modForceState = ModForceState.NEUTRAL;
+                        return;
+                    case "FORCED_OFF":
+                        ZansMinimapMod.modForceState = ModForceState.FORCED_OFF;
+                        return;
+                    default:
+                        return;
+                }
+            case SERVER_HANDLES_WAYPOINTS:
+                this.serverHandlesWaypoints = cbpacketServerRule.isBooleanValue();
+                break;
+            case COMPETITIVE_GAMEMODE:
+                this.competitiveGamemode = cbpacketServerRule.isBooleanValue();
+                break;
+            case FORCE_DISABLE_FAST_MATH:
+                this.flag = cbpacketServerRule.isBooleanValue();
+        }
+    }
 
-   public boolean isVoiceEnabled() {
-      return this.voiceEnabled;
-   }
+    public boolean isCompetitiveGamemode() {
+        return this.competitiveGamemode;
+    }
 
-   public void handleSwingInhibitorUpdate(CBPacketSwingInhibitorUpdate cbpacketSwingInhibitorUpdate) {
-      ClickRateLimiter clickRateLimiter = this.cheatBreaker.getClickRateLimiter();
-      RateLimiter limiter = clickRateLimiter.getLimiter(cbpacketSwingInhibitorUpdate.getType());
-      limiter.setMinInterval(cbpacketSwingInhibitorUpdate.getFrequencyMs());
-      limiter.setBurstRate(cbpacketSwingInhibitorUpdate.getDecayRate());
-      limiter.setMaxPerSecond(cbpacketSwingInhibitorUpdate.getCpsCap());
-   }
+    public void onJoinGame(S01PacketJoinGameEvent s01PacketJoinGameEvent) {
+        this.nametagOverrides.clear();
+    }
+
+    public void reset() throws java.io.IOException {
+        this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap().getWaypointManager().getWaypoints().removeIf(waypoint -> waypoint.deathpoint);
+        this.voiceEnabled = false;
+        this.serverHandlesWaypoints = false;
+        this.voiceChannels = null;
+        this.voiceChannel = null;
+        this.competitiveGamemode = false;
+        this.flag = false;
+        this.worldName = "";
+        this.autoMutedPlayers.clear();
+
+        for (AbstractNamedMod abstractNamedMod : this.cheatBreaker.getModManager().abstractNamedModList) {
+            abstractNamedMod.disable();
+        }
+
+        this.cheatBreaker.getWorldBorderManager().clear();
+        this.clearServerData();
+        ZansMinimapMod.modForceState = ModForceState.FORCED_OFF;
+        ScoreboardMod.modForceState = ModForceState.NEUTRAL;
+        this.cheatBreaker.getModManager().teamManager.getTeamMemberList().clear();
+        WorldLabel.getLabels().clear();
+        VoxelMap voxelMap = this.cheatBreaker.getModManager().zansMinimapMod.getVoxelMap();
+        if (Minecraft.getMinecraft().thePlayer != null && voxelMap.getWaypointManager() != null) {
+            voxelMap.getWaypointManager().getWaypoints().removeIf(waypoint -> waypoint.fromServer);
+            ((OldReiWaypointLoader)voxelMap.getWaypointManager()).getDeathpoints().removeIf(waypoint -> waypoint.fromServer);
+            if (((OldReiWaypointLoader)voxelMap.getWaypointManager()).getEntityWaypointContainer() != null) {
+                ((OldReiWaypointLoader)voxelMap.getWaypointManager()).getEntityWaypointContainer().waypoints.removeIf(waypoint -> waypoint.fromServer);
+                MinimapSettings.instance.save();
+                voxelMap.getWaypointManager().updateDeathpoints();
+            }
+        }
+    }
+
+    public void handleAddHologram(CBPacketAddHologram cbpacketAddHologram) {
+        WorldLabel worldLabel = new WorldLabel(cbpacketAddHologram.getUuid(), cbpacketAddHologram.getX(), cbpacketAddHologram.getY(), cbpacketAddHologram.getZ());
+        WorldLabel.getLabels().add(worldLabel);
+        worldLabel.setLines(cbpacketAddHologram.getLines().toArray(new String[0]));
+    }
+
+    public void muteMissingPlayers(List<VoiceChatPlayer> list) {
+        for (VoiceChatPlayer voiceChatPlayer : list) {
+            if (voiceChatPlayer != null && this.mutedPlayers.contains(voiceChatPlayer.getUuid()) && !this.autoMutedPlayers.contains(voiceChatPlayer.getUuid())) {
+                this.autoMutedPlayers.add(voiceChatPlayer.getUuid());
+                this.sendPacket(new CBPacketVoiceMute(voiceChatPlayer.getUuid()));
+            }
+        }
+    }
+
+    public void handleUpdateHologram(CBPacketUpdateHologram cbpacketUpdateHologram) {
+        WorldLabel.getLabels()
+            .stream()
+            .filter(worldLabel -> worldLabel.getPlayerId().equals(cbpacketUpdateHologram.getUuid()))
+            .forEach(worldLabel -> worldLabel.setLines(cbpacketUpdateHologram.getLines().toArray(new String[0])));
+    }
+
+    public Map<UUID, List<String>> getNametagOverrides() {
+        return this.nametagOverrides;
+    }
+
+    public List<VoiceChannel> getVoiceChannels() {
+        return this.voiceChannels;
+    }
+
+    public void onWorldClientEvent(WorldClientEvent worldClientEvent) {
+        this.nametagOverrides.clear();
+    }
+
+    public void handleServerUpdate(CBPacketServerUpdate cbpacketServerUpdate) {
+        this.log("Retrieved " + cbpacketServerUpdate.getServer());
+        this.cheatBreaker.getDiscordRpcManager().updatePresence(cbpacketServerUpdate.getServer());
+    }
+
+    public void handleRemoveHologram(CBPacketRemoveHologram cbpacketRemoveHologram) {
+        WorldLabel.getLabels().removeIf(worldLabel -> worldLabel.getPlayerId().equals(cbpacketRemoveHologram.getUuid()));
+    }
+
+    public void handleTitle(CBPacketTitle cbpacketTitle) {
+        TitleType titleType = TitleType.SUBTITLE;
+        if (cbpacketTitle.getType().equalsIgnoreCase("subtitle")) {
+            titleType = TitleType.TITLE;
+        }
+
+        this.cheatBreaker
+            .getTitleManager()
+            .getObjectArrayList()
+            .add(new Title(cbpacketTitle.getMessage(), titleType, cbpacketTitle.getScale(), cbpacketTitle.getDisplayTimeMs(), cbpacketTitle.getFadeInTimeMs(), cbpacketTitle.getFadeOutTimeMs()));
+    }
+
+    public void onStringByteArrayEvent(StringByteArrayEvent stringByteArrayEvent) {
+        try {
+            Logging.debug("Custom Payload: " + stringByteArrayEvent.getText());
+            if (stringByteArrayEvent.getText().equals("REGISTER")) {
+                String str = new String(stringByteArrayEvent.getBytes(), Charsets.UTF_8);
+                if (!this.pluginChannelRegistered && str.contains(this.cheatBreaker.getPluginMessageChannel())) {
+                    this.activeChannel = this.cheatBreaker.getPluginMessageChannel();
+                    this.pluginChannelRegistered = true;
+                }
+
+                this.binaryChannelRegistered = str.contains(this.cheatBreaker.getBinaryChannel());
+                ArrayList list = new ArrayList();
+                net.minecraft.network.PacketBuffer packetBuffer = new net.minecraft.network.PacketBuffer(Unpooled.buffer());
+                list.add(!this.activeChannel.isEmpty() ? this.activeChannel : this.cheatBreaker.getPluginMessageChannel());
+                boolean flag = true;
+
+                for (String str2 : (Iterable<String>)list) {
+                    if (!flag) {
+                        packetBuffer.writeBytes(new byte[]{0});
+                    }
+
+                    packetBuffer.writeBytes(str2.getBytes(StandardCharsets.UTF_8));
+                    flag = false;
+                }
+
+                if (Minecraft.getMinecraft().getNetHandler() != null && this.pluginChannelRegistered) {
+                    Minecraft.getMinecraft().getNetHandler().addToSendQueue(new C17PacketCustomPayload("REGISTER", packetBuffer));
+                }
+
+                this.reset();
+            } else if (stringByteArrayEvent.getText().equals(this.cheatBreaker.getPluginMessageChannel())) {
+                Logging.debug(stringByteArrayEvent.getText());
+                CBPacket handle = CBPacket.handle(this, stringByteArrayEvent.getBytes());
+                if (handle != null) {
+                    handle.process(this);
+                }
+
+                this.cheatBreaker.getEventBus().handleEvent(new CBPacketEvent1(handle));
+            }
+        } catch (AssertionError | Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean hasVoiceChannel(UUID uuid) {
+        return this.getVoiceChannel(uuid) != null;
+    }
+
+    public VoiceChannel getVoiceChannel() {
+        return this.voiceChannel;
+    }
+
+    public boolean isVoiceEnabled() {
+        return this.voiceEnabled;
+    }
+
+    public void handleNotification(CBPacketNotification cbpacketNotification) {
+        this.cheatBreaker.getModManager().notificationsMod.addNotification(cbpacketNotification.getLevel(), cbpacketNotification.getMessage(), cbpacketNotification.getDurationMs());
+    }
+
+    public boolean isFlag() {
+        return this.flag;
+    }
+
+    public void onSimpleEvent26(SimpleEvent26 simpleEvent26) {
+        this.binaryChannelRegistered = false;
+    }
 }

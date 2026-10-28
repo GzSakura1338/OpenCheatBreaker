@@ -1,36 +1,56 @@
 package net.minecraft.item;
 
-import net.minecraft.block.Block;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class ItemRedstone extends Item {
-   public ItemRedstone() {
-      this.setCreativeTab(CreativeTabs.tabRedstone);
-   }
+    public ItemRedstone() {
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      boolean isReplaceable = worldIn.getBlockState(pos).getBlock().isReplaceable(worldIn, pos);
-      BlockPos blockPos = isReplaceable ? pos : pos.offset(side);
-      if (!playerIn.canPlayerEdit(blockPos, side, stack)) {
-         return false;
-      } else {
-         Block block = worldIn.getBlockState(blockPos).getBlock();
-         if (!worldIn.canBlockBePlaced(block, blockPos, false, side, (Entity)null, stack)) {
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (world.getBlock(n, n2, n3) != Blocks.snow_layer) {
+            if (n4 == 0) {
+                n2--;
+            }
+
+            if (n4 == 1) {
+                n2++;
+            }
+
+            if (n4 == 2) {
+                n3--;
+            }
+
+            if (n4 == 3) {
+                n3++;
+            }
+
+            if (n4 == 4) {
+                n--;
+            }
+
+            if (n4 == 5) {
+                n++;
+            }
+
+            if (!world.isAirBlock(n, n2, n3)) {
+                return false;
+            }
+        }
+
+        if (!entityPlayer.canPlayerEdit(n, n2, n3, n4, itemStack)) {
             return false;
-         } else if (Blocks.redstone_wire.canPlaceBlockAt(worldIn, blockPos)) {
-            stack.stackSize--;
-            worldIn.setBlockState(blockPos, Blocks.redstone_wire.getDefaultState());
-            return true;
-         } else {
-            return false;
-         }
-      }
-   }
+        }
+
+        if (Blocks.redstone_wire.canPlaceBlockAt(world, n, n2, n3)) {
+            itemStack.stackSize--;
+            world.setBlock(n, n2, n3, Blocks.redstone_wire);
+        }
+
+        return true;
+    }
 }

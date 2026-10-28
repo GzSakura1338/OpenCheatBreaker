@@ -6,68 +6,68 @@ import net.minecraft.client.model.ModelPlayer;
 import net.minecraft.util.ResourceLocation;
 
 public class ResourceEmote extends AbstractEmote {
-   public String text2;
-   public boolean flag;
+    public String emoteKey;
+    public boolean looping;
 
-   @Override
-   public void handleAbstractClientPlayer(AbstractClientPlayer abstractClientPlayer) {
-      super.handleAbstractClientPlayer(abstractClientPlayer);
-      EmotePlayHelper.playEmoteByName(null, abstractClientPlayer);
-   }
+    @Override
+    public void afterModelRender(AbstractClientPlayer abstractClientPlayer, float f) {
+    }
 
-   public ResourceEmote(String str) {
-      super(createStringBuilder(str), new LinearAnimation(computeLong(str)));
-      this.text2 = str;
-      EmoteDefinition resolve = EmoteRegistry.resolve(str);
-      this.flag = resolve != null && resolve.looping;
-   }
+    public String getEmoteKey() {
+        return this.emoteKey;
+    }
 
-   @Override
-   public ResourceLocation getClientEmotes() {
-      return new ResourceLocation("client/emotes/" + this.text2 + ".png");
-   }
+    public boolean isLooping() {
+        return this.looping;
+    }
 
-   @Override
-   public void noop(AbstractClientPlayer abstractClientPlayer, float f) {
-   }
+    public static long getDurationMillis(String str) {
+        EmoteDefinition resolve = EmoteRegistry.resolve(str);
+        int n = resolve != null ? resolve.durationTicks : 100;
+        return Math.max(n, 1) * 50L;
+    }
 
-   @Override
-   public void handleAbstractClientPlayer(AbstractClientPlayer abstractClientPlayer, ModelPlayer modelPlayer, float f) {
-   }
+    @Override
+    public ResourceLocation getClientEmotes() {
+        return new ResourceLocation("client/emotes/" + this.emoteKey + ".png");
+    }
 
-   public static String createStringBuilder(String str) {
-      String[] split = str.split("_");
-      StringBuilder sb = new StringBuilder();
+    @Override
+    public void applyPose(AbstractClientPlayer abstractClientPlayer, ModelPlayer modelPlayer, float f) {
+    }
 
-      for (String str2 : split) {
-         if (!str2.isEmpty()) {
-            if (sb.length() > 0) {
-               sb.append(' ');
+    public ResourceEmote(String str) {
+        super(formatEmoteName(str), new LinearAnimation(getDurationMillis(str)));
+        this.emoteKey = str;
+        EmoteDefinition resolve = EmoteRegistry.resolve(str);
+        this.looping = resolve != null && resolve.looping;
+    }
+
+    @Override
+    public boolean isFinished() {
+        return !this.looping && super.isFinished();
+    }
+
+    public static String formatEmoteName(String str) {
+        String[] split = str.split("_");
+        StringBuilder sb = new StringBuilder();
+
+        for (String str2 : split) {
+            if (!str2.isEmpty()) {
+                if (sb.length() > 0) {
+                    sb.append(' ');
+                }
+
+                sb.append(Character.toUpperCase(str2.charAt(0))).append(str2.substring(1));
             }
+        }
 
-            sb.append(Character.toUpperCase(str2.charAt(0))).append(str2.substring(1));
-         }
-      }
+        return sb.toString();
+    }
 
-      return sb.toString();
-   }
-
-   @Override
-   public boolean check() {
-      return !this.flag && super.check();
-   }
-
-   public static long computeLong(String str) {
-      EmoteDefinition resolve = EmoteRegistry.resolve(str);
-      int n = resolve != null ? resolve.durationTicks : 100;
-      return Math.max(n, 1) * 50L;
-   }
-
-   public boolean isFlag() {
-      return this.flag;
-   }
-
-   public String getText7() {
-      return this.text2;
-   }
+    @Override
+    public void restorePerspective(AbstractClientPlayer abstractClientPlayer) {
+        super.restorePerspective(abstractClientPlayer);
+        EmotePlayHelper.playEmoteByName(null, abstractClientPlayer);
+    }
 }

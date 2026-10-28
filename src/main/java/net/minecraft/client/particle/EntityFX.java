@@ -2,252 +2,218 @@ package net.minecraft.client.particle;
 
 import com.cheatbreaker.client.CheatBreaker;
 import com.cheatbreaker.client.event.EntityFXDoubleEvent;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 
 public class EntityFX extends Entity {
-   public int particleTextureIndexX;
-   public int particleTextureIndexY;
-   public float particleAlpha = 1.0F;
-   public float particleBlue;
-   public float particleGreen;
-   public float particleRed;
-   public float particleTextureJitterX;
-   public float particleGravity;
-   public float particleTextureJitterY;
-   public float particleScale;
-   public int particleMaxAge;
-   public int particleAge;
-   public TextureAtlasSprite particleIcon;
-   public static double interpPosX;
-   public static double interpPosY;
-   public static double interpPosZ;
+    public int particleTextureIndexX;
+    public int particleTextureIndexY;
+    public float particleAlpha = 1.0F;
+    public float particleBlue;
+    public float particleGreen;
+    public float particleRed;
+    public float particleTextureJitterX;
+    public float particleGravity;
+    public float particleTextureJitterY;
+    public float particleScale;
+    public int particleMaxAge;
+    public int particleAge;
+    public IIcon particleIcon;
+    public static double interpPosX;
+    public static double interpPosY;
+    public static double interpPosZ;
 
-   public EntityFX(World worldIn, double posXIn, double posYIn, double posZIn) {
-      super(worldIn);
-      this.setSize(0.2F, 0.2F);
-      this.setPosition(posXIn, posYIn, posZIn);
-      this.lastTickPosX = this.prevPosX = posXIn;
-      this.lastTickPosY = this.prevPosY = posYIn;
-      this.lastTickPosZ = this.prevPosZ = posZIn;
-      this.particleRed = this.particleGreen = this.particleBlue = 1.0F;
-      this.particleTextureJitterX = this.rand.nextFloat() * 3.0F;
-      this.particleTextureJitterY = this.rand.nextFloat() * 3.0F;
-      this.particleScale = (this.rand.nextFloat() * 0.5F + 0.5F) * 2.0F;
-      this.particleMaxAge = (int)(4.0F / (this.rand.nextFloat() * 0.9F + 0.1F));
-      this.particleAge = 0;
-   }
+    public EntityFX(World world, double d, double d2, double d3) {
+        super(world);
+        this.setSize(0.2F, 0.2F);
+        this.yOffset = this.height / 2.0F;
+        this.setPosition(d, d2, d3);
+        this.lastTickPosX = d;
+        this.lastTickPosY = d2;
+        this.lastTickPosZ = d3;
+        this.particleRed = this.particleGreen = this.particleBlue = 1.0F;
+        this.particleTextureJitterX = this.rand.nextFloat() * 3.0F;
+        this.particleTextureJitterY = this.rand.nextFloat() * 3.0F;
+        this.particleScale = (this.rand.nextFloat() * 0.5F + 0.5F) * 2.0F;
+        this.particleMaxAge = (int)(4.0F / (this.rand.nextFloat() * 0.9F + 0.1F));
+        this.particleAge = 0;
+    }
 
-   public EntityFX(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn) {
-      this(worldIn, xCoordIn, yCoordIn, zCoordIn);
-      this.motionX = xSpeedIn + (Math.random() * 2.0 - 1.0) * 0.4F;
-      this.motionY = ySpeedIn + (Math.random() * 2.0 - 1.0) * 0.4F;
-      this.motionZ = zSpeedIn + (Math.random() * 2.0 - 1.0) * 0.4F;
-      float f = (float)(Math.random() + Math.random() + 1.0) * 0.15F;
-      float f2 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ);
-      this.motionX = this.motionX / f2 * f * 0.4F;
-      this.motionY = this.motionY / f2 * f * 0.4F + 0.1F;
-      this.motionZ = this.motionZ / f2 * f * 0.4F;
-   }
+    public EntityFX(World world, double d, double d2, double d3, double d4, double d5, double d6) {
+        this(world, d, d2, d3);
+        this.motionX = d4 + (float)(Math.random() * 2.0 - 1.0) * 0.4F;
+        this.motionY = d5 + (float)(Math.random() * 2.0 - 1.0) * 0.4F;
+        this.motionZ = d6 + (float)(Math.random() * 2.0 - 1.0) * 0.4F;
+        float f = (float)(Math.random() + Math.random() + 1.0) * 0.15F;
+        float f2 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionY * this.motionY + this.motionZ * this.motionZ);
+        this.motionX = this.motionX / f2 * f * 0.4F;
+        this.motionY = this.motionY / f2 * f * 0.4F + 0.1F;
+        this.motionZ = this.motionZ / f2 * f * 0.4F;
+    }
 
-   public EntityFX multiplyVelocity(float multiplier) {
-      this.motionX *= multiplier;
-      this.motionY = (this.motionY - 0.1F) * multiplier + 0.1F;
-      this.motionZ *= multiplier;
-      return this;
-   }
+    public EntityFX multiplyVelocity(float f) {
+        this.motionX *= f;
+        this.motionY = (this.motionY - 0.1F) * f + 0.1F;
+        this.motionZ *= f;
+        return this;
+    }
 
-   public EntityFX multipleParticleScaleBy(float scale) {
-      this.setSize(0.2F * scale, 0.2F * scale);
-      this.particleScale *= scale;
-      return this;
-   }
+    public EntityFX multipleParticleScaleBy(float f) {
+        this.setSize(0.2F * f, 0.2F * f);
+        this.particleScale *= f;
+        return this;
+    }
 
-   public void setRBGColorF(float particleRedIn, float particleGreenIn, float particleBlueIn) {
-      this.particleRed = particleRedIn;
-      this.particleGreen = particleGreenIn;
-      this.particleBlue = particleBlueIn;
-   }
+    public void setRBGColorF(float f, float f2, float f3) {
+        this.particleRed = f;
+        this.particleGreen = f2;
+        this.particleBlue = f3;
+    }
 
-   public void setAlphaF(float alpha) {
-      if (this.particleAlpha == 1.0F && alpha < 1.0F) {
-         Minecraft.getMinecraft().effectRenderer.moveToAlphaLayer(this);
-      } else if (this.particleAlpha < 1.0F && alpha == 1.0F) {
-         Minecraft.getMinecraft().effectRenderer.moveToNoAlphaLayer(this);
-      }
+    public void setAlphaF(float f) {
+        this.particleAlpha = f;
+    }
 
-      this.particleAlpha = alpha;
-   }
+    public float getRedColorF() {
+        return this.particleRed;
+    }
 
-   public float getRedColorF() {
-      return this.particleRed;
-   }
+    public float getGreenColorF() {
+        return this.particleGreen;
+    }
 
-   public float getGreenColorF() {
-      return this.particleGreen;
-   }
+    public float getBlueColorF() {
+        return this.particleBlue;
+    }
 
-   public float getBlueColorF() {
-      return this.particleBlue;
-   }
+    @Override
+    public boolean canTriggerWalking() {
+        return false;
+    }
 
-   public float getAlpha() {
-      return this.particleAlpha;
-   }
+    @Override
+    public void entityInit() {
+    }
 
-   @Override
-   public boolean canTriggerWalking() {
-      return false;
-   }
+    @Override
+    public void onUpdate() {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        if (this.particleAge++ >= this.particleMaxAge) {
+            this.setDead();
+        }
 
-   @Override
-   public void entityInit() {
-   }
+        this.motionY = this.motionY - 0.04 * this.particleGravity;
+        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        this.motionX *= 0.98F;
+        this.motionY *= 0.98F;
+        this.motionZ *= 0.98F;
+        if (this.onGround) {
+            this.motionX *= 0.7F;
+            this.motionZ *= 0.7F;
+        }
+    }
 
-   @Override
-   public void onUpdate() {
-      this.prevPosX = this.posX;
-      this.prevPosY = this.posY;
-      this.prevPosZ = this.posZ;
-      if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
-      }
+    public void renderParticle(Tessellator tessellator, float f, float f2, float f3, float f4, float f5, float f6) {
+        float f7 = this.particleTextureIndexX / 16.0F;
+        float f8 = f7 + 0.0624375F;
+        float f9 = this.particleTextureIndexY / 16.0F;
+        float f10 = f9 + 0.0624375F;
+        float f11 = 0.1F * this.particleScale;
+        if (this.particleIcon != null) {
+            f7 = this.particleIcon.getMinU();
+            f8 = this.particleIcon.getMaxU();
+            f9 = this.particleIcon.getMinV();
+            f10 = this.particleIcon.getMaxV();
+        }
 
-      this.motionY = this.motionY - 0.04 * this.particleGravity;
-      this.moveEntity(this.motionX, this.motionY, this.motionZ);
-      this.motionX *= 0.98F;
-      this.motionY *= 0.98F;
-      this.motionZ *= 0.98F;
-      if (this.onGround) {
-         this.motionX *= 0.7F;
-         this.motionZ *= 0.7F;
-      }
-   }
+        float f12 = (float)(this.prevPosX + (this.posX - this.prevPosX) * f - interpPosX);
+        float f13 = (float)(this.prevPosY + (this.posY - this.prevPosY) * f - interpPosY);
+        float f14 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * f - interpPosZ);
+        tessellator.setColorRGBA_F(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha);
+        tessellator.addVertexWithUV(f12 - f2 * f11 - f5 * f11, f13 - f3 * f11, f14 - f4 * f11 - f6 * f11, f8, f10);
+        tessellator.addVertexWithUV(f12 - f2 * f11 + f5 * f11, f13 + f3 * f11, f14 - f4 * f11 + f6 * f11, f8, f9);
+        tessellator.addVertexWithUV(f12 + f2 * f11 + f5 * f11, f13 + f3 * f11, f14 + f4 * f11 + f6 * f11, f7, f9);
+        tessellator.addVertexWithUV(f12 + f2 * f11 - f5 * f11, f13 - f3 * f11, f14 + f4 * f11 - f6 * f11, f7, f10);
+    }
 
-   public void renderParticle(
-      WorldRenderer worldRendererIn,
-      Entity entityIn,
-      float partialTicks,
-      float rotationX,
-      float rotationZ,
-      float rotationYZ,
-      float rotationXY,
-      float rotationXZ
-   ) {
-      float f = this.particleTextureIndexX / 16.0F;
-      float f2 = f + 0.0624375F;
-      float f3 = this.particleTextureIndexY / 16.0F;
-      float f4 = f3 + 0.0624375F;
-      float f5 = 0.1F * this.particleScale;
-      if (this.particleIcon != null) {
-         f = this.particleIcon.getMinU();
-         f2 = this.particleIcon.getMaxU();
-         f3 = this.particleIcon.getMinV();
-         f4 = this.particleIcon.getMaxV();
-      }
+    public int getFXLayer() {
+        return 0;
+    }
 
-      float f6 = (float)(this.prevPosX + (this.posX - this.prevPosX) * partialTicks - interpPosX);
-      float f7 = (float)(this.prevPosY + (this.posY - this.prevPosY) * partialTicks - interpPosY);
-      float f8 = (float)(this.prevPosZ + (this.posZ - this.prevPosZ) * partialTicks - interpPosZ);
-      int brightnessForRender = this.getBrightnessForRender(partialTicks);
-      int n = brightnessForRender >> 16 & 65535;
-      int n2 = brightnessForRender & 65535;
-      worldRendererIn.pos(f6 - rotationX * f5 - rotationXY * f5, f7 - rotationZ * f5, f8 - rotationYZ * f5 - rotationXZ * f5)
-         .tex(f2, f4)
-         .color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
-         .lightmap(n, n2)
-         .endVertex();
-      worldRendererIn.pos(f6 - rotationX * f5 + rotationXY * f5, f7 + rotationZ * f5, f8 - rotationYZ * f5 + rotationXZ * f5)
-         .tex(f2, f3)
-         .color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
-         .lightmap(n, n2)
-         .endVertex();
-      worldRendererIn.pos(f6 + rotationX * f5 + rotationXY * f5, f7 + rotationZ * f5, f8 + rotationYZ * f5 + rotationXZ * f5)
-         .tex(f, f3)
-         .color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
-         .lightmap(n, n2)
-         .endVertex();
-      worldRendererIn.pos(f6 + rotationX * f5 - rotationXY * f5, f7 - rotationZ * f5, f8 + rotationYZ * f5 - rotationXZ * f5)
-         .tex(f, f4)
-         .color(this.particleRed, this.particleGreen, this.particleBlue, this.particleAlpha)
-         .lightmap(n, n2)
-         .endVertex();
-   }
+    @Override
+    public void writeEntityToNBT(NBTTagCompound tagCompound) {
+    }
 
-   public int getFXLayer() {
-      return 0;
-   }
+    @Override
+    public void readEntityFromNBT(NBTTagCompound tagCompund) {
+    }
 
-   @Override
-   public void writeEntityToNBT(NBTTagCompound tagCompound) {
-   }
+    public void setParticleIcon(IIcon icon) {
+        if (this.getFXLayer() == 1) {
+            this.particleIcon = icon;
+        } else {
+            if (this.getFXLayer() != 2) {
+                throw new RuntimeException("Invalid call to Particle.setTex, use coordinate methods");
+            }
 
-   @Override
-   public void readEntityFromNBT(NBTTagCompound tagCompund) {
-   }
+            this.particleIcon = icon;
+        }
+    }
 
-   public void setParticleIcon(TextureAtlasSprite icon) {
-      int fXLayer = this.getFXLayer();
-      if (fXLayer == 1) {
-         this.particleIcon = icon;
-      } else {
-         throw new RuntimeException("Invalid call to Particle.setTex, use coordinate methods");
-      }
-   }
+    public void setParticleTextureIndex(int n) {
+        if (this.getFXLayer() != 0) {
+            throw new RuntimeException("Invalid call to Particle.setMiscTex");
+        }
 
-   public void setParticleTextureIndex(int particleTextureIndex) {
-      if (this.getFXLayer() != 0) {
-         throw new RuntimeException("Invalid call to Particle.setMiscTex");
-      }
+        this.particleTextureIndexX = n % 16;
+        this.particleTextureIndexY = n / 16;
+    }
 
-      this.particleTextureIndexX = particleTextureIndex % 16;
-      this.particleTextureIndexY = particleTextureIndex / 16;
-   }
+    public void nextTextureIndexX() {
+        this.particleTextureIndexX++;
+    }
 
-   public void nextTextureIndexX() {
-      this.particleTextureIndexX++;
-   }
+    @Override
+    public boolean canAttackWithItem() {
+        return false;
+    }
 
-   @Override
-   public boolean canAttackWithItem() {
-      return false;
-   }
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName()
+            + ", Pos ("
+            + this.posX
+            + ","
+            + this.posY
+            + ","
+            + this.posZ
+            + "), RGBA ("
+            + this.particleRed
+            + ","
+            + this.particleGreen
+            + ","
+            + this.particleBlue
+            + ","
+            + this.particleAlpha
+            + "), Age "
+            + this.particleAge;
+    }
 
-   @Override
-   public String toString() {
-      return this.getClass().getSimpleName()
-         + ", Pos ("
-         + this.posX
-         + ","
-         + this.posY
-         + ","
-         + this.posZ
-         + "), RGBA ("
-         + this.particleRed
-         + ","
-         + this.particleGreen
-         + ","
-         + this.particleBlue
-         + ","
-         + this.particleAlpha
-         + "), Age "
-         + this.particleAge;
-   }
-
-   @Override
-   public void moveEntity(double d, double d2, double d3) {
-      EntityFXDoubleEvent entityFXDoubleEvent = new EntityFXDoubleEvent(this, d, d2, d3);
-      CheatBreaker.getInstance().getEventBus().handleEvent(entityFXDoubleEvent);
-      if (!entityFXDoubleEvent.isFlag()) {
-         d = entityFXDoubleEvent.getDoubleValue1();
-         d2 = entityFXDoubleEvent.getDoubleValue2();
-         d3 = entityFXDoubleEvent.getDoubleValue3();
-         super.moveEntity(d, d2, d3);
-      }
-   }
+    @Override
+    public void moveEntity(double d, double d2, double d3) {
+        EntityFXDoubleEvent entityFXDoubleEvent = new EntityFXDoubleEvent(this, d, d2, d3);
+        CheatBreaker.getInstance().getEventBus().handleEvent(entityFXDoubleEvent);
+        if (!entityFXDoubleEvent.isCancelled()) {
+            d = entityFXDoubleEvent.getDoubleValue1();
+            d2 = entityFXDoubleEvent.getDoubleValue2();
+            d3 = entityFXDoubleEvent.getDoubleValue3();
+            super.moveEntity(d, d2, d3);
+        }
+    }
 }

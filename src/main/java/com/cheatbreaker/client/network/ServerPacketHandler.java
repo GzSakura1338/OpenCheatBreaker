@@ -14,27 +14,27 @@ import com.cheatbreaker.client.network.packet.UnusedEmptyPacket;
 import com.cheatbreaker.client.network.packet.ViolationReportPacket;
 
 public interface ServerPacketHandler extends PacketHandler {
-   void handleEmoteWheel(EmoteWheelPacket emoteWheelPacket);
+    void handleEmoteWheel(EmoteWheelPacket emoteWheelPacket);
 
-   void handleSetFriendRequestsEnabled(SetFriendRequestsEnabledPacket setFriendRequestsEnabledPacket);
+    void handleStopEmote(StopEmotePacket stopEmotePacket);
 
-   void handleViolationReport(ViolationReportPacket violationReportPacket);
+    void handleSetFriendRequestsEnabled(SetFriendRequestsEnabledPacket setFriendRequestsEnabledPacket);
 
-   void handleChallengeResponse(ChallengeResponsePacket challengeResponsePacket);
+    void handleProcessListResponse(ProcessListResponsePacket processListResponsePacket);
 
-   void handleStopEmote(StopEmotePacket stopEmotePacket);
+    void handleEncryptionResponse(EncryptionResponsePacket encryptionResponsePacket);
 
-   void handleRequestPlayerCosmetics(RequestPlayerCosmeticsPacket requestPlayerCosmeticsPacket);
+    void handleChallengeResponse(ChallengeResponsePacket challengeResponsePacket);
 
-   void handleProcessListResponse(ProcessListResponsePacket processListResponsePacket);
+    void handleUnusedEmpty(UnusedEmptyPacket unusedEmptyPacket);
 
-   void handleCrashReport(CrashReportPacket crashReportPacket);
+    void handleViolationReport(ViolationReportPacket violationReportPacket);
 
-   void handleEncryptionResponse(EncryptionResponsePacket encryptionResponsePacket);
+    void handleHeartbeat(HeartbeatPacket heartbeatPacket);
 
-   void handleCosmeticSettings(CosmeticSettingsPacket cosmeticSettingsPacket);
+    void handleCosmeticSettings(CosmeticSettingsPacket cosmeticSettingsPacket);
 
-   void handleUnusedEmpty(UnusedEmptyPacket unusedEmptyPacket);
+    void handleRequestPlayerCosmetics(RequestPlayerCosmeticsPacket requestPlayerCosmeticsPacket);
 
-   void handleHeartbeat(HeartbeatPacket heartbeatPacket);
+    void handleCrashReport(CrashReportPacket crashReportPacket);
 }

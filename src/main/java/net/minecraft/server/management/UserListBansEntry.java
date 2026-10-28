@@ -5,42 +5,42 @@ import com.mojang.authlib.GameProfile;
 import java.util.Date;
 import java.util.UUID;
 
-public class UserListBansEntry extends BanEntry<GameProfile> {
-   public UserListBansEntry(GameProfile profile) {
-      this(profile, (Date)null, (String)null, (Date)null, (String)null);
-   }
+public class UserListBansEntry extends BanEntry {
+    public UserListBansEntry(GameProfile gameProfile) {
+        this(gameProfile, null, null, null, null);
+    }
 
-   public UserListBansEntry(GameProfile profile, Date startDate, String banner, Date endDate, String banReason) {
-      super(profile, endDate, banner, endDate, banReason);
-   }
+    public UserListBansEntry(GameProfile gameProfile, Date date, String str, Date date2, String str2) {
+        super(gameProfile, date2, str, date2, str2);
+    }
 
-   public UserListBansEntry(JsonObject json) {
-      super(toGameProfile(json), json);
-   }
+    public UserListBansEntry(JsonObject jsonObject) {
+        super(getProfileFromJson(jsonObject), jsonObject);
+    }
 
-   @Override
-   public void onSerialization(JsonObject data) {
-      if (this.getValue() != null) {
-         data.addProperty("uuid", this.getValue().getId() == null ? "" : this.getValue().getId().toString());
-         data.addProperty("name", this.getValue().getName());
-         super.onSerialization(data);
-      }
-   }
+    @Override
+    public void onSerialization(JsonObject data) {
+        if (this.getValue() != null) {
+            data.addProperty("uuid", ((GameProfile)this.getValue()).getId() == null ? "" : ((GameProfile)this.getValue()).getId().toString());
+            data.addProperty("name", ((GameProfile)this.getValue()).getName());
+            super.onSerialization(data);
+        }
+    }
 
-   public static GameProfile toGameProfile(JsonObject json) {
-      if (json.has("uuid") && json.has("name")) {
-         String asString = json.get("uuid").getAsString();
+    public static GameProfile getProfileFromJson(JsonObject jsonObject) {
+        if (jsonObject.has("uuid") && jsonObject.has("name")) {
+            String asString = jsonObject.get("uuid").getAsString();
 
-         UUID uuid;
-         try {
-            uuid = UUID.fromString(asString);
-         } catch (Throwable e) {
+            UUID uuid;
+            try {
+                uuid = UUID.fromString(asString);
+            } catch (Throwable e) {
+                return null;
+            }
+
+            return new GameProfile(uuid, jsonObject.get("name").getAsString());
+        } else {
             return null;
-         }
-
-         return new GameProfile(uuid, json.get("name").getAsString());
-      } else {
-         return null;
-      }
-   }
+        }
+    }
 }

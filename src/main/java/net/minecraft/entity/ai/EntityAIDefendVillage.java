@@ -1,47 +1,42 @@
 package net.minecraft.entity.ai;
 
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.monster.EntityCreeper;
 import net.minecraft.entity.monster.EntityIronGolem;
 import net.minecraft.village.Village;
 
 public class EntityAIDefendVillage extends EntityAITarget {
-   public EntityIronGolem irongolem;
-   public EntityLivingBase villageAgressorTarget;
+    public EntityIronGolem irongolem;
+    public EntityLivingBase villageAgressorTarget;
 
-   public EntityAIDefendVillage(EntityIronGolem ironGolemIn) {
-      super(ironGolemIn, false, true);
-      this.irongolem = ironGolemIn;
-      this.setMutexBits(1);
-   }
+    public EntityAIDefendVillage(EntityIronGolem entityIronGolem) {
+        super(entityIronGolem, false, true);
+        this.irongolem = entityIronGolem;
+        this.setMutexBits(1);
+    }
 
-   @Override
-   public boolean shouldExecute() {
-      Village village = this.irongolem.getVillage();
-      if (village == null) {
-         return false;
-      }
-
-      this.villageAgressorTarget = village.findNearestVillageAggressor(this.irongolem);
-      if (this.villageAgressorTarget instanceof EntityCreeper) {
-         return false;
-      }
-
-      if (!this.isSuitableTarget(this.villageAgressorTarget, false)) {
-         if (this.taskOwner.getRNG().nextInt(20) == 0) {
-            this.villageAgressorTarget = village.getNearestTargetPlayer(this.irongolem);
-            return this.isSuitableTarget(this.villageAgressorTarget, false);
-         } else {
+    @Override
+    public boolean shouldExecute() {
+        Village village = this.irongolem.getVillage();
+        if (village == null) {
             return false;
-         }
-      } else {
-         return true;
-      }
-   }
+        }
 
-   @Override
-   public void startExecuting() {
-      this.irongolem.setAttackTarget(this.villageAgressorTarget);
-      super.startExecuting();
-   }
+        this.villageAgressorTarget = village.findNearestVillageAggressor(this.irongolem);
+        if (!this.isSuitableTarget(this.villageAgressorTarget, false)) {
+            if (this.taskOwner.getRNG().nextInt(20) == 0) {
+                this.villageAgressorTarget = village.findEntityPlayer(this.irongolem);
+                return this.isSuitableTarget(this.villageAgressorTarget, false);
+            } else {
+                return false;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    @Override
+    public void startExecuting() {
+        this.irongolem.setAttackTarget(this.villageAgressorTarget);
+        super.startExecuting();
+    }
 }

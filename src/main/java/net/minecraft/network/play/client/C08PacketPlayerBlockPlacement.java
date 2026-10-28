@@ -2,81 +2,97 @@ package net.minecraft.network.play.client;
 
 import java.io.IOException;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayServer;
-import net.minecraft.util.BlockPos;
 
-public class C08PacketPlayerBlockPlacement implements Packet<INetHandlerPlayServer> {
-   public static BlockPos UNKNOWN_POS = new BlockPos(-1, -1, -1);
-   public BlockPos position;
-   public int placedBlockDirection;
-   public ItemStack stack;
-   public float facingX;
-   public float facingY;
-   public float facingZ;
+public class C08PacketPlayerBlockPlacement extends Packet {
+    public int placedBlockX;
+    public int placedBlockY;
+    public int placedBlockZ;
+    public int placedBlockDirection;
+    public ItemStack stack;
+    public float facingX;
+    public float facingY;
+    public float facingZ;
 
-   public C08PacketPlayerBlockPlacement() {
-   }
+    public C08PacketPlayerBlockPlacement() {
+    }
 
-   public C08PacketPlayerBlockPlacement(ItemStack stackIn) {
-      this(UNKNOWN_POS, 255, stackIn, 0.0F, 0.0F, 0.0F);
-   }
+    public C08PacketPlayerBlockPlacement(int n, int n2, int n3, int n4, ItemStack itemStack, float f, float f2, float f3) {
+        this.placedBlockX = n;
+        this.placedBlockY = n2;
+        this.placedBlockZ = n3;
+        this.placedBlockDirection = n4;
+        this.stack = itemStack != null ? itemStack.copy() : null;
+        this.facingX = f;
+        this.facingY = f2;
+        this.facingZ = f3;
+    }
 
-   public C08PacketPlayerBlockPlacement(BlockPos positionIn, int placedBlockDirectionIn, ItemStack stackIn, float facingXIn, float facingYIn, float facingZIn) {
-      this.position = positionIn;
-      this.placedBlockDirection = placedBlockDirectionIn;
-      this.stack = stackIn != null ? stackIn.copy() : null;
-      this.facingX = facingXIn;
-      this.facingY = facingYIn;
-      this.facingZ = facingZIn;
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.placedBlockX = data.readInt();
+        this.placedBlockY = data.readUnsignedByte();
+        this.placedBlockZ = data.readInt();
+        this.placedBlockDirection = data.readUnsignedByte();
+        this.stack = data.readItemStackFromBuffer();
+        this.facingX = data.readUnsignedByte() / 16.0F;
+        this.facingY = data.readUnsignedByte() / 16.0F;
+        this.facingZ = data.readUnsignedByte() / 16.0F;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.position = buf.readBlockPos();
-      this.placedBlockDirection = buf.readUnsignedByte();
-      this.stack = buf.readItemStackFromBuffer();
-      this.facingX = buf.readUnsignedByte() / 16.0F;
-      this.facingY = buf.readUnsignedByte() / 16.0F;
-      this.facingZ = buf.readUnsignedByte() / 16.0F;
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.placedBlockX);
+        data.writeByte(this.placedBlockY);
+        data.writeInt(this.placedBlockZ);
+        data.writeByte(this.placedBlockDirection);
+        data.writeItemStackToBuffer(this.stack);
+        data.writeByte((int)(this.facingX * 16.0F));
+        data.writeByte((int)(this.facingY * 16.0F));
+        data.writeByte((int)(this.facingZ * 16.0F));
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeBlockPos(this.position);
-      buf.writeByte(this.placedBlockDirection);
-      buf.writeItemStackToBuffer(this.stack);
-      buf.writeByte((int)(this.facingX * 16.0F));
-      buf.writeByte((int)(this.facingY * 16.0F));
-      buf.writeByte((int)(this.facingZ * 16.0F));
-   }
+    public void processPacket(INetHandlerPlayServer handler) throws IOException {
+        handler.processPlayerBlockPlacement(this);
+    }
 
-   public void processPacket(INetHandlerPlayServer handler) {
-      handler.processPlayerBlockPlacement(this);
-   }
+    public int getPlacedBlockX() {
+        return this.placedBlockX;
+    }
 
-   public BlockPos getPosition() {
-      return this.position;
-   }
+    public int getPlacedBlockY() {
+        return this.placedBlockY;
+    }
 
-   public int getPlacedBlockDirection() {
-      return this.placedBlockDirection;
-   }
+    public int getPlacedBlockZ() {
+        return this.placedBlockZ;
+    }
 
-   public ItemStack getStack() {
-      return this.stack;
-   }
+    public int getPlacedBlockDirection() {
+        return this.placedBlockDirection;
+    }
 
-   public float getPlacedBlockOffsetX() {
-      return this.facingX;
-   }
+    public ItemStack getStack() {
+        return this.stack;
+    }
 
-   public float getPlacedBlockOffsetY() {
-      return this.facingY;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) throws IOException {
+        this.processPacket((INetHandlerPlayServer)netHandler);
+    }
 
-   public float getPlacedBlockOffsetZ() {
-      return this.facingZ;
-   }
+    public float getFacingZ() {
+        return this.facingZ;
+    }
+
+    public float getFacingY() {
+        return this.facingY;
+    }
+
+    public float getFacingX() {
+        return this.facingX;
+    }
 }

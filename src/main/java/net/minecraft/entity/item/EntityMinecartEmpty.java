@@ -1,53 +1,36 @@
 package net.minecraft.entity.item;
 
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 
 public class EntityMinecartEmpty extends EntityMinecart {
-   public EntityMinecartEmpty(World worldIn) {
-      super(worldIn);
-   }
+    public EntityMinecartEmpty(World world) {
+        super(world);
+    }
 
-   public EntityMinecartEmpty(World worldIn, double x, double y, double z) {
-      super(worldIn, x, y, z);
-   }
+    public EntityMinecartEmpty(World world, double d, double d2, double d3) {
+        super(world, d, d2, d3);
+    }
 
-   @Override
-   public boolean interactFirst(EntityPlayer playerIn) {
-      if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityPlayer && this.riddenByEntity != playerIn) {
-         return true;
-      }
+    @Override
+    public boolean interactFirst(EntityPlayer player) {
+        if (this.riddenByEntity != null && this.riddenByEntity instanceof EntityPlayer && this.riddenByEntity != player) {
+            return true;
+        }
 
-      if (this.riddenByEntity != null && this.riddenByEntity != playerIn) {
-         return false;
-      }
+        if (this.riddenByEntity != null && this.riddenByEntity != player) {
+            return false;
+        }
 
-      if (!this.worldObj.isRemote) {
-         playerIn.mountEntity(this);
-      }
+        if (!this.worldObj.isRemote) {
+            player.mountEntity(this);
+        }
 
-      return true;
-   }
+        return true;
+    }
 
-   @Override
-   public void onActivatorRailPass(int x, int y, int z, boolean receivingPower) {
-      if (receivingPower) {
-         if (this.riddenByEntity != null) {
-            this.riddenByEntity.mountEntity((Entity)null);
-         }
-
-         if (this.getRollingAmplitude() == 0) {
-            this.setRollingDirection(-this.getRollingDirection());
-            this.setRollingAmplitude(10);
-            this.setDamage(50.0F);
-            this.setBeenAttacked();
-         }
-      }
-   }
-
-   @Override
-   public EntityMinecart.EnumMinecartType getMinecartType() {
-      return EntityMinecart.EnumMinecartType.RIDEABLE;
-   }
+    @Override
+    public int getMinecartType() {
+        return 0;
+    }
 }

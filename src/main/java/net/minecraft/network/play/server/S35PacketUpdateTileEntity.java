@@ -2,52 +2,73 @@ package net.minecraft.network.play.server;
 
 import java.io.IOException;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.BlockPos;
 
-public class S35PacketUpdateTileEntity implements Packet<INetHandlerPlayClient> {
-   public BlockPos blockPos;
-   public int metadata;
-   public NBTTagCompound nbt;
+public class S35PacketUpdateTileEntity extends Packet {
+    public int x;
+    public int y;
+    public int z;
+    public int metadata;
+    public NBTTagCompound nbt;
 
-   public S35PacketUpdateTileEntity() {
-   }
+    public S35PacketUpdateTileEntity() {
+    }
 
-   public S35PacketUpdateTileEntity(BlockPos blockPosIn, int metadataIn, NBTTagCompound nbtIn) {
-      this.blockPos = blockPosIn;
-      this.metadata = metadataIn;
-      this.nbt = nbtIn;
-   }
+    public S35PacketUpdateTileEntity(int xcoord, int ycoord, int zcoord, int meta, NBTTagCompound nbtTag) {
+        this.x = xcoord;
+        this.y = ycoord;
+        this.z = zcoord;
+        this.metadata = meta;
+        this.nbt = nbtTag;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.blockPos = buf.readBlockPos();
-      this.metadata = buf.readUnsignedByte();
-      this.nbt = buf.readNBTTagCompoundFromBuffer();
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.x = data.readInt();
+        this.y = data.readShort();
+        this.z = data.readInt();
+        this.metadata = data.readUnsignedByte();
+        this.nbt = data.readNBTTagCompoundFromBuffer();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeBlockPos(this.blockPos);
-      buf.writeByte((byte)this.metadata);
-      buf.writeNBTTagCompoundToBuffer(this.nbt);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.x);
+        data.writeShort(this.y);
+        data.writeInt(this.z);
+        data.writeByte((byte)this.metadata);
+        data.writeNBTTagCompoundToBuffer(this.nbt);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleUpdateTileEntity(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleUpdateTileEntity(this);
+    }
 
-   public BlockPos getPos() {
-      return this.blockPos;
-   }
+    public int getX() {
+        return this.x;
+    }
 
-   public int getTileEntityType() {
-      return this.metadata;
-   }
+    public int getY() {
+        return this.y;
+    }
 
-   public NBTTagCompound getNbtCompound() {
-      return this.nbt;
-   }
+    public int getZ() {
+        return this.z;
+    }
+
+    public int getTileEntityType() {
+        return this.metadata;
+    }
+
+    public NBTTagCompound getNbtCompound() {
+        return this.nbt;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

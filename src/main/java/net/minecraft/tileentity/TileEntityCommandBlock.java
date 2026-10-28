@@ -1,93 +1,70 @@
 package net.minecraft.tileentity;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.command.CommandResultStats;
 import net.minecraft.command.server.CommandBlockLogic;
-import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.Vec3;
+import net.minecraft.util.ChunkCoordinates;
 import net.minecraft.world.World;
 
 public class TileEntityCommandBlock extends TileEntity {
-   public CommandBlockLogic commandBlockLogic = new CommandBlockLogic() {
-      @Override
-      public BlockPos getPosition() {
-         return TileEntityCommandBlock.this.pos;
-      }
+    public CommandBlockLogic executor = new CommandBlockLogic() {
+        @Override
+        public ChunkCoordinates getCommandSenderPosition() {
+            return new ChunkCoordinates(TileEntityCommandBlock.this.xCoord, TileEntityCommandBlock.this.yCoord, TileEntityCommandBlock.this.zCoord);
+        }
 
-      @Override
-      public Vec3 getPositionVector() {
-         return new Vec3(
-            TileEntityCommandBlock.this.pos.getX() + 0.5, TileEntityCommandBlock.this.pos.getY() + 0.5, TileEntityCommandBlock.this.pos.getZ() + 0.5
-         );
-      }
+        @Override
+        public World getEntityWorld() {
+            return TileEntityCommandBlock.this.getWorld();
+        }
 
-      @Override
-      public World getEntityWorld() {
-         return TileEntityCommandBlock.this.getWorld();
-      }
+        @Override
+        public void setCommand(String str) {
+            super.setCommand(str);
+            TileEntityCommandBlock.this.markDirty();
+        }
 
-      @Override
-      public void setCommand(String command) {
-         super.setCommand(command);
-         TileEntityCommandBlock.this.markDirty();
-      }
+        @Override
+        public void run() {
+            TileEntityCommandBlock.this.getWorld()
+                .markBlockForUpdate(TileEntityCommandBlock.this.xCoord, TileEntityCommandBlock.this.yCoord, TileEntityCommandBlock.this.zCoord);
+        }
 
-      @Override
-      public void updateCommand() {
-         TileEntityCommandBlock.this.getWorld().markBlockForUpdate(TileEntityCommandBlock.this.pos);
-      }
+        @Override
+        public int constantInt() {
+            return 0;
+        }
 
-      @Override
-      public int constantInt() {
-         return 0;
-      }
+        @Override
+        public void write(ByteBuf byteBuf) {
+            byteBuf.writeInt(TileEntityCommandBlock.this.xCoord);
+            byteBuf.writeInt(TileEntityCommandBlock.this.yCoord);
+            byteBuf.writeInt(TileEntityCommandBlock.this.zCoord);
+        }
+    };
 
-      @Override
-      public void write(ByteBuf byteBuf) {
-         byteBuf.writeInt(TileEntityCommandBlock.this.pos.getX());
-         byteBuf.writeInt(TileEntityCommandBlock.this.pos.getY());
-         byteBuf.writeInt(TileEntityCommandBlock.this.pos.getZ());
-      }
+    @Override
+    public void writeToNBT(NBTTagCompound compound) {
+        super.writeToNBT(compound);
+        this.executor.writeDataToNBT(compound);
+    }
 
-      @Override
-      public Entity getCommandSenderEntity() {
-         return null;
-      }
-   };
+    @Override
+    public void readFromNBT(NBTTagCompound compound) {
+        super.readFromNBT(compound);
+        this.executor.readDataFromNBT(compound);
+    }
 
-   @Override
-   public void writeToNBT(NBTTagCompound compound) {
-      super.writeToNBT(compound);
-      this.commandBlockLogic.writeDataToNBT(compound);
-   }
+    @Override
+    public Packet getDescriptionPacket() {
+        NBTTagCompound nbttagCompound = new NBTTagCompound();
+        this.writeToNBT(nbttagCompound);
+        return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 2, nbttagCompound);
+    }
 
-   @Override
-   public void readFromNBT(NBTTagCompound compound) {
-      super.readFromNBT(compound);
-      this.commandBlockLogic.readDataFromNBT(compound);
-   }
-
-   @Override
-   public Packet getDescriptionPacket() {
-      NBTTagCompound nbttagCompound = new NBTTagCompound();
-      this.writeToNBT(nbttagCompound);
-      return new S35PacketUpdateTileEntity(this.pos, 2, nbttagCompound);
-   }
-
-   @Override
-   public boolean alwaysFalse() {
-      return true;
-   }
-
-   public CommandBlockLogic getCommandBlockLogic() {
-      return this.commandBlockLogic;
-   }
-
-   public CommandResultStats getCommandResultStats() {
-      return this.commandBlockLogic.getCommandResultStats();
-   }
+    public CommandBlockLogic getCommandExecutor() {
+        return this.executor;
+    }
 }

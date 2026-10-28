@@ -1,51 +1,57 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 
-public class S31PacketWindowProperty implements Packet<INetHandlerPlayClient> {
-   public int windowId;
-   public int varIndex;
-   public int varValue;
+public class S31PacketWindowProperty extends Packet {
+    public int syncId;
+    public int propertyId;
+    public int value;
 
-   public S31PacketWindowProperty() {
-   }
+    public S31PacketWindowProperty() {
+    }
 
-   public S31PacketWindowProperty(int windowIdIn, int varIndexIn, int varValueIn) {
-      this.windowId = windowIdIn;
-      this.varIndex = varIndexIn;
-      this.varValue = varValueIn;
-   }
+    public S31PacketWindowProperty(int n, int n2, int n3) {
+        this.syncId = n;
+        this.propertyId = n2;
+        this.value = n3;
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleWindowProperty(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleWindowProperty(this);
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.windowId = buf.readUnsignedByte();
-      this.varIndex = buf.readShort();
-      this.varValue = buf.readShort();
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.syncId = data.readUnsignedByte();
+        this.propertyId = data.readShort();
+        this.value = data.readShort();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeByte(this.windowId);
-      buf.writeShort(this.varIndex);
-      buf.writeShort(this.varValue);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeByte(this.syncId);
+        data.writeShort(this.propertyId);
+        data.writeShort(this.value);
+    }
 
-   public int getWindowId() {
-      return this.windowId;
-   }
+    public int getSyncId() {
+        return this.syncId;
+    }
 
-   public int getVarIndex() {
-      return this.varIndex;
-   }
+    public int getPropertyId() {
+        return this.propertyId;
+    }
 
-   public int getVarValue() {
-      return this.varValue;
-   }
+    public int getValue() {
+        return this.value;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

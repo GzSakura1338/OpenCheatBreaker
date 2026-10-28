@@ -1,6 +1,6 @@
 package net.minecraft.entity.ai;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.minecraft.profiler.Profiler;
@@ -8,110 +8,126 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EntityAITasks {
-   public static Logger logger = LogManager.getLogger();
-   public List<EntityAITasks.EntityAITaskEntry> taskEntries = Lists.newArrayList();
-   public List<EntityAITasks.EntityAITaskEntry> executingTaskEntries = Lists.newArrayList();
-   public int tickRate = 3;
-   public int tickCount;
-   public Profiler theProfiler;
+    public static Logger logger = LogManager.getLogger();
+    public List taskEntries = new ArrayList();
+    public List executingTaskEntries = new ArrayList();
+    public final int tickRate = 3;
+    public int tickCount;
+    public Profiler theProfiler;
 
-   public EntityAITasks(Profiler profilerIn) {
-      this.theProfiler = profilerIn;
-   }
+    public EntityAITasks(Profiler profiler) {
+        this.theProfiler = profiler;
+    }
 
-   public void addTask(int priority, EntityAIBase task) {
-      this.taskEntries.add(new EntityAITasks.EntityAITaskEntry(priority, task));
-   }
+    public void addTask(int n, EntityAIBase entityAIBase) {
+        this.taskEntries.add(new EntityAITasks.EntityAITaskEntry(n, entityAIBase));
+    }
 
-   public void removeTask(EntityAIBase task) {
-      Iterator iterator = this.taskEntries.iterator();
+    public void removeTask(EntityAIBase entityAIBase) {
+        Iterator iterator = this.taskEntries.iterator();
 
-      while (iterator.hasNext()) {
-         EntityAITasks.EntityAITaskEntry entityAITaskEntry = (EntityAITasks.EntityAITaskEntry)iterator.next();
-         EntityAIBase action = entityAITaskEntry.action;
-         if (action == task) {
-            if (this.executingTaskEntries.contains(entityAITaskEntry)) {
-               action.resetTask();
-               this.executingTaskEntries.remove(entityAITaskEntry);
-            }
-
-            iterator.remove();
-         }
-      }
-   }
-
-   public void onUpdateTasks() {
-      this.theProfiler.startSection("goalSetup");
-      if (this.tickCount++ % this.tickRate == 0) {
-         for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : this.taskEntries) {
-            boolean flag = this.executingTaskEntries.contains(entityAITaskEntry);
-            if (flag) {
-               if (this.canUse(entityAITaskEntry) && this.canContinue(entityAITaskEntry)) {
-                  continue;
-               }
-
-               entityAITaskEntry.action.resetTask();
-               this.executingTaskEntries.remove(entityAITaskEntry);
-            }
-
-            if (this.canUse(entityAITaskEntry) && entityAITaskEntry.action.shouldExecute()) {
-               entityAITaskEntry.action.startExecuting();
-               this.executingTaskEntries.add(entityAITaskEntry);
-            }
-         }
-      } else {
-         Iterator iterator = this.executingTaskEntries.iterator();
-
-         while (iterator.hasNext()) {
+        while (iterator.hasNext()) {
             EntityAITasks.EntityAITaskEntry entityAITaskEntry = (EntityAITasks.EntityAITaskEntry)iterator.next();
-            if (!this.canContinue(entityAITaskEntry)) {
-               entityAITaskEntry.action.resetTask();
-               iterator.remove();
+            EntityAIBase action = entityAITaskEntry.action;
+            if (action == entityAIBase) {
+                if (this.executingTaskEntries.contains(entityAITaskEntry)) {
+                    action.resetTask();
+                    this.executingTaskEntries.remove(entityAITaskEntry);
+                }
+
+                iterator.remove();
             }
-         }
-      }
+        }
+    }
 
-      this.theProfiler.endSection();
-      this.theProfiler.startSection("goalTick");
+    public void onUpdateTasks() {
+        ArrayList list = new ArrayList();
+        if (this.tickCount++ % 3 == 0) {
+            for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : (Iterable<EntityAITasks.EntityAITaskEntry>)this.taskEntries) {
+                boolean flag = this.executingTaskEntries.contains(entityAITaskEntry);
+                if (flag) {
+                    if (this.canUse(entityAITaskEntry) && this.canContinue(entityAITaskEntry)) {
+                        continue;
+                    }
 
-      for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : this.executingTaskEntries) {
-         entityAITaskEntry.action.updateTask();
-      }
+                    entityAITaskEntry.action.resetTask();
+                    this.executingTaskEntries.remove(entityAITaskEntry);
+                }
 
-      this.theProfiler.endSection();
-   }
-
-   public boolean canContinue(EntityAITasks.EntityAITaskEntry taskEntry) {
-      return taskEntry.action.continueExecuting();
-   }
-
-   public boolean canUse(EntityAITasks.EntityAITaskEntry taskEntry) {
-      for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : this.taskEntries) {
-         if (entityAITaskEntry != taskEntry) {
-            if (taskEntry.priority >= entityAITaskEntry.priority) {
-               if (!this.areTasksCompatible(taskEntry, entityAITaskEntry) && this.executingTaskEntries.contains(entityAITaskEntry)) {
-                  return false;
-               }
-            } else if (!entityAITaskEntry.action.isInterruptible() && this.executingTaskEntries.contains(entityAITaskEntry)) {
-               return false;
+                if (this.canUse(entityAITaskEntry) && entityAITaskEntry.action.shouldExecute()) {
+                    list.add(entityAITaskEntry);
+                    this.executingTaskEntries.add(entityAITaskEntry);
+                }
             }
-         }
-      }
+        } else {
+            Iterator iterator = this.executingTaskEntries.iterator();
 
-      return true;
-   }
+            while (iterator.hasNext()) {
+                EntityAITasks.EntityAITaskEntry entityAITaskEntry = (EntityAITasks.EntityAITaskEntry)iterator.next();
+                if (!entityAITaskEntry.action.continueExecuting()) {
+                    entityAITaskEntry.action.resetTask();
+                    iterator.remove();
+                }
+            }
+        }
 
-   public boolean areTasksCompatible(EntityAITasks.EntityAITaskEntry taskEntry1, EntityAITasks.EntityAITaskEntry taskEntry2) {
-      return (taskEntry1.action.getMutexBits() & taskEntry2.action.getMutexBits()) == 0;
-   }
+        this.theProfiler.startSection("goalStart");
 
-   class EntityAITaskEntry {
-      public int priority;
-      public EntityAIBase action;
+        for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : (Iterable<EntityAITasks.EntityAITaskEntry>)list) {
+            this.theProfiler.startSection(entityAITaskEntry.action.getClass().getSimpleName());
+            entityAITaskEntry.action.startExecuting();
+            this.theProfiler.endSection();
+        }
 
-      public EntityAITaskEntry(int priorityIn, EntityAIBase task) {
-         this.priority = priorityIn;
-         this.action = task;
-      }
-   }
+        this.theProfiler.endSection();
+        this.theProfiler.startSection("goalTick");
+
+        for (EntityAITasks.EntityAITaskEntry entityAITaskEntry : (Iterable<EntityAITasks.EntityAITaskEntry>)this.executingTaskEntries) {
+            entityAITaskEntry.action.updateTask();
+        }
+
+        this.theProfiler.endSection();
+    }
+
+    public boolean canContinue(EntityAITasks.EntityAITaskEntry entityAITaskEntry) {
+        this.theProfiler.startSection("canContinue");
+        boolean continueExecuting = entityAITaskEntry.action.continueExecuting();
+        this.theProfiler.endSection();
+        return continueExecuting;
+    }
+
+    public boolean canUse(EntityAITasks.EntityAITaskEntry entityAITaskEntry) {
+        this.theProfiler.startSection("canUse");
+
+        for (EntityAITasks.EntityAITaskEntry entityAITaskEntry2 : (Iterable<EntityAITasks.EntityAITaskEntry>)this.taskEntries) {
+            if (entityAITaskEntry2 != entityAITaskEntry) {
+                if (entityAITaskEntry.priority >= entityAITaskEntry2.priority) {
+                    if (this.executingTaskEntries.contains(entityAITaskEntry2) && !this.areTasksCompatible(entityAITaskEntry, entityAITaskEntry2)) {
+                        this.theProfiler.endSection();
+                        return false;
+                    }
+                } else if (this.executingTaskEntries.contains(entityAITaskEntry2) && !entityAITaskEntry2.action.isInterruptible()) {
+                    this.theProfiler.endSection();
+                    return false;
+                }
+            }
+        }
+
+        this.theProfiler.endSection();
+        return true;
+    }
+
+    public boolean areTasksCompatible(EntityAITasks.EntityAITaskEntry entityAITaskEntry, EntityAITasks.EntityAITaskEntry entityAITaskEntry2) {
+        return (entityAITaskEntry.action.getMutexBits() & entityAITaskEntry2.action.getMutexBits()) == 0;
+    }
+
+    public class EntityAITaskEntry {
+        public int priority;
+        public EntityAIBase action;
+
+        public EntityAITaskEntry(int n, EntityAIBase entityAIBase) {
+            this.priority = n;
+            this.action = entityAIBase;
+        }
+    }
 }

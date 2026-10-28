@@ -1,13 +1,11 @@
 package net.minecraft.inventory;
 
-import net.minecraft.util.IChatComponent;
-
 public class AnimalChest extends InventoryBasic {
-   public AnimalChest(String inventoryName, int slotCount) {
-      super(inventoryName, false, slotCount);
-   }
+    public AnimalChest(String str, int n) {
+        super(str, false, n);
+    }
 
-   public AnimalChest(IChatComponent invTitle, int slotCount) {
-      super(invTitle, slotCount);
-   }
+    public AnimalChest(String str, boolean flag, int n) {
+        super(str, flag, n);
+    }
 }

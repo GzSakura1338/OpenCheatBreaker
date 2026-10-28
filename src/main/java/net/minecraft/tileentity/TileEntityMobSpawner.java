@@ -5,72 +5,77 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S35PacketUpdateTileEntity;
 import net.minecraft.tileentity.MobSpawnerBaseLogic.WeightedRandomMinecart;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.ITickable;
 import net.minecraft.world.World;
 
-public class TileEntityMobSpawner extends TileEntity implements ITickable {
-   public MobSpawnerBaseLogic spawnerLogic = new MobSpawnerBaseLogic() {
-      @Override
-      public void addBlockEvent(int id) {
-         TileEntityMobSpawner.this.worldObj.addBlockEvent(TileEntityMobSpawner.this.pos, Blocks.mob_spawner, id, 0);
-      }
+public class TileEntityMobSpawner extends TileEntity {
+    public MobSpawnerBaseLogic behaviorHandler = new MobSpawnerBaseLogic() {
+        @Override
+        public void addBlockEvent(int n) {
+            TileEntityMobSpawner.this.worldObj
+                .addBlockEvent(TileEntityMobSpawner.this.xCoord, TileEntityMobSpawner.this.yCoord, TileEntityMobSpawner.this.zCoord, Blocks.mob_spawner, n, 0);
+        }
 
-      @Override
-      public World getSpawnerWorld() {
-         return TileEntityMobSpawner.this.worldObj;
-      }
+        @Override
+        public World getSpawnerWorld() {
+            return TileEntityMobSpawner.this.worldObj;
+        }
 
-      @Override
-      public BlockPos getSpawnerPosition() {
-         return TileEntityMobSpawner.this.pos;
-      }
+        @Override
+        public int getSpawnerX() {
+            return TileEntityMobSpawner.this.xCoord;
+        }
 
-      @Override
-      public void setRandomEntity(WeightedRandomMinecart weightedRandomMinecart) {
-         super.setRandomEntity(weightedRandomMinecart);
-         if (this.getSpawnerWorld() != null) {
-            this.getSpawnerWorld().markBlockForUpdate(TileEntityMobSpawner.this.pos);
-         }
-      }
-   };
+        @Override
+        public int getSpawnerY() {
+            return TileEntityMobSpawner.this.yCoord;
+        }
 
-   @Override
-   public void readFromNBT(NBTTagCompound compound) {
-      super.readFromNBT(compound);
-      this.spawnerLogic.readFromNBT(compound);
-   }
+        @Override
+        public int getSpawnerZ() {
+            return TileEntityMobSpawner.this.zCoord;
+        }
 
-   @Override
-   public void writeToNBT(NBTTagCompound compound) {
-      super.writeToNBT(compound);
-      this.spawnerLogic.writeToNBT(compound);
-   }
+        @Override
+        public void setRandomEntity(WeightedRandomMinecart weightedRandomMinecart) {
+            super.setRandomEntity(weightedRandomMinecart);
+            if (this.getSpawnerWorld() != null) {
+                this.getSpawnerWorld().markBlockForUpdate(TileEntityMobSpawner.this.xCoord, TileEntityMobSpawner.this.yCoord, TileEntityMobSpawner.this.zCoord);
+            }
+        }
+    };
 
-   @Override
-   public void update() {
-      this.spawnerLogic.updateSpawner();
-   }
+    @Override
+    public void readFromNBT(NBTTagCompound compound) {
+        super.readFromNBT(compound);
+        this.behaviorHandler.readFromNBT(compound);
+    }
 
-   @Override
-   public Packet getDescriptionPacket() {
-      NBTTagCompound nbttagCompound = new NBTTagCompound();
-      this.writeToNBT(nbttagCompound);
-      nbttagCompound.removeTag("SpawnPotentials");
-      return new S35PacketUpdateTileEntity(this.pos, 1, nbttagCompound);
-   }
+    @Override
+    public void writeToNBT(NBTTagCompound compound) {
+        super.writeToNBT(compound);
+        this.behaviorHandler.writeToNBT(compound);
+    }
 
-   @Override
-   public boolean receiveClientEvent(int id, int type) {
-      return this.spawnerLogic.setDelayToMin(id) ? true : super.receiveClientEvent(id, type);
-   }
+    @Override
+    public void updateEntity() {
+        this.behaviorHandler.updateSpawner();
+        super.updateEntity();
+    }
 
-   @Override
-   public boolean alwaysFalse() {
-      return true;
-   }
+    @Override
+    public Packet getDescriptionPacket() {
+        NBTTagCompound nbttagCompound = new NBTTagCompound();
+        this.writeToNBT(nbttagCompound);
+        nbttagCompound.removeTag("SpawnPotentials");
+        return new S35PacketUpdateTileEntity(this.xCoord, this.yCoord, this.zCoord, 1, nbttagCompound);
+    }
 
-   public MobSpawnerBaseLogic getSpawnerBaseLogic() {
-      return this.spawnerLogic;
-   }
+    @Override
+    public boolean receiveClientEvent(int id, int type) {
+        return this.behaviorHandler.setDelayToMin(id) || super.receiveClientEvent(id, type);
+    }
+
+    public MobSpawnerBaseLogic getLogic() {
+        return this.behaviorHandler;
+    }
 }

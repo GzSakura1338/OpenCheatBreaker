@@ -8,40 +8,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IntegerListPacket extends AbstractPacket {
-   public List<Integer> values = new ArrayList<>();
+    public List<Integer> values = new ArrayList<>();
 
-   public List<Integer> getValues() {
-      return this.values;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handleIntegerList(this);
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      int readInt = packetBuffer.getByteBuf().readInt();
-      this.values = new ArrayList<>();
+    public IntegerListPacket() {
+    }
 
-      for (int i = 0; i < readInt; i++) {
-         this.values.add(packetBuffer.getByteBuf().readInt());
-      }
-   }
+    public IntegerListPacket(List<Integer> list) {
+        this.values = list;
+    }
 
-   public IntegerListPacket() {
-   }
+    public List<Integer> getValues() {
+        return this.values;
+    }
 
-   public IntegerListPacket(List<Integer> list) {
-      this.values = list;
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        int readInt = packetBuffer.getByteBuf().readInt();
+        this.values = new ArrayList<>();
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handleIntegerList(this);
-   }
+        for (int i = 0; i < readInt; i++) {
+            this.values.add(packetBuffer.getByteBuf().readInt());
+        }
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeInt(this.values.size());
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeInt(this.values.size());
 
-      for (int n : this.values) {
-         packetBuffer.getByteBuf().writeInt(n);
-      }
-   }
+        for (int n : this.values) {
+            packetBuffer.getByteBuf().writeInt(n);
+        }
+    }
 }

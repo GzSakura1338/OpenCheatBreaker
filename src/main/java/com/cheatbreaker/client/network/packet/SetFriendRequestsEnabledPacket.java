@@ -6,31 +6,31 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.ServerPacketHandler;
 
 public class SetFriendRequestsEnabledPacket extends AbstractPacket {
-   public boolean enabled;
+    public boolean enabled;
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeBoolean(this.enabled);
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleSetFriendRequestsEnabled(this);
+    }
 
-   public SetFriendRequestsEnabledPacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.enabled = packetBuffer.getByteBuf().readBoolean();
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleSetFriendRequestsEnabled(this);
-   }
+    public SetFriendRequestsEnabledPacket(boolean flag) {
+        this.enabled = flag;
+    }
 
-   public SetFriendRequestsEnabledPacket(boolean flag) {
-      this.enabled = flag;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeBoolean(this.enabled);
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.enabled = packetBuffer.getByteBuf().readBoolean();
-   }
+    public SetFriendRequestsEnabledPacket() {
+    }
 
-   public boolean isEnabled() {
-      return this.enabled;
-   }
+    public boolean isEnabled() {
+        return this.enabled;
+    }
 }

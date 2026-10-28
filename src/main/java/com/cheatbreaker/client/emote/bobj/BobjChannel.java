@@ -6,118 +6,118 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BobjChannel {
-   public List<Keyframe> keyframes = new ArrayList<>();
-   public String property;
-   public int axis;
+    public List<Keyframe> keyframes = new ArrayList<>();
+    public String property;
+    public int axis;
 
-   public Keyframe getKeyframe(float f, boolean flag) {
-      int size = this.keyframes.size();
-      if (size == 0) {
-         return null;
-      }
+    public void applyBlended(Bone bone, float f, float f2) {
+        float valueAt = this.getValueAt(f);
+        if (this.property.equals("location")) {
+            if (this.axis == 0) {
+                bone.locationX = valueAt + (bone.locationX - valueAt) * f2;
+            } else if (this.axis == 1) {
+                bone.locationY = valueAt + (bone.locationY - valueAt) * f2;
+            } else if (this.axis == 2) {
+                bone.locationZ = valueAt + (bone.locationZ - valueAt) * f2;
+            }
+        } else if (this.property.equals("rotation")) {
+            if (this.axis == 0) {
+                bone.rotationX = valueAt + (bone.rotationX - valueAt) * f2;
+            } else if (this.axis == 1) {
+                bone.rotationY = valueAt + (bone.rotationY - valueAt) * f2;
+            } else if (this.axis == 2) {
+                bone.rotationZ = valueAt + (bone.rotationZ - valueAt) * f2;
+            }
+        } else if (this.property.equals("scale")) {
+            if (this.axis == 0) {
+                bone.scaleX = valueAt + (bone.scaleX - valueAt) * f2;
+            } else if (this.axis == 1) {
+                bone.scaleY = valueAt + (bone.scaleY - valueAt) * f2;
+            } else if (this.axis == 2) {
+                bone.scaleZ = valueAt + (bone.scaleZ - valueAt) * f2;
+            }
+        }
+    }
 
-      if (size == 1) {
-         return this.keyframes.get(0);
-      }
+    public void apply(Bone bone, float f) {
+        if (this.property.equals("location")) {
+            if (this.axis == 0) {
+                bone.locationX = this.getValueAt(f);
+            } else if (this.axis == 1) {
+                bone.locationY = this.getValueAt(f);
+            } else if (this.axis == 2) {
+                bone.locationZ = this.getValueAt(f);
+            }
+        } else if (this.property.equals("rotation")) {
+            if (this.axis == 0) {
+                bone.rotationX = this.getValueAt(f);
+            } else if (this.axis == 1) {
+                bone.rotationY = this.getValueAt(f);
+            } else if (this.axis == 2) {
+                bone.rotationZ = this.getValueAt(f);
+            }
+        } else if (this.property.equals("scale")) {
+            if (this.axis == 0) {
+                bone.scaleX = this.getValueAt(f);
+            } else if (this.axis == 1) {
+                bone.scaleY = this.getValueAt(f);
+            } else if (this.axis == 2) {
+                bone.scaleZ = this.getValueAt(f);
+            }
+        }
+    }
 
-      Keyframe keyframe = null;
+    public BobjChannel(String str, int n) {
+        this.property = str;
+        this.axis = n;
+    }
 
-      for (int i = 0; i < size; i++) {
-         keyframe = this.keyframes.get(i);
-         if (keyframe.frame > f && i != 0) {
-            return flag ? keyframe : this.keyframes.get(i - 1);
-         }
-      }
+    public float getValueAt(float f) {
+        int size = this.keyframes.size();
+        if (size <= 0) {
+            return 0.0F;
+        }
 
-      return keyframe;
-   }
+        if (size == 1) {
+            return this.keyframes.get(0).value;
+        }
 
-   public BobjChannel(String str, int n) {
-      this.property = str;
-      this.axis = n;
-   }
+        Keyframe keyframe = this.keyframes.get(0);
+        if (keyframe.frame > f) {
+            return keyframe.value;
+        }
 
-   public float getValueAt(float f) {
-      int size = this.keyframes.size();
-      if (size <= 0) {
-         return 0.0F;
-      }
+        for (int i = 0; i < size; i++) {
+            keyframe = this.keyframes.get(i);
+            if (keyframe.frame > f && i != 0) {
+                Keyframe keyframe2 = this.keyframes.get(i - 1);
+                float f2 = (f - keyframe2.frame) / (keyframe.frame - keyframe2.frame);
+                return keyframe2.interpolate(f2, keyframe);
+            }
+        }
 
-      if (size == 1) {
-         return this.keyframes.get(0).value;
-      }
+        return keyframe.value;
+    }
 
-      Keyframe keyframe = this.keyframes.get(0);
-      if (keyframe.frame > f) {
-         return keyframe.value;
-      }
+    public Keyframe getKeyframe(float f, boolean flag) {
+        int size = this.keyframes.size();
+        if (size == 0) {
+            return null;
+        }
 
-      for (int i = 0; i < size; i++) {
-         keyframe = this.keyframes.get(i);
-         if (keyframe.frame > f && i != 0) {
-            Keyframe keyframe2 = this.keyframes.get(i - 1);
-            float f2 = (f - keyframe2.frame) / (keyframe.frame - keyframe2.frame);
-            return keyframe2.interpolate(f2, keyframe);
-         }
-      }
+        if (size == 1) {
+            return this.keyframes.get(0);
+        }
 
-      return keyframe.value;
-   }
+        Keyframe keyframe = null;
 
-   public void apply(Bone bone, float f) {
-      if (this.property.equals("location")) {
-         if (this.axis == 0) {
-            bone.locationX = this.getValueAt(f);
-         } else if (this.axis == 1) {
-            bone.locationY = this.getValueAt(f);
-         } else if (this.axis == 2) {
-            bone.locationZ = this.getValueAt(f);
-         }
-      } else if (this.property.equals("rotation")) {
-         if (this.axis == 0) {
-            bone.rotationX = this.getValueAt(f);
-         } else if (this.axis == 1) {
-            bone.rotationY = this.getValueAt(f);
-         } else if (this.axis == 2) {
-            bone.rotationZ = this.getValueAt(f);
-         }
-      } else if (this.property.equals("scale")) {
-         if (this.axis == 0) {
-            bone.scaleX = this.getValueAt(f);
-         } else if (this.axis == 1) {
-            bone.scaleY = this.getValueAt(f);
-         } else if (this.axis == 2) {
-            bone.scaleZ = this.getValueAt(f);
-         }
-      }
-   }
+        for (int i = 0; i < size; i++) {
+            keyframe = this.keyframes.get(i);
+            if (keyframe.frame > f && i != 0) {
+                return flag ? keyframe : this.keyframes.get(i - 1);
+            }
+        }
 
-   public void applyBlended(Bone bone, float f, float f2) {
-      float valueAt = this.getValueAt(f);
-      if (this.property.equals("location")) {
-         if (this.axis == 0) {
-            bone.locationX = valueAt + (bone.locationX - valueAt) * f2;
-         } else if (this.axis == 1) {
-            bone.locationY = valueAt + (bone.locationY - valueAt) * f2;
-         } else if (this.axis == 2) {
-            bone.locationZ = valueAt + (bone.locationZ - valueAt) * f2;
-         }
-      } else if (this.property.equals("rotation")) {
-         if (this.axis == 0) {
-            bone.rotationX = valueAt + (bone.rotationX - valueAt) * f2;
-         } else if (this.axis == 1) {
-            bone.rotationY = valueAt + (bone.rotationY - valueAt) * f2;
-         } else if (this.axis == 2) {
-            bone.rotationZ = valueAt + (bone.rotationZ - valueAt) * f2;
-         }
-      } else if (this.property.equals("scale")) {
-         if (this.axis == 0) {
-            bone.scaleX = valueAt + (bone.scaleX - valueAt) * f2;
-         } else if (this.axis == 1) {
-            bone.scaleY = valueAt + (bone.scaleY - valueAt) * f2;
-         } else if (this.axis == 2) {
-            bone.scaleZ = valueAt + (bone.scaleZ - valueAt) * f2;
-         }
-      }
-   }
+        return keyframe;
+    }
 }

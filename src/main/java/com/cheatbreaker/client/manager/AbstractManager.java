@@ -4,8 +4,8 @@ import com.cheatbreaker.client.CheatBreaker;
 import net.minecraft.client.Minecraft;
 
 public abstract class AbstractManager {
-   public CheatBreaker cheatBreaker = CheatBreaker.getInstance();
-   public Minecraft mc = this.cheatBreaker.getMc();
+    public CheatBreaker cheatBreaker = CheatBreaker.getInstance();
+    public Minecraft mc = this.cheatBreaker.getMc();
 
-   public abstract void run();
+    public abstract void initialize() throws java.io.IOException;
 }

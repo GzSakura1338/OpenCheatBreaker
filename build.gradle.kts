@@ -1,8 +1,3 @@
-import groovy.json.JsonOutput
-import groovy.json.JsonSlurper
-import java.security.MessageDigest
-import java.util.zip.ZipFile
-
 plugins {
     java
     idea
@@ -15,7 +10,7 @@ idea {
 }
 
 group = "com.cheatbreaker"
-version = "1.8.9"
+version = "1.7.10"
 
 java {
     toolchain {
@@ -63,8 +58,8 @@ val prepareGameRun = tasks.register("prepareGameRun") {
     val run = gameRunDir
     doLast {
         val downloads = file(launcher.getOrElse("")).resolve("downloads")
-        require(downloads.resolve("natives").isDirectory && downloads.resolve("assets/objects").isDirectory) {
-            "CheatBreaker launcher data not found under $downloads. Run the CheatBreaker launcher once, or pass -Pcb.launcherDir=<launcher data dir>"
+        require(downloads.resolve("natives").isDirectory && downloads.resolve("assets/indexes/1.7.10.json").isFile) {
+            "CheatBreaker launcher data not found under $downloads. Run the CheatBreaker launcher once (it downloads 1.7.10), or pass -Pcb.launcherDir=<launcher data dir>"
         }
         run.asFile.resolve("mc").mkdirs()
         for (name in listOf("natives", "assets")) {
@@ -115,110 +110,4 @@ tasks.register<JavaExec>("runGame") {
             "--launcherVersion", "2026.10.0"
         )
     })
-}
-
-val releaseId = "OpenCheatBreaker-${project.version}"
-val releaseRoot = layout.buildDirectory.dir("release/$releaseId")
-
-val releasePackage = tasks.register("releasePackage") {
-    group = "distribution"
-    description = "Builds a launcher-style version folder (versions/, libraries/, natives/, start.bat) in build/release"
-    dependsOn(tasks.jar)
-    val jarFile = tasks.jar.flatMap { it.archiveFile }
-    val libsDir = layout.projectDirectory.dir("libs")
-    val releaseSource = layout.projectDirectory.dir("release")
-    val outputRoot = releaseRoot
-    inputs.file(jarFile)
-    inputs.dir(libsDir)
-    inputs.dir(releaseSource)
-    outputs.dir(outputRoot)
-    doLast {
-        val root = outputRoot.get().asFile
-        root.deleteRecursively()
-
-        fun sha1(file: File): String =
-            MessageDigest.getInstance("SHA-1").digest(file.readBytes()).joinToString("") { "%02x".format(it) }
-
-        fun place(artifact: Map<*, *>): File {
-            val path = artifact["path"] as String
-            val name = path.substringAfterLast('/')
-            val source = libsDir.file(name).asFile.takeIf { it.isFile } ?: releaseSource.file("libraries/$path").asFile
-            if (!source.isFile) {
-                throw GradleException("Library $path is not in libs/ or release/libraries/")
-            }
-            if (sha1(source) != artifact["sha1"]) {
-                throw GradleException("Checksum of $path does not match release/version-template.json")
-            }
-            val target = File(root, "libraries/$path")
-            target.parentFile.mkdirs()
-            source.copyTo(target, overwrite = true)
-            return target
-        }
-
-        val template = LinkedHashMap((JsonSlurper().parse(releaseSource.file("version-template.json").asFile, "UTF-8") as Map<*, *>).entries.associate { it.key as String to it.value })
-        template["id"] = releaseId
-
-        val classpath = mutableListOf<String>()
-        val nativeJars = mutableListOf<File>()
-        for (library in template["libraries"] as List<*>) {
-            val downloads = (library as Map<*, *>)["downloads"] as Map<*, *>
-            (downloads["artifact"] as Map<*, *>?)?.let {
-                place(it)
-                classpath += "libraries/" + it["path"]
-            }
-            ((downloads["classifiers"] as Map<*, *>?)?.get("natives-windows") as Map<*, *>?)?.let { nativeJars += place(it) }
-        }
-
-        val versionDir = File(root, "versions/$releaseId")
-        versionDir.mkdirs()
-        jarFile.get().asFile.copyTo(File(versionDir, "$releaseId.jar"), overwrite = true)
-        classpath += "versions/$releaseId/$releaseId.jar"
-        File(versionDir, "$releaseId.json").writeText(JsonOutput.prettyPrint(JsonOutput.toJson(template)) + "\n")
-
-        val nativesDir = File(root, "natives")
-        nativesDir.mkdirs()
-        for (nativeJar in nativeJars) {
-            ZipFile(nativeJar).use { zip ->
-                for (entry in zip.entries().asSequence()) {
-                    val name = entry.name
-                    if (entry.isDirectory || name.startsWith("META-INF/") || name.contains("openal", ignoreCase = true)) {
-                        continue
-                    }
-                    File(nativesDir, name).outputStream().use { out -> zip.getInputStream(entry).use { it.copyTo(out) } }
-                }
-            }
-        }
-
-        val runtimeDir = File(root, "runtime")
-        runtimeDir.mkdirs()
-        File(runtimeDir, "java.args").writeText(
-            listOf(
-                "-Djava.library.path=natives",
-                "-Xmx2G",
-                "-XX:-UseAdaptiveSizePolicy",
-                "-XX:-OmitStackTraceInFastThrow",
-                "-Djava.locale.providers=JRE",
-                "-cp",
-                classpath.joinToString(";")
-            ).joinToString("\n") + "\n"
-        )
-
-        File(root, "start.bat").writeText(releaseSource.file("start.bat").asFile.readText().replace("\r\n", "\n").replace("\n", "\r\n"))
-        releaseSource.file("README.txt").asFile.copyTo(File(root, "README.txt"), overwrite = true)
-        File(root, "tools").mkdirs()
-        releaseSource.file("tools/download-assets.ps1").asFile.copyTo(File(root, "tools/download-assets.ps1"), overwrite = true)
-    }
-}
-
-tasks.register<Zip>("releaseZip") {
-    group = "distribution"
-    description = "Packs the version folder into build/distributions/$releaseId.zip"
-    dependsOn(releasePackage)
-    from(layout.buildDirectory.dir("release")) {
-        include("$releaseId/**")
-    }
-    archiveFileName = "$releaseId.zip"
-    destinationDirectory = layout.buildDirectory.dir("distributions")
-    isPreserveFileTimestamps = false
-    isReproducibleFileOrder = true
 }

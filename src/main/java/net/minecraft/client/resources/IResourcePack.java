@@ -9,15 +9,15 @@ import net.minecraft.client.resources.data.IMetadataSerializer;
 import net.minecraft.util.ResourceLocation;
 
 public interface IResourcePack {
-   InputStream getInputStream(ResourceLocation resourceLocation) throws IOException;
+    InputStream getInputStream(ResourceLocation resourceLocation) throws IOException;
 
-   boolean resourceExists(ResourceLocation resourceLocation);
+    boolean resourceExists(ResourceLocation resourceLocation);
 
-   Set<String> getResourceDomains();
+    Set getResourceDomains();
 
-   <T extends IMetadataSection> T getPackMetadata(IMetadataSerializer metadataSerializer, String str) throws IOException;
+    IMetadataSection getPackMetadata(IMetadataSerializer metadataSerializer, String str) throws IOException;
 
-   BufferedImage getPackImage() throws IOException;
+    BufferedImage getPackImage() throws IOException;
 
-   String getPackName();
+    String getPackName();
 }

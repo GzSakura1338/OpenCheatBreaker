@@ -1,129 +1,215 @@
 package com.cheatbreaker.client.mod.impl;
 
 import com.cheatbreaker.client.event.ClientTickEvent;
-import com.cheatbreaker.client.event.EntityItemDoubleEvent;
+import com.cheatbreaker.client.event.RenderDroppedItemEvent;
 import com.cheatbreaker.client.mod.AbstractMod;
 import com.cheatbreaker.client.mod.ModCategory;
 import com.cheatbreaker.client.mod.setting.Setting;
 import java.util.Random;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
+import net.minecraft.block.Block;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RenderBlocks;
+import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.texture.TextureMap;
-import net.minecraft.client.resources.model.IBakedModel;
+import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.item.Item;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemCloth;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 public class ItemPhysicsMod extends AbstractMod {
-   public long longValue;
-   public double doubleValue;
-   public Random random = new Random();
-   public Setting rotationSpeed;
+    public Random random = new Random();
+    public RenderBlocks renderBlocks = new RenderBlocks();
+    public long lastTickNanos;
+    public Setting rotationSpeed = new Setting(this, "Rotation Speed").changeValue(50.0).setRange(10.0, 100.0);
+    public double rotation;
 
-   public ResourceLocation getResourceLocation2() {
-      return TextureMap.locationBlocksTexture;
-   }
+    public void onRenderDroppedItemEvent(RenderDroppedItemEvent renderDroppedItemEvent) {
+        renderDroppedItemEvent.setCancelled(true);
+        this.rotation = (System.nanoTime() - this.lastTickNanos) / 2500000.0 * (this.rotationSpeed.getDoubleValue() / 1000.0);
+        if (!this.mc.inGameHasFocus) {
+            this.rotation = 0.0;
+        }
 
-   public int computeInt(ItemStack itemStack) {
-      if (itemStack.stackSize > 48) {
-         return 5;
-      } else if (itemStack.stackSize > 32) {
-         return 4;
-      } else if (itemStack.stackSize > 16) {
-         return 3;
-      } else {
-         return itemStack.stackSize > 1 ? 2 : 1;
-      }
-   }
-
-   public void onEntityItemDoubleEvent(EntityItemDoubleEvent entityItemDoubleEvent) {
-      entityItemDoubleEvent.setFlag(true);
-      this.doubleValue = (System.nanoTime() - this.longValue) / 2500000.0 * (this.rotationSpeed.getDoubleValue() / 1000.0);
-      if (!this.mc.inGameHasFocus) {
-         this.doubleValue = 0.0;
-      }
-
-      EntityItem entityItem;
-      ItemStack itemStack;
-      int n = (itemStack = (entityItem = entityItemDoubleEvent.getEntityItem()).getEntityItem()) != null && itemStack.getItem() != null
-         ? Item.getIdFromItem(itemStack.getItem()) + itemStack.getMetadata()
-         : 187;
-      this.random.setSeed(n);
-      this.mc.getTextureManager().bindTexture(this.getResourceLocation2());
-      this.mc.getTextureManager().getTexture(this.getResourceLocation2()).setBlurMipmap(false, false);
-      GlStateManager.enableRescaleNormal();
-      GlStateManager.alphaFunc(516, 0.1F);
-      GlStateManager.enableBlend();
-      RenderHelper.enableStandardItemLighting();
-      GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
-      GlStateManager.pushMatrix();
-      IBakedModel itemModel = this.mc.getRenderItem().getItemModelMesher().getItemModel(itemStack);
-      boolean isGui3d = itemModel.isGui3d();
-      boolean isGui3d2 = itemModel.isGui3d();
-      int computeInt = this.computeInt(itemStack);
-      GlStateManager.translate((float)entityItemDoubleEvent.getX(), (float)entityItemDoubleEvent.getY(), (float)entityItemDoubleEvent.getZ());
-      if (itemModel.isGui3d()) {
-         GlStateManager.scale(0.5F, 0.5F, 0.5F);
-      }
-
-      GL11.glRotatef(90.0F, 1.0F, 0.0F, 0.0F);
-      GL11.glRotatef(entityItem.rotationYaw, 0.0F, 0.0F, 1.0F);
-      GlStateManager.translate(0.0, 0.0, isGui3d2 ? -0.08 : -0.04);
-      if (isGui3d2 || this.mc.getRenderManager().options != null) {
-         if (isGui3d2) {
-            if (!entityItem.onGround) {
-               double d = this.doubleValue * 2.0;
-               entityItem.rotationPitch = (float)(entityItem.rotationPitch + d);
+        EntityItem entityItem;
+        ItemStack itemStack;
+        if ((itemStack = (entityItem = (EntityItem)renderDroppedItemEvent.getEntity()).getEntityItem()).getItem() != null) {
+            this.mc.renderEngine.bindTexture(this.mc.renderEngine.getResourceLocation(entityItem.getEntityItem().getItemSpriteNumber()));
+            TextureUtil.saveAndSetTextureScaling(false, false, 1.0F);
+            this.random.setSeed(187L);
+            GL11.glPushMatrix();
+            byte b = 1;
+            if (entityItem.getEntityItem().stackSize > 1) {
+                b = 2;
             }
-         } else if (!Double.isNaN(entityItem.posX) && !Double.isNaN(entityItem.posY) && !Double.isNaN(entityItem.posZ) && entityItem.worldObj != null) {
-            if (entityItem.onGround) {
-               entityItem.rotationPitch = 0.0F;
+
+            if (entityItem.getEntityItem().stackSize > 5) {
+                b = 3;
+            }
+
+            if (entityItem.getEntityItem().stackSize > 20) {
+                b = 4;
+            }
+
+            if (entityItem.getEntityItem().stackSize > 40) {
+                b = 5;
+            }
+
+            GL11.glTranslatef((float)renderDroppedItemEvent.getX(), (float)renderDroppedItemEvent.getY(), (float)renderDroppedItemEvent.getZ());
+            GL11.glEnable(32826);
+            if (itemStack.getItemSpriteNumber() == 0
+                && itemStack.getItem() instanceof ItemBlock
+                && RenderBlocks.renderItemIn3d(Block.getBlockFromItem(itemStack.getItem()).getRenderType())) {
+                Block blockFromItem = Block.getBlockFromItem(itemStack.getItem());
+                if (renderDroppedItemEvent.getEntity().onGround) {
+                    GL11.glScalef(1.25F, 1.25F, 1.25F);
+                    GL11.glTranslatef(0.0F, 0.05F, 0.0F);
+                    GL11.glTranslatef(0.0F, 0.09F, 0.0F);
+                    GL11.glRotatef(-90.0F, 0.0F, 1.0F, 0.0F);
+                } else {
+                    GL11.glRotatef(entityItem.rotationYaw, 0.0F, 1.0F, 0.0F);
+                    GL11.glRotatef(entityItem.rotationPitch, 1.0F, 0.0F, 0.0F);
+                }
+
+                float f = 0.25F;
+                int renderType = blockFromItem.getRenderType();
+                if (renderType == 1 || renderType == 19 || renderType == 12 || renderType == 2) {
+                    f = 0.5F;
+                }
+
+                if (blockFromItem.getRenderBlockPass() > 0) {
+                    GL11.glAlphaFunc(516, 0.1F);
+                    GL11.glEnable(3042);
+                    OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+                }
+
+                GL11.glScalef(f, f, f);
+
+                for (int i = 0; i < b; i++) {
+                    GL11.glPushMatrix();
+                    if (i > 0) {
+                        float f2 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.2F / f;
+                        float f3 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.2F / f;
+                        float f4 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.2F / f;
+                        GL11.glTranslatef(f2, f3, f4);
+                    }
+
+                    if (entityItem.rotationPitch > 360.0F) {
+                        entityItem.rotationPitch = 0.0F;
+                    }
+
+                    if (entityItem != null && !Double.isNaN(entityItem.posX) && !Double.isNaN(entityItem.posY) && !Double.isNaN(entityItem.posZ) && entityItem.worldObj != null && !entityItem.onGround) {
+                        double d = this.rotation * 2.0;
+                        entityItem.rotationPitch = (float)(entityItem.rotationPitch + d);
+                    }
+
+                    this.renderBlocks.renderBlockAsItem(blockFromItem, itemStack.getMetadata(), 1.0F);
+                    GL11.glPopMatrix();
+                }
+
+                if (blockFromItem.getRenderBlockPass() > 0) {
+                    GL11.glDisable(3042);
+                }
+            } else if (itemStack.getItem().requiresMultipleRenderPasses()) {
+                if (renderDroppedItemEvent.getRenderItem().renderWithColor) {
+                    GL11.glScalef(0.5128205F, 0.5128205F, 0.5128205F);
+                    GL11.glTranslatef(0.0F, -0.05F, 0.0F);
+                } else {
+                    GL11.glScalef(0.5F, 0.5F, 0.5F);
+                }
+
+                for (int i = 0; i <= 1; i++) {
+                    if (!renderDroppedItemEvent.getEntity().onGround) {
+                        GL11.glRotatef((float)this.rotation, 0.0F, 1.0F, 0.0F);
+                        GL11.glRotatef((float)this.rotation, 1.0F, 0.0F, 0.0F);
+                    }
+
+                    this.random.setSeed(187L);
+                    IIcon iconFromDamageForRenderPass = itemStack.getItem().getIconFromDamageForRenderPass(itemStack.getMetadata(), i);
+                    if (renderDroppedItemEvent.getRenderItem().renderWithColor) {
+                        int colorFromItemStack = itemStack.getItem().getColorFromItemStack(itemStack, i);
+                        float f = (colorFromItemStack >> 16 & 0xFF) / 255.0F;
+                        float f2 = (colorFromItemStack >> 8 & 0xFF) / 255.0F;
+                        float f3 = (colorFromItemStack & 0xFF) / 255.0F;
+                        GL11.glColor4f(f, f2, f3, 1.0F);
+                        renderDroppedItemEvent.getRenderItem().renderDroppedItem(entityItem, iconFromDamageForRenderPass, b, renderDroppedItemEvent.getPartialTicks(), f, f2, f3);
+                    } else {
+                        renderDroppedItemEvent.getRenderItem().renderDroppedItem(entityItem, iconFromDamageForRenderPass, b, renderDroppedItemEvent.getPartialTicks(), 1.0F, 1.0F, 1.0F);
+                    }
+                }
             } else {
-               double d = this.doubleValue * 2.0;
-               entityItem.rotationPitch = (float)(entityItem.rotationPitch + d);
+                if (entityItem != null && !Double.isNaN(entityItem.posX) && !Double.isNaN(entityItem.posY) && !Double.isNaN(entityItem.posZ) && entityItem.worldObj != null && !entityItem.onGround) {
+                    if (entityItem.onGround) {
+                        entityItem.rotationPitch = 0.0F;
+                    } else {
+                        double d = this.rotation * 2.0;
+                        entityItem.rotationPitch = (float)(entityItem.rotationPitch + d);
+                    }
+                }
+
+                GL11.glRotatef(entityItem.rotationPitch, 1.0F, 0.0F, 0.0F);
+                if (itemStack != null && itemStack.getItem() instanceof ItemCloth) {
+                    GL11.glAlphaFunc(516, 0.1F);
+                    GL11.glEnable(3042);
+                    OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+                }
+
+                if (RenderItem.renderInFrame) {
+                    GL11.glScalef(0.5128205F, 0.5128205F, 0.5128205F);
+                    GL11.glTranslatef(0.0F, -0.05F, 0.0F);
+                } else {
+                    GL11.glScalef(0.5F, 0.5F, 0.5F);
+                }
+
+                IIcon iconIndex = itemStack.getIconIndex();
+                if (renderDroppedItemEvent.getRenderItem().renderWithColor) {
+                    int colorFromItemStack = itemStack.getItem().getColorFromItemStack(itemStack, 0);
+                    float f = (colorFromItemStack >> 16 & 0xFF) / 255.0F;
+                    float f2 = (colorFromItemStack >> 8 & 0xFF) / 255.0F;
+                    float f3 = (colorFromItemStack & 0xFF) / 255.0F;
+                    renderDroppedItemEvent.getRenderItem().renderDroppedItem(entityItem, iconIndex, b, renderDroppedItemEvent.getPartialTicks(), f, f2, f3);
+                } else {
+                    renderDroppedItemEvent.getRenderItem().renderDroppedItem(entityItem, iconIndex, b, renderDroppedItemEvent.getPartialTicks(), 1.0F, 1.0F, 1.0F);
+                }
+
+                if (itemStack != null && itemStack.getItem() instanceof ItemCloth) {
+                    GL11.glDisable(3042);
+                }
             }
-         }
 
-         GlStateManager.rotate(entityItem.rotationPitch, 1.0F, 0.0F, 0.0F);
-      }
+            GL11.glDisable(32826);
+            GL11.glPopMatrix();
+            this.mc.renderEngine.bindTexture(this.mc.renderEngine.getResourceLocation(entityItem.getEntityItem().getItemSpriteNumber()));
+            TextureUtil.restoreTextureScaling();
+        }
+    }
 
-      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+    public ResourceLocation getResourceLocation2() {
+        return TextureMap.locationBlocksTexture;
+    }
 
-      for (int i = 0; i < computeInt; i++) {
-         GlStateManager.pushMatrix();
-         if (isGui3d) {
-            if (i > 0) {
-               float f = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
-               float f2 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
-               float f3 = (this.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
-               GlStateManager.translate(f, f2, f3);
-            }
+    public ItemPhysicsMod() {
+        super("Item Physics");
+        this.setCategories(ModCategory.MISC);
+        this.addEventHandler(ClientTickEvent.class, clientTickEvent -> this.lastTickNanos = System.nanoTime());
+        this.addEventHandler(RenderDroppedItemEvent.class, this::onRenderDroppedItemEvent);
+    }
 
-            this.mc.getRenderItem().render(itemStack, itemModel, "dropped", TransformType.GROUND);
-            GlStateManager.popMatrix();
-         } else {
-            this.mc.getRenderItem().render(itemStack, itemModel, "dropped", TransformType.GROUND);
-            GlStateManager.popMatrix();
-            GlStateManager.translate(0.0F, 0.0F, 0.05375F);
-         }
-      }
+    public int getRenderedStackCount(ItemStack itemStack) {
+        byte b = 1;
+        if (itemStack.stackSize > 48) {
+            b = 5;
+        } else if (itemStack.stackSize > 32) {
+            b = 4;
+        } else if (itemStack.stackSize > 16) {
+            b = 3;
+        } else if (itemStack.stackSize > 1) {
+            b = 2;
+        }
 
-      GlStateManager.popMatrix();
-      GlStateManager.disableRescaleNormal();
-      GlStateManager.disableBlend();
-      this.mc.getTextureManager().bindTexture(this.getResourceLocation2());
-      this.mc.getTextureManager().getTexture(this.getResourceLocation2()).restoreLastBlurMipmap();
-   }
-
-   public ItemPhysicsMod() {
-      super("Item Physics");
-      this.setLabel("Item Physics", 1.0F);
-      this.setCategories(ModCategory.MISC);
-      this.rotationSpeed = new Setting(this, "Rotation Speed").changeValue(50.0).setRange(10.0, 100.0);
-      this.addEventHandler(ClientTickEvent.class, clientTickEvent -> this.longValue = System.nanoTime());
-      this.addEventHandler(EntityItemDoubleEvent.class, this::onEntityItemDoubleEvent);
-   }
+        return b;
+    }
 }

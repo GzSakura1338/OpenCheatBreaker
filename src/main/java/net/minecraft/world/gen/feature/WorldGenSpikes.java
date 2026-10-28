@@ -4,54 +4,50 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenSpikes extends WorldGenerator {
-   public Block baseBlockRequired;
+    public Block block;
 
-   public WorldGenSpikes(Block block) {
-      this.baseBlockRequired = block;
-   }
+    public WorldGenSpikes(Block block) {
+        this.block = block;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      if (worldIn.isAirBlock(position) && worldIn.getBlockState(position.down()).getBlock() == this.baseBlockRequired) {
-         int n = rand.nextInt(32) + 6;
-         int n2 = rand.nextInt(4) + 1;
-         MutableBlockPos mutableBlockPos = new MutableBlockPos();
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        if (world.isAirBlock(n, n2, n3) && world.getBlock(n, n2 - 1, n3) == this.block) {
+            int n4 = random.nextInt(32) + 6;
+            int n5 = random.nextInt(4) + 1;
 
-         for (int i = position.getX() - n2; i <= position.getX() + n2; i++) {
-            for (int j = position.getZ() - n2; j <= position.getZ() + n2; j++) {
-               int n3 = i - position.getX();
-               int n4 = j - position.getZ();
-               if (n3 * n3 + n4 * n4 <= n2 * n2 + 1
-                  && worldIn.getBlockState(mutableBlockPos.set(i, position.getY() - 1, j)).getBlock() != this.baseBlockRequired) {
-                  return false;
-               }
+            for (int i = n - n5; i <= n + n5; i++) {
+                for (int j = n3 - n5; j <= n3 + n5; j++) {
+                    int n6 = i - n;
+                    int n7 = j - n3;
+                    if (n6 * n6 + n7 * n7 <= n5 * n5 + 1 && world.getBlock(i, n2 - 1, j) != this.block) {
+                        return false;
+                    }
+                }
             }
-         }
 
-         for (int i = position.getY(); i < position.getY() + n && i < 256; i++) {
-            for (int j = position.getX() - n2; j <= position.getX() + n2; j++) {
-               for (int k = position.getZ() - n2; k <= position.getZ() + n2; k++) {
-                  int n3 = j - position.getX();
-                  int n4 = k - position.getZ();
-                  if (n3 * n3 + n4 * n4 <= n2 * n2 + 1) {
-                     worldIn.setBlockState(new BlockPos(j, i, k), Blocks.obsidian.getDefaultState(), 2);
-                  }
-               }
+            for (int i = n2; i < n2 + n4 && i < 256; i++) {
+                for (int j = n - n5; j <= n + n5; j++) {
+                    for (int k = n3 - n5; k <= n3 + n5; k++) {
+                        int n6 = j - n;
+                        int n7 = k - n3;
+                        if (n6 * n6 + n7 * n7 <= n5 * n5 + 1) {
+                            world.setBlock(j, i, k, Blocks.obsidian, 0, 2);
+                        }
+                    }
+                }
             }
-         }
 
-         EntityEnderCrystal entityEnderCrystal = new EntityEnderCrystal(worldIn);
-         entityEnderCrystal.setLocationAndAngles(position.getX() + 0.5F, position.getY() + n, position.getZ() + 0.5F, rand.nextFloat() * 360.0F, 0.0F);
-         worldIn.spawnEntityInWorld(entityEnderCrystal);
-         worldIn.setBlockState(position.up(n), Blocks.bedrock.getDefaultState(), 2);
-         return true;
-      } else {
-         return false;
-      }
-   }
+            EntityEnderCrystal entityEnderCrystal = new EntityEnderCrystal(world);
+            entityEnderCrystal.setLocationAndAngles(n + 0.5F, n2 + n4, n3 + 0.5F, random.nextFloat() * 360.0F, 0.0F);
+            world.spawnEntityInWorld(entityEnderCrystal);
+            world.setBlock(n, n2 + n4, n3, Blocks.bedrock, 0, 2);
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

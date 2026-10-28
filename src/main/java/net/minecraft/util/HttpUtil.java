@@ -1,9 +1,5 @@
 package net.minecraft.util;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -17,11 +13,10 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.server.MinecraftServer;
 import org.apache.commons.io.FileUtils;
@@ -30,229 +25,235 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class HttpUtil {
-   public static ListeningExecutorService downloadExecutor = MoreExecutors.listeningDecorator(
-      Executors.newCachedThreadPool(new ThreadFactoryBuilder().setDaemon(true).setNameFormat("Downloader %d").build())
-   );
-   public static AtomicInteger downloadThreadsStarted = new AtomicInteger(0);
-   public static Logger logger = LogManager.getLogger();
+    public static AtomicInteger downloadThreadsStarted = new AtomicInteger(0);
+    public static Logger logger = LogManager.getLogger();
 
-   public static String buildPostString(Map<String, Object> data) {
-      StringBuilder sb = new StringBuilder();
+    public static String buildPostString(Map data) {
+        StringBuilder sb = new StringBuilder();
 
-      for (Entry entry : data.entrySet()) {
-         if (sb.length() > 0) {
-            sb.append('&');
-         }
-
-         try {
-            sb.append(URLEncoder.encode((String)entry.getKey(), "UTF-8"));
-         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-         }
-
-         if (entry.getValue() != null) {
-            sb.append('=');
+        for (Entry entry : (Iterable<Entry>)data.entrySet()) {
+            if (sb.length() > 0) {
+                sb.append('&');
+            }
 
             try {
-               sb.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+                sb.append(URLEncoder.encode((String)entry.getKey(), "UTF-8"));
             } catch (UnsupportedEncodingException e) {
-               e.printStackTrace();
+                e.printStackTrace();
             }
-         }
-      }
 
-      return sb.toString();
-   }
+            if (entry.getValue() != null) {
+                sb.append('=');
 
-   public static String postMap(URL url, Map<String, Object> data, boolean skipLoggingErrors) {
-      return post(url, buildPostString(data), skipLoggingErrors);
-   }
+                try {
+                    sb.append(URLEncoder.encode(entry.getValue().toString(), "UTF-8"));
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
-   public static String post(URL url, String content, boolean skipLoggingErrors) {
-      try {
-         Proxy proxy = MinecraftServer.getServer() == null ? null : MinecraftServer.getServer().getServerProxy();
-         if (proxy == null) {
-            proxy = Proxy.NO_PROXY;
-         }
+        return sb.toString();
+    }
 
-         HttpURLConnection openConnection = (HttpURLConnection)url.openConnection(proxy);
-         openConnection.setRequestMethod("POST");
-         openConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-         openConnection.setRequestProperty("Content-Length", "" + content.getBytes().length);
-         openConnection.setRequestProperty("Content-Language", "en-US");
-         openConnection.setUseCaches(false);
-         openConnection.setDoInput(true);
-         openConnection.setDoOutput(true);
-         DataOutputStream dataOutputStream = new DataOutputStream(openConnection.getOutputStream());
-         dataOutputStream.writeBytes(content);
-         dataOutputStream.flush();
-         dataOutputStream.close();
-         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(openConnection.getInputStream()));
-         StringBuffer sb = new StringBuffer();
+    public static String postMap(URL url, Map data, boolean skipLoggingErrors) {
+        return post(url, buildPostString(data), skipLoggingErrors);
+    }
 
-         String str;
-         while ((str = bufferedReader.readLine()) != null) {
+    public static String post(URL url, String content, boolean skipLoggingErrors) {
+        try {
+            Proxy proxy = MinecraftServer.getServer() == null ? null : MinecraftServer.getServer().getServerProxy();
+            if (proxy == null) {
+                proxy = Proxy.NO_PROXY;
+            }
+
+            HttpURLConnection openConnection = (HttpURLConnection)url.openConnection(proxy);
+            openConnection.setRequestMethod("POST");
+            openConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            openConnection.setRequestProperty("Content-Length", "" + content.getBytes().length);
+            openConnection.setRequestProperty("Content-Language", "en-US");
+            openConnection.setUseCaches(false);
+            openConnection.setDoInput(true);
+            openConnection.setDoOutput(true);
+            DataOutputStream dataOutputStream = new DataOutputStream(openConnection.getOutputStream());
+            dataOutputStream.writeBytes(content);
+            dataOutputStream.flush();
+            dataOutputStream.close();
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(openConnection.getInputStream()));
+            StringBuffer sb = new StringBuffer();
+
+            String str;
+            while ((str = bufferedReader.readLine()) != null) {
+                sb.append(str);
+                sb.append('\r');
+            }
+
+            bufferedReader.close();
+            return sb.toString();
+        } catch (Exception e) {
+            if (!skipLoggingErrors) {
+                logger.error("Could not post to " + url, e);
+            }
+
+            return "";
+        }
+    }
+
+    public static void downloadResourcePack(
+        final File packFile,
+        final String packName,
+        final HttpUtil.DownloadListener completionListener,
+        final Map requestData,
+        final int maxSize,
+        final IProgressUpdate loadingScreen,
+        final Proxy proxy
+    ) {
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() { try {
+                URLConnection urlconnection = null;
+                InputStream inputStream = null;
+                DataOutputStream dataOutputStream = null;
+                boolean flag = false;
+                if (loadingScreen != null) {
+                    loadingScreen.resetProgressAndMessage("Downloading Texture Pack");
+                    loadingScreen.displayLoadingString("Making Request...");
+                }
+
+                try {
+                    try {
+                        byte[] bytes = new byte[4096];
+                        URL url = new URL(packName);
+                        urlconnection = url.openConnection(proxy);
+                        urlconnection.setRequestProperty("User-Agent", "Minecraft/1.7.10 CheatBreaker");
+                        float f = 0.0F;
+                        float size = requestData.entrySet().size();
+
+                        for (Entry entry : (Iterable<Entry>)requestData.entrySet()) {
+                            urlconnection.setRequestProperty((String)entry.getKey(), (String)entry.getValue());
+                            if (loadingScreen != null) {
+                                loadingScreen.setLoadingProgress((int)(++f / size * 100.0F));
+                            }
+                        }
+
+                        inputStream = urlconnection.getInputStream();
+                        size = urlconnection.getContentLength();
+                        int contentLength = urlconnection.getContentLength();
+                        if (maxSize > 0 && contentLength > maxSize) {
+                            throw new IOException("Filesize is bigger than maximum allowed (file is " + contentLength + ", limit is " + maxSize + ")");
+                        }
+
+                        if (loadingScreen != null) {
+                            loadingScreen.displayLoadingString(String.format("Downloading file (%.2f MB)...", size / 1000.0F / 1000.0F));
+                        }
+
+                        if (packFile.exists()) {
+                            long l = packFile.length();
+                            if (l == contentLength) {
+                                flag = true;
+                                completionListener.onDownloadComplete(packFile);
+                                return;
+                            }
+
+                            HttpUtil.logger.warn("Deleting " + packFile + " as it does not match what we currently have (" + contentLength + " vs our " + l + ").");
+                            packFile.delete();
+                        } else if (packFile.getParentFile() != null) {
+                            packFile.getParentFile().mkdirs();
+                        }
+
+                        dataOutputStream = new DataOutputStream(new FileOutputStream(packFile));
+                        long l = 0L;
+
+                        int n;
+                        while ((n = inputStream.read(bytes)) >= 0) {
+                            l += n;
+                            if (loadingScreen != null && contentLength > 0) {
+                                loadingScreen.setLoadingProgress((int)(l * 100L / contentLength));
+                            }
+
+                            if (maxSize > 0 && l > maxSize) {
+                                throw new IOException("Filesize was bigger than maximum allowed (got >= " + l + ", limit was " + maxSize + ")");
+                            }
+
+                            if (Thread.currentThread().isInterrupted()) {
+                                throw new InterruptedIOException("Resource pack download interrupted");
+                            }
+
+                            dataOutputStream.write(bytes, 0, n);
+                        }
+
+                        if (contentLength >= 0 && l != contentLength) {
+                            throw new IOException("Incomplete resource pack download (expected " + contentLength + " bytes, received " + l + ")");
+                        }
+
+                        dataOutputStream.close();
+                        flag = true;
+                        completionListener.onDownloadComplete(packFile);
+                    } catch (Exception e) {
+                        HttpUtil.logger.error("Couldn't download resource pack from " + packName, e);
+                        completionListener.handleThrowable(e);
+                    }
+                } finally {
+                    IOUtils.closeQuietly(inputStream);
+                    IOUtils.closeQuietly(dataOutputStream);
+                    if (dataOutputStream != null && !flag) {
+                        FileUtils.deleteQuietly(packFile);
+                    }
+
+                    if (urlconnection instanceof HttpURLConnection) {
+                        ((HttpURLConnection)urlconnection).disconnect();
+                    }
+
+                    if (loadingScreen != null) {
+                        loadingScreen.setDoneWorking();
+                    }
+                }
+            } catch (Exception sneakyEx) { throw com.cheatbreaker.client.util.SneakyThrow.sneakyThrow(sneakyEx); } }
+        }, "File Downloader #" + downloadThreadsStarted.incrementAndGet());
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    public static int getSuitableLanPort() throws IOException {
+        ServerSocket serverSocket = null;
+        boolean flag = true;
+
+        int n;
+        try {
+            serverSocket = new ServerSocket(0);
+            n = serverSocket.getLocalPort();
+        } finally {
+            try {
+                if (serverSocket != null) {
+                    serverSocket.close();
+                }
+            } catch (IOException e) {
+            }
+        }
+
+        return n;
+    }
+
+    public static String get(URL url) throws IOException {
+        HttpURLConnection openConnection = (HttpURLConnection)url.openConnection();
+        openConnection.setRequestMethod("GET");
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(openConnection.getInputStream()));
+        StringBuilder sb = new StringBuilder();
+
+        String str;
+        while ((str = bufferedReader.readLine()) != null) {
             sb.append(str);
             sb.append('\r');
-         }
+        }
 
-         bufferedReader.close();
-         return sb.toString();
-      } catch (Exception e) {
-         if (!skipLoggingErrors) {
-            logger.error("Could not post to " + url, e);
-         }
+        bufferedReader.close();
+        return sb.toString();
+    }
 
-         return "";
-      }
-   }
+    public interface DownloadListener {
+        void onDownloadComplete(File file);
 
-   public static ListenableFuture<Object> downloadResourcePack(
-      final File saveFile, final String packUrl, final Map<String, String> map, final int maxSize, final IProgressUpdate progressUpdate, final Proxy proxy
-   ) {
-      return downloadExecutor.submit(new Callable<Object>() {
-         @Override
-         public Object call() throws IOException {
-            HttpURLConnection httpURLConnection = null;
-            InputStream inputStream = null;
-            DataOutputStream dataOutputStream = null;
-            boolean flag = false;
-            if (progressUpdate != null) {
-               progressUpdate.resetProgressAndMessage("Downloading Resource Pack");
-               progressUpdate.displayLoadingString("Making Request...");
-            }
-
-            try {
-               byte[] bytes = new byte[4096];
-               URL url = new URL(packUrl);
-               httpURLConnection = (HttpURLConnection)url.openConnection(proxy);
-               httpURLConnection.setRequestProperty("User-Agent", "Minecraft/1.8.9 CheatBreaker");
-               float f = 0.0F;
-               float size = map.entrySet().size();
-
-               for (Entry entry : map.entrySet()) {
-                  httpURLConnection.setRequestProperty((String)entry.getKey(), (String)entry.getValue());
-                  if (progressUpdate != null) {
-                     progressUpdate.setLoadingProgress((int)(++f / size * 100.0F));
-                  }
-               }
-
-               inputStream = httpURLConnection.getInputStream();
-               size = httpURLConnection.getContentLength();
-               int contentLength = httpURLConnection.getContentLength();
-               if (progressUpdate != null) {
-                  progressUpdate.displayLoadingString(String.format("Downloading file (%.2f MB)...", size / 1000.0F / 1000.0F));
-               }
-
-               if (saveFile.exists()) {
-                  long l = saveFile.length();
-                  if (l == contentLength) {
-                     flag = true;
-                     return null;
-                  }
-
-                  HttpUtil.logger.warn("Deleting " + saveFile + " as it does not match what we currently have (" + contentLength + " vs our " + l + ").");
-                  FileUtils.deleteQuietly(saveFile);
-               } else if (saveFile.getParentFile() != null) {
-                  saveFile.getParentFile().mkdirs();
-               }
-
-               dataOutputStream = new DataOutputStream(new FileOutputStream(saveFile));
-               if (maxSize > 0 && size > maxSize) {
-                  throw new IOException("Filesize is bigger than maximum allowed (file is " + contentLength + ", limit is " + maxSize + ")");
-               }
-
-               long l = 0L;
-               int n = 0;
-
-               while ((n = inputStream.read(bytes)) >= 0) {
-                  l += n;
-                  if (progressUpdate != null && contentLength > 0) {
-                     progressUpdate.setLoadingProgress((int)(l * 100L / contentLength));
-                  }
-
-                  if (maxSize > 0 && l > maxSize) {
-                     throw new IOException("Filesize was bigger than maximum allowed (got >= " + l + ", limit was " + maxSize + ")");
-                  }
-
-                  if (Thread.interrupted()) {
-                     throw new InterruptedIOException("Resource pack download interrupted");
-                  }
-
-                  dataOutputStream.write(bytes, 0, n);
-               }
-
-               if (contentLength >= 0 && l != contentLength) {
-                  throw new IOException("Incomplete resource pack download (expected " + contentLength + " bytes, received " + l + ")");
-               }
-
-               dataOutputStream.close();
-               flag = true;
-               return null;
-            } catch (IOException e) {
-               HttpUtil.logger.error("Couldn't download resource pack from " + packUrl, e);
-               if (httpURLConnection != null) {
-                  try (InputStream errorStream = httpURLConnection.getErrorStream()) {
-                     if (errorStream != null) {
-                        HttpUtil.logger.error(IOUtils.toString(errorStream, "UTF-8"));
-                     }
-                  } catch (IOException e2) {
-                     e.addSuppressed(e2);
-                  }
-               }
-
-               throw e;
-            } finally {
-               IOUtils.closeQuietly(inputStream);
-               IOUtils.closeQuietly(dataOutputStream);
-               if (dataOutputStream != null && !flag) {
-                  FileUtils.deleteQuietly(saveFile);
-               }
-
-               if (httpURLConnection != null) {
-                  httpURLConnection.disconnect();
-               }
-
-               if (progressUpdate != null) {
-                  progressUpdate.setDoneWorking();
-               }
-            }
-         }
-      });
-   }
-
-   public static int getSuitableLanPort() throws IOException {
-      ServerSocket serverSocket = null;
-      int n = -1;
-
-      try {
-         serverSocket = new ServerSocket(0);
-         n = serverSocket.getLocalPort();
-      } finally {
-         try {
-            if (serverSocket != null) {
-               serverSocket.close();
-            }
-         } catch (IOException e) {
-         }
-      }
-
-      return n;
-   }
-
-   public static String get(URL url) throws IOException {
-      HttpURLConnection openConnection = (HttpURLConnection)url.openConnection();
-      openConnection.setRequestMethod("GET");
-      BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(openConnection.getInputStream()));
-      StringBuilder sb = new StringBuilder();
-
-      String str;
-      while ((str = bufferedReader.readLine()) != null) {
-         sb.append(str);
-         sb.append('\r');
-      }
-
-      bufferedReader.close();
-      return sb.toString();
-   }
+        default void handleThrowable(Throwable throwable) {
+        }
+    }
 }

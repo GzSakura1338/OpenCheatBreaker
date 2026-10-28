@@ -1,5 +1,5 @@
 package com.cheatbreaker.client.util;
 
 public class ClientVersion {
-   public static String text = "1.8.9";
+    public static String version = "1.7.10";
 }

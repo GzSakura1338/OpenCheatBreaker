@@ -5,39 +5,39 @@ import com.cheatbreaker.client.network.PacketBuffer;
 import com.cheatbreaker.client.network.PacketHandler;
 
 public class FriendServerPacket extends AbstractPacket {
-   public String playerId;
-   public String server;
+    public String playerId;
+    public String server;
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeString(this.playerId);
-      packetBuffer.writeString(this.server);
-   }
+    public FriendServerPacket(String str, String str2) {
+        this.playerId = str;
+        this.server = str2;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.playerId = packetBuffer.readString();
-      this.server = packetBuffer.readString();
-   }
+    public String getServer() {
+        return this.server;
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      packetHandler.handleFriendServer(this);
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.playerId = packetBuffer.readString();
+        this.server = packetBuffer.readString();
+    }
 
-   public String getServer() {
-      return this.server;
-   }
+    public FriendServerPacket() {
+    }
 
-   public FriendServerPacket() {
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        packetHandler.handleFriendServer(this);
+    }
 
-   public FriendServerPacket(String str, String str2) {
-      this.playerId = str;
-      this.server = str2;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeString(this.playerId);
+        packetBuffer.writeString(this.server);
+    }
 
-   public String getPlayerId() {
-      return this.playerId;
-   }
+    public String getPlayerId() {
+        return this.playerId;
+    }
 }

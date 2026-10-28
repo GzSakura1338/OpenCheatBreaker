@@ -7,25 +7,25 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.ResourcePackRepository.Entry;
 
 public class ResourcePackSync {
-   public Minecraft mc = Minecraft.getMinecraft();
+    public Minecraft mc = Minecraft.getMinecraft();
 
-   public ResourcePackSync() {
-      HashMap map = new HashMap();
+    public ResourcePackSync() {
+        HashMap map = new HashMap();
 
-      for (String str : this.mc.gameSettings.resourcePacks) {
-         map.put(str, null);
-      }
+        for (String str : this.mc.gameSettings.resourcePacks) {
+            map.put(str, null);
+        }
 
-      for (Entry entry : this.mc.getResourcePackRepository().getRepositoryEntries()) {
-         map.put(entry.getResourcePackName(), entry);
-      }
+        for (Entry entry : this.mc.getResourcePackRepository().getRepositoryEntries()) {
+            map.put(entry.getResourcePackName(), entry);
+        }
 
-      for (Entry entry : ResourcePackScanner.createArrayList()) {
-         map.put(entry.getResourcePackName(), entry);
-      }
+        for (Entry entry : ResourcePackScanner.getEnabledEntries()) {
+            map.put(entry.getResourcePackName(), entry);
+        }
 
-      map.values().removeIf(Objects::isNull);
-      this.mc.getResourcePackRepository().setRepositories(new ArrayList<>(map.values()));
-      Runtime.getRuntime().addShutdownHook(new Thread(PackExecutor::shutdown));
-   }
+        map.values().removeIf(Objects::isNull);
+        this.mc.getResourcePackRepository().setSelectedResourcePacks(new ArrayList(map.values()));
+        Runtime.getRuntime().addShutdownHook(new Thread(PackExecutor::shutdown));
+    }
 }

@@ -1,15 +1,16 @@
 package net.minecraft.client.network;
 
 import com.cheatbreaker.client.CheatBreaker;
-import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.exceptions.AuthenticationException;
 import com.mojang.authlib.exceptions.AuthenticationUnavailableException;
 import com.mojang.authlib.exceptions.InvalidCredentialsException;
 import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import java.math.BigInteger;
 import java.security.PublicKey;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiDisconnected;
@@ -21,7 +22,6 @@ import net.minecraft.network.login.client.C01PacketEncryptionResponse;
 import net.minecraft.network.login.server.S00PacketDisconnect;
 import net.minecraft.network.login.server.S01PacketEncryptionRequest;
 import net.minecraft.network.login.server.S02PacketLoginSuccess;
-import net.minecraft.network.login.server.S03PacketEnableCompression;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.CryptManager;
 import net.minecraft.util.IChatComponent;
@@ -29,89 +29,90 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class NetHandlerLoginClient implements INetHandlerLoginClient {
-   public static Logger logger = LogManager.getLogger();
-   public NetworkManager networkManager;
-   public Minecraft mc;
-   public GuiScreen previousGuiScreen;
-   public GameProfile gameProfile;
+    public static Logger logger = LogManager.getLogger();
+    public NetworkManager connection;
+    public Minecraft client;
+    public GuiScreen parent;
 
-   public NetHandlerLoginClient(NetworkManager networkManagerIn, Minecraft mcIn, GuiScreen guiScreen) {
-      this.networkManager = networkManagerIn;
-      this.mc = mcIn;
-      this.previousGuiScreen = guiScreen;
-   }
+    public NetHandlerLoginClient(NetworkManager networkManager, Minecraft mc, GuiScreen guiScreen) {
+        this.connection = networkManager;
+        this.client = mc;
+        this.parent = guiScreen;
+    }
 
-   @Override
-   public void handleEncryptionRequest(S01PacketEncryptionRequest packetIn) {
-      final SecretKey createNewSharedKey = CryptManager.createNewSharedKey();
-      String serverId = packetIn.getServerId();
-      PublicKey publicKey = packetIn.getPublicKey();
-      String str = new BigInteger(CryptManager.getServerIdHash(serverId, publicKey, createNewSharedKey)).toString(16);
-      if (this.mc.getCurrentServerData() != null && this.mc.getCurrentServerData().isOnLAN()) {
-         try {
-            this.getSessionService().joinServer(this.mc.getSession().getProfile(), this.mc.getSession().getToken(), str);
-         } catch (AuthenticationException e) {
-            logger.warn("Couldn't connect to auth servers but will continue to join LAN");
-         }
-      } else {
-         if (!CheatBreaker.getInstance().isWebsocketConnected() && !CheatBreaker.getInstance().getClientBuildType().equals("Production")) {
-            this.networkManager.closeChannel(new ChatComponentTranslation("disconnect.loginFailedInfo", "Not connected to the player assets server!"));
-            return;
-         }
+    @Override
+    public void handleEncryptionRequest(S01PacketEncryptionRequest packetIn) {
+        final SecretKey createNewSharedKey = CryptManager.createNewSharedKey();
+        String serverId = packetIn.getServerId();
+        PublicKey publicKey = packetIn.getPublicKey();
+        String str = new BigInteger(CryptManager.getServerIdHash(serverId, publicKey, createNewSharedKey)).toString(16);
+        boolean flag = this.client.getCurrentServerData() == null || !this.client.getCurrentServerData().isLanServer();
 
-         try {
-            this.getSessionService().joinServer(this.mc.getSession().getProfile(), this.mc.getSession().getToken(), str);
-         } catch (AuthenticationUnavailableException e) {
-            this.networkManager
-               .closeChannel(
-                  new ChatComponentTranslation("disconnect.loginFailedInfo", new ChatComponentTranslation("disconnect.loginFailedInfo.serversUnavailable"))
-               );
-            return;
-         } catch (InvalidCredentialsException e) {
-            this.networkManager
-               .closeChannel(
-                  new ChatComponentTranslation("disconnect.loginFailedInfo", new ChatComponentTranslation("disconnect.loginFailedInfo.invalidSession"))
-               );
-            return;
-         } catch (AuthenticationException e) {
-            this.networkManager.closeChannel(new ChatComponentTranslation("disconnect.loginFailedInfo", e.getMessage()));
-            return;
-         }
-      }
-
-      this.networkManager
-         .sendPacket(new C01PacketEncryptionResponse(createNewSharedKey, publicKey, packetIn.getVerifyToken()), new GenericFutureListener<Future<? super Void>>() {
-            public void operationComplete(Future<? super Void> future) throws Exception {
-               NetHandlerLoginClient.this.networkManager.enableEncryption(createNewSharedKey);
+        try {
+            if (!CheatBreaker.getInstance().isWebsocketConnected() && !CheatBreaker.getInstance().getClientBuildType().equals("Production") && flag) {
+                this.connection.closeChannel(new ChatComponentTranslation("disconnect.loginFailedInfo", "Not connected to the player assets server!"));
+                return;
             }
-         });
-   }
 
-   public MinecraftSessionService getSessionService() {
-      return this.mc.getSessionService();
-   }
+            this.getSessionService().joinServer(this.client.getSession().getProfile(), this.client.getSession().getToken(), str);
+        } catch (AuthenticationUnavailableException e) {
+            if (flag) {
+                this.connection
+                    .closeChannel(
+                        new ChatComponentTranslation("disconnect.loginFailedInfo", new ChatComponentTranslation("disconnect.loginFailedInfo.serversUnavailable"))
+                    );
+                return;
+            }
+        } catch (InvalidCredentialsException e) {
+            if (flag) {
+                this.connection
+                    .closeChannel(
+                        new ChatComponentTranslation("disconnect.loginFailedInfo", new ChatComponentTranslation("disconnect.loginFailedInfo.invalidSession"))
+                    );
+                return;
+            }
+        } catch (AuthenticationException e) {
+            if (flag) {
+                this.connection.closeChannel(new ChatComponentTranslation("disconnect.loginFailedInfo", e.getMessage()));
+                return;
+            }
+        }
 
-   @Override
-   public void handleLoginSuccess(S02PacketLoginSuccess packetIn) {
-      this.gameProfile = packetIn.getProfile();
-      this.networkManager.setConnectionState(EnumConnectionState.PLAY);
-      this.networkManager.setNetHandler(new NetHandlerPlayClient(this.mc, this.previousGuiScreen, this.networkManager, this.gameProfile));
-   }
+        this.connection.scheduleOutboundPacket(new C01PacketEncryptionResponse(createNewSharedKey, publicKey, packetIn.getNonce()), new GenericFutureListener() {
+            public void operationComplete(Future future) {
+                NetHandlerLoginClient.this.connection.enableEncryption(createNewSharedKey);
+            }
+        });
+    }
 
-   @Override
-   public void onDisconnect(IChatComponent reason) {
-      this.mc.displayGuiScreen(new GuiDisconnected(this.previousGuiScreen, "connect.failed", reason));
-   }
+    public MinecraftSessionService getSessionService() {
+        return new YggdrasilAuthenticationService(this.client.getProxy(), UUID.randomUUID().toString()).createMinecraftSessionService();
+    }
 
-   @Override
-   public void handleDisconnect(S00PacketDisconnect packetIn) {
-      this.networkManager.closeChannel(packetIn.getReason());
-   }
+    @Override
+    public void handleLoginSuccess(S02PacketLoginSuccess packetIn) {
+        this.connection.setConnectionState(EnumConnectionState.PLAY);
+    }
 
-   @Override
-   public void handleEnableCompression(S03PacketEnableCompression packetIn) {
-      if (!this.networkManager.isLocalChannel()) {
-         this.networkManager.setCompressionTreshold(packetIn.getCompressionTreshold());
-      }
-   }
+    @Override
+    public void onDisconnect(IChatComponent reason) throws java.io.IOException {
+        this.client.displayGuiScreen(new GuiDisconnected(this.parent, "connect.failed", reason));
+    }
+
+    @Override
+    public void onConnectionStateTransition(EnumConnectionState oldState, EnumConnectionState newState) {
+        logger.debug("Switching protocol from " + oldState + " to " + newState);
+        if (newState == EnumConnectionState.PLAY) {
+            this.connection.setNetHandler(new NetHandlerPlayClient(this.client, this.parent, this.connection));
+        }
+    }
+
+    @Override
+    public void onNetworkTick() {
+    }
+
+    @Override
+    public void handleDisconnect(S00PacketDisconnect packetIn) {
+        this.connection.closeChannel(packetIn.getReason());
+    }
 }

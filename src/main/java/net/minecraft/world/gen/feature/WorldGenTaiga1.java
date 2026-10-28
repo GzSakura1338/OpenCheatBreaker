@@ -2,101 +2,87 @@ package net.minecraft.world.gen.feature;
 
 import java.util.Random;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockOldLeaf;
-import net.minecraft.block.BlockOldLog;
-import net.minecraft.block.BlockPlanks.EnumType;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenTaiga1 extends WorldGenAbstractTree {
-   public static IBlockState LOG = Blocks.log.getDefaultState().withProperty(BlockOldLog.VARIANT, EnumType.SPRUCE);
-   public static IBlockState LEAVES = Blocks.leaves
-      .getDefaultState()
-      .withProperty(BlockOldLeaf.VARIANT, EnumType.SPRUCE)
-      .withProperty(BlockLeaves.CHECK_DECAY, false);
+    public WorldGenTaiga1() {
+        super(false);
+    }
 
-   public WorldGenTaiga1() {
-      super(false);
-   }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        int n4 = random.nextInt(5) + 7;
+        int n5 = n4 - random.nextInt(2) - 3;
+        int n6 = n4 - n5;
+        int n7 = 1 + random.nextInt(n6 + 1);
+        boolean flag = true;
+        if (n2 >= 1 && n2 + n4 + 1 <= 256) {
+            for (int i = n2; i <= n2 + 1 + n4 && flag; i++) {
+                boolean flag2 = true;
+                int n8;
+                if (i - n2 < n5) {
+                    n8 = 0;
+                } else {
+                    n8 = n7;
+                }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      int n = rand.nextInt(5) + 7;
-      int n2 = n - rand.nextInt(2) - 3;
-      int n3 = n - n2;
-      int n4 = 1 + rand.nextInt(n3 + 1);
-      boolean flag = true;
-      if (position.getY() >= 1 && position.getY() + n + 1 <= 256) {
-         for (int i = position.getY(); i <= position.getY() + 1 + n && flag; i++) {
-            int n5 = 1;
-            if (i - position.getY() < n2) {
-               n5 = 0;
-            } else {
-               n5 = n4;
-            }
-
-            MutableBlockPos mutableBlockPos = new MutableBlockPos();
-
-            for (int j = position.getX() - n5; j <= position.getX() + n5 && flag; j++) {
-               for (int k = position.getZ() - n5; k <= position.getZ() + n5 && flag; k++) {
-                  if (i < 0 || i >= 256) {
-                     flag = false;
-                  } else if (!this.isBlockReplaceable(worldIn.getBlockState(mutableBlockPos.set(j, i, k)).getBlock())) {
-                     flag = false;
-                  }
-               }
-            }
-         }
-
-         if (!flag) {
-            return false;
-         }
-
-         Block block = worldIn.getBlockState(position.down()).getBlock();
-         if ((block == Blocks.grass || block == Blocks.dirt) && position.getY() < 256 - n - 1) {
-            this.setDirt(worldIn, position.down());
-            int n5 = 0;
-
-            for (int i = position.getY() + n; i >= position.getY() + n2; i--) {
-               for (int j = position.getX() - n5; j <= position.getX() + n5; j++) {
-                  int n6 = j - position.getX();
-
-                  for (int k = position.getZ() - n5; k <= position.getZ() + n5; k++) {
-                     int n7 = k - position.getZ();
-                     if (Math.abs(n6) != n5 || Math.abs(n7) != n5 || n5 <= 0) {
-                        BlockPos blockPos = new BlockPos(j, i, k);
-                        if (!worldIn.getBlockState(blockPos).getBlock().isFullBlock()) {
-                           this.setBlockAndNotifyAdequately(worldIn, blockPos, LEAVES);
+                for (int j = n - n8; j <= n + n8 && flag; j++) {
+                    for (int k = n3 - n8; k <= n3 + n8 && flag; k++) {
+                        if (i >= 0 && i < 256) {
+                            Block block = world.getBlock(j, i, k);
+                            if (!this.isBlockReplaceable(block)) {
+                                flag = false;
+                            }
+                        } else {
+                            flag = false;
                         }
-                     }
-                  }
-               }
-
-               if (n5 >= 1 && i == position.getY() + n2 + 1) {
-                  n5--;
-               } else if (n5 < n4) {
-                  n5++;
-               }
+                    }
+                }
             }
 
-            for (int i = 0; i < n - 1; i++) {
-               Block block2 = worldIn.getBlockState(position.up(i)).getBlock();
-               if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves) {
-                  this.setBlockAndNotifyAdequately(worldIn, position.up(i), LOG);
-               }
+            if (!flag) {
+                return false;
             }
 
-            return true;
-         } else {
+            Block block = world.getBlock(n, n2 - 1, n3);
+            if ((block == Blocks.grass || block == Blocks.dirt) && n2 < 256 - n4 - 1) {
+                this.setBlockAndNotifyAdequately(world, n, n2 - 1, n3, Blocks.dirt);
+                int n8 = 0;
+
+                for (int i = n2 + n4; i >= n2 + n5; i--) {
+                    for (int j = n - n8; j <= n + n8; j++) {
+                        int n9 = j - n;
+
+                        for (int k = n3 - n8; k <= n3 + n8; k++) {
+                            int n10 = k - n3;
+                            if ((Math.abs(n9) != n8 || Math.abs(n10) != n8 || n8 <= 0) && !world.getBlock(j, i, k).isFullBlock()) {
+                                this.setBlockAndNotifyAdequately(world, j, i, k, Blocks.leaves, 1);
+                            }
+                        }
+                    }
+
+                    if (n8 >= 1 && i == n2 + n5 + 1) {
+                        n8--;
+                    } else if (n8 < n7) {
+                        n8++;
+                    }
+                }
+
+                for (int i = 0; i < n4 - 1; i++) {
+                    Block block2 = world.getBlock(n, n2 + i, n3);
+                    if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves) {
+                        this.setBlockAndNotifyAdequately(world, n, n2 + i, n3, Blocks.log, 1);
+                    }
+                }
+
+                return true;
+            } else {
+                return false;
+            }
+        } else {
             return false;
-         }
-      } else {
-         return false;
-      }
-   }
+        }
+    }
 }

@@ -1,30 +1,25 @@
 package net.minecraft.entity.monster;
 
 import net.minecraft.entity.SharedMonsterAttributes;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public class EntityGiantZombie extends EntityMob {
-   public EntityGiantZombie(World worldIn) {
-      super(worldIn);
-      this.setSize(this.width * 6.0F, this.height * 6.0F);
-   }
+    public EntityGiantZombie(World world) {
+        super(world);
+        this.yOffset *= 6.0F;
+        this.setSize(this.width * 6.0F, this.height * 6.0F);
+    }
 
-   @Override
-   public float getEyeHeight() {
-      return 10.440001F;
-   }
+    @Override
+    public void applyEntityAttributes() {
+        super.applyEntityAttributes();
+        this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(100.0);
+        this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.5);
+        this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(50.0);
+    }
 
-   @Override
-   public void applyEntityAttributes() {
-      super.applyEntityAttributes();
-      this.getEntityAttribute(SharedMonsterAttributes.maxHealth).setBaseValue(100.0);
-      this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.5);
-      this.getEntityAttribute(SharedMonsterAttributes.attackDamage).setBaseValue(50.0);
-   }
-
-   @Override
-   public float getBlockPathWeight(BlockPos pos) {
-      return this.worldObj.getLightBrightness(pos) - 0.5F;
-   }
+    @Override
+    public float getBlockPathWeight(int n, int n2, int n3) {
+        return this.worldObj.getLightBrightness(n, n2, n3) - 0.5F;
+    }
 }

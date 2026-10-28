@@ -1,140 +1,99 @@
 package net.minecraft.block;
 
 import java.util.List;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockDirt extends Block {
-   public static PropertyEnum<BlockDirt.DirtType> VARIANT = PropertyEnum.create("variant", BlockDirt.DirtType.class);
-   public static PropertyBool SNOWY = PropertyBool.create("snowy");
+    public static String[] stringArray = new String[]{"default", "default", "podzol"};
+    public IIcon iIcon3;
+    public IIcon iIcon2;
 
-   public BlockDirt() {
-      super(Material.ground);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, BlockDirt.DirtType.DIRT).withProperty(SNOWY, false));
-      this.setCreativeTab(CreativeTabs.tabBlock);
-   }
+    public BlockDirt() {
+        super(Material.ground);
+        this.setCreativeTab(CreativeTabs.tabBlock);
+    }
 
-   @Override
-   public MapColor getMapColor(IBlockState state) {
-      return state.getValue(VARIANT).getColor();
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        if (meta == 2) {
+            if (side == 1) {
+                return this.iIcon3;
+            }
 
-   @Override
-   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-      if (state.getValue(VARIANT) == BlockDirt.DirtType.PODZOL) {
-         Block block = worldIn.getBlockState(pos.up()).getBlock();
-         state = state.withProperty(SNOWY, block == Blocks.snow || block == Blocks.snow_layer);
-      }
+            if (side != 0) {
+                return this.iIcon2;
+            }
+        }
 
-      return state;
-   }
+        return this.blockIcon;
+    }
 
-   @Override
-   public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-      list.add(new ItemStack(this, 1, BlockDirt.DirtType.DIRT.getMetadata()));
-      list.add(new ItemStack(this, 1, BlockDirt.DirtType.COARSE_DIRT.getMetadata()));
-      list.add(new ItemStack(this, 1, BlockDirt.DirtType.PODZOL.getMetadata()));
-   }
+    @Override
+    public IIcon getIcon(IBlockAccess worldIn, int x, int y, int z, int side) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (blockMetadata == 2) {
+            if (side == 1) {
+                return this.iIcon3;
+            }
 
-   @Override
-   public int getDamageValue(World worldIn, BlockPos pos) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      return blockState.getBlock() != this ? 0 : blockState.getValue(VARIANT).getMetadata();
-   }
+            if (side != 0) {
+                Material material = worldIn.getBlock(x, y + 1, z).getMaterial();
+                if (material == Material.snow || material == Material.craftedSnow) {
+                    return Blocks.grass.getIcon(worldIn, x, y, z, side);
+                }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(VARIANT, BlockDirt.DirtType.byMetadata(meta));
-   }
+                Block block = worldIn.getBlock(x, y + 1, z);
+                if (block != Blocks.dirt && block != Blocks.grass) {
+                    return this.iIcon2;
+                }
+            }
+        }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(VARIANT).getMetadata();
-   }
+        return this.blockIcon;
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, VARIANT, SNOWY);
-   }
+    @Override
+    public int damageDropped(int meta) {
+        return 0;
+    }
 
-   @Override
-   public int damageDropped(IBlockState state) {
-      BlockDirt.DirtType value = state.getValue(VARIANT);
-      if (value == BlockDirt.DirtType.PODZOL) {
-         value = BlockDirt.DirtType.DIRT;
-      }
+    @Override
+    public ItemStack createStackedBlock(int meta) {
+        if (meta == 1) {
+            meta = 0;
+        }
 
-      return value.getMetadata();
-   }
+        return super.createStackedBlock(meta);
+    }
 
-   public enum DirtType implements IStringSerializable {
-      DIRT(0, "dirt", "default", MapColor.dirtColor),
-      COARSE_DIRT(1, "coarse_dirt", "coarse", MapColor.dirtColor),
-      PODZOL(2, "podzol", MapColor.obsidianColor);
+    @Override
+    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+        list.add(new ItemStack(this, 1, 0));
+        list.add(new ItemStack(this, 1, 2));
+    }
 
-      public int metadata;
-      public String name;
-      public String unlocalizedName;
-      public MapColor color;
-      public static BlockDirt.DirtType[] METADATA_LOOKUP = new BlockDirt.DirtType[values().length];
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        super.registerIcons(reg);
+        this.iIcon3 = reg.registerIcon(this.getTextureName() + "_podzol_top");
+        this.iIcon2 = reg.registerIcon(this.getTextureName() + "_podzol_side");
+    }
 
-      DirtType(int n, String str, MapColor mapColor) {
-         this(n, str, str, mapColor);
-      }
+    @Override
+    public int getDamageValue(World worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (blockMetadata == 1) {
+            blockMetadata = 0;
+        }
 
-      DirtType(int n, String str, String str2, MapColor mapColor) {
-         this.metadata = n;
-         this.name = str;
-         this.unlocalizedName = str2;
-         this.color = mapColor;
-      }
-
-      public int getMetadata() {
-         return this.metadata;
-      }
-
-      public String getUnlocalizedName() {
-         return this.unlocalizedName;
-      }
-
-      public MapColor getColor() {
-         return this.color;
-      }
-
-      @Override
-      public String toString() {
-         return this.name;
-      }
-
-      public static BlockDirt.DirtType byMetadata(int metadata) {
-         if (metadata < 0 || metadata >= METADATA_LOOKUP.length) {
-            metadata = 0;
-         }
-
-         return METADATA_LOOKUP[metadata];
-      }
-
-      @Override
-      public String getName() {
-         return this.name;
-      }
-
-      static {
-         for (BlockDirt.DirtType dirtType : values()) {
-            METADATA_LOOKUP[dirtType.getMetadata()] = dirtType;
-         }
-      }
-   }
+        return blockMetadata;
+    }
 }

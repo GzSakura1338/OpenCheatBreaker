@@ -7,23 +7,23 @@ import net.minecraft.world.WorldProvider;
 import net.minecraft.world.chunk.storage.IChunkLoader;
 
 public interface ISaveHandler {
-   WorldInfo loadWorldInfo();
+    WorldInfo loadWorldInfo();
 
-   void checkSessionLock() throws MinecraftException;
+    void checkSessionLock() throws MinecraftException;
 
-   IChunkLoader getChunkLoader(WorldProvider worldProvider);
+    IChunkLoader getChunkLoader(WorldProvider worldProvider);
 
-   void saveWorldInfoWithPlayer(WorldInfo worldInfo, NBTTagCompound nbttagCompound);
+    void saveWorldInfoWithPlayer(WorldInfo worldInfo, NBTTagCompound nbttagCompound);
 
-   void saveWorldInfo(WorldInfo worldInfo);
+    void saveWorldInfo(WorldInfo worldInfo);
 
-   IPlayerFileData getPlayerNBTManager();
+    IPlayerFileData getPlayerNBTManager();
 
-   void flush();
+    void flush();
 
-   File getWorldDirectory();
+    File getWorldDirectory();
 
-   File getMapFileFromName(String str);
+    File getMapFileFromName(String str);
 
-   String getWorldDirectoryName();
+    String getWorldDirectoryName();
 }

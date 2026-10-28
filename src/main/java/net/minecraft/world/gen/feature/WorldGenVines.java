@@ -1,38 +1,33 @@
 package net.minecraft.world.gen.feature;
 
 import java.util.Random;
-import net.minecraft.block.BlockVine;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Facing;
 import net.minecraft.world.World;
 
 public class WorldGenVines extends WorldGenerator {
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      while (position.getY() < 128) {
-         if (worldIn.isAirBlock(position)) {
-            for (EnumFacing enumFacing : Plane.HORIZONTAL.facings()) {
-               if (Blocks.vine.canPlaceBlockOnSide(worldIn, position, enumFacing)) {
-                  IBlockState withProperty = Blocks.vine
-                     .getDefaultState()
-                     .withProperty(BlockVine.NORTH, enumFacing == EnumFacing.NORTH)
-                     .withProperty(BlockVine.EAST, enumFacing == EnumFacing.EAST)
-                     .withProperty(BlockVine.SOUTH, enumFacing == EnumFacing.SOUTH)
-                     .withProperty(BlockVine.WEST, enumFacing == EnumFacing.WEST);
-                  worldIn.setBlockState(position, withProperty, 2);
-                  break;
-               }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        int n4 = n;
+        int n5 = n3;
+
+        while (n2 < 128) {
+            if (world.isAirBlock(n, n2, n3)) {
+                for (int i = 2; i <= 5; i++) {
+                    if (Blocks.vine.canPlaceBlockOnSide(world, n, n2, n3, i)) {
+                        world.setBlock(n, n2, n3, Blocks.vine, 1 << Direction.facingToDirection[Facing.oppositeSide[i]], 2);
+                        break;
+                    }
+                }
+            } else {
+                n = n4 + random.nextInt(4) - random.nextInt(4);
+                n3 = n5 + random.nextInt(4) - random.nextInt(4);
             }
-         } else {
-            position = position.add(rand.nextInt(4) - rand.nextInt(4), 0, rand.nextInt(4) - rand.nextInt(4));
-         }
 
-         position = position.up();
-      }
+            n2++;
+        }
 
-      return true;
-   }
+        return true;
+    }
 }

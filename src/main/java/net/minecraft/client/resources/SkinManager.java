@@ -26,109 +26,106 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ResourceLocation;
 
 public class SkinManager {
-   public static ExecutorService THREAD_POOL = new ThreadPoolExecutor(0, 2, 1L, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
-   public TextureManager textureManager;
-   public File skinCacheDir;
-   public MinecraftSessionService sessionService;
-   public LoadingCache<GameProfile, Map<Type, MinecraftProfileTexture>> skinCacheLoader;
+    public static ResourceLocation DEFAULT_SKIN = new ResourceLocation("textures/entity/steve.png");
+    public static ExecutorService THREAD_POOL = new ThreadPoolExecutor(0, 2, 1L, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
+    public TextureManager textureManager;
+    public File skinCacheDir;
+    public MinecraftSessionService sessionService;
+    public LoadingCache skinCacheLoader;
 
-   public SkinManager(TextureManager textureManagerInstance, File skinCacheDirectory, MinecraftSessionService sessionService) {
-      this.textureManager = textureManagerInstance;
-      this.skinCacheDir = skinCacheDirectory;
-      this.sessionService = sessionService;
-      this.skinCacheLoader = CacheBuilder.newBuilder()
-         .expireAfterAccess(15L, TimeUnit.SECONDS)
-         .build(new CacheLoader<GameProfile, Map<Type, MinecraftProfileTexture>>() {
-            public Map<Type, MinecraftProfileTexture> load(GameProfile gameProfile) throws Exception {
-               return Minecraft.getMinecraft().getSessionService().getTextures(gameProfile, false);
-            }
-         });
-   }
-
-   public ResourceLocation loadSkin(MinecraftProfileTexture profileTexture, Type type) {
-      return this.loadSkin(profileTexture, type, (SkinManager.SkinAvailableCallback)null);
-   }
-
-   public ResourceLocation loadSkin(
-      final MinecraftProfileTexture profileTexture, final Type type, final SkinManager.SkinAvailableCallback skinAvailableCallback
-   ) {
-      final ResourceLocation resourceLocation = new ResourceLocation("skins/" + profileTexture.getHash());
-      ITextureObject texture = this.textureManager.getTexture(resourceLocation);
-      if (texture != null) {
-         if (skinAvailableCallback != null) {
-            skinAvailableCallback.skinAvailable(type, resourceLocation, profileTexture);
-         }
-      } else {
-         File file = new File(this.skinCacheDir, profileTexture.getHash().length() > 2 ? profileTexture.getHash().substring(0, 2) : "xx");
-         File file2 = new File(file, profileTexture.getHash());
-         final ImageBufferDownload imageBufferDownload = type == Type.SKIN ? new ImageBufferDownload() : null;
-         ThreadDownloadImageData threadDownloadImageData = new ThreadDownloadImageData(
-            file2, profileTexture.getUrl(), DefaultPlayerSkin.getDefaultSkinLegacy(), new IImageBuffer() {
-               @Override
-               public BufferedImage parseUserSkin(BufferedImage image) {
-                  if (imageBufferDownload != null) {
-                     image = imageBufferDownload.parseUserSkin(image);
-                  }
-
-                  return image;
-               }
-
-               @Override
-               public void skinAvailable() {
-                  if (imageBufferDownload != null) {
-                     imageBufferDownload.skinAvailable();
-                  }
-
-                  if (skinAvailableCallback != null) {
-                     skinAvailableCallback.skinAvailable(type, resourceLocation, profileTexture);
-                  }
-               }
-            }
-         );
-         this.textureManager.loadTexture(resourceLocation, threadDownloadImageData);
-      }
-
-      return resourceLocation;
-   }
-
-   public void loadProfileTextures(final GameProfile profile, final SkinManager.SkinAvailableCallback skinAvailableCallback, final boolean requireSecure) {
-      THREAD_POOL.submit(new Runnable() {
-         @Override
-         public void run() {
-            final HashMap newHashMap = Maps.newHashMap();
-
-            try {
-               newHashMap.putAll(SkinManager.this.sessionService.getTextures(profile, requireSecure));
-            } catch (InsecureTextureException e) {
+    public SkinManager(TextureManager textureManagerInstance, File skinCacheDirectory, MinecraftSessionService sessionService) {
+        this.textureManager = textureManagerInstance;
+        this.skinCacheDir = skinCacheDirectory;
+        this.sessionService = sessionService;
+        this.skinCacheLoader = CacheBuilder.newBuilder().expireAfterAccess(15L, TimeUnit.SECONDS).build(new CacheLoader() {
+            public Map load(GameProfile gameProfile) {
+                return Minecraft.getMinecraft().getSessionService().getTextures(gameProfile, false);
             }
 
-            if (newHashMap.isEmpty() && profile.getId().equals(Minecraft.getMinecraft().getSession().getProfile().getId())) {
-               profile.getProperties().clear();
-               profile.getProperties().putAll(Minecraft.getMinecraft().getProfileProperties());
-               newHashMap.putAll(SkinManager.this.sessionService.getTextures(profile, false));
+            public Object load(Object obj) {
+                return this.load((GameProfile)obj);
             }
+        });
+    }
 
-            Minecraft.getMinecraft().addScheduledTask(new Runnable() {
-               @Override
-               public void run() {
-                  if (newHashMap.containsKey(Type.SKIN)) {
-                     SkinManager.this.loadSkin((MinecraftProfileTexture)newHashMap.get(Type.SKIN), Type.SKIN, skinAvailableCallback);
-                  }
+    public ResourceLocation loadSkin(MinecraftProfileTexture minecraftProfileTexture, Type type) {
+        return this.loadSkin(minecraftProfileTexture, type, null);
+    }
 
-                  if (newHashMap.containsKey(Type.CAPE)) {
-                     SkinManager.this.loadSkin((MinecraftProfileTexture)newHashMap.get(Type.CAPE), Type.CAPE, skinAvailableCallback);
-                  }
-               }
+    public ResourceLocation loadSkin(final MinecraftProfileTexture minecraftProfileTexture, final Type type, final SkinManager.SkinAvailableCallback skinAvailableCallback) {
+        final ResourceLocation resourceLocation = new ResourceLocation("skins/" + minecraftProfileTexture.getHash());
+        ITextureObject texture = this.textureManager.getTexture(resourceLocation);
+        if (texture != null) {
+            if (skinAvailableCallback != null) {
+                skinAvailableCallback.handleType(type, resourceLocation, minecraftProfileTexture);
+            }
+        } else {
+            File file = new File(this.skinCacheDir, minecraftProfileTexture.getHash().substring(0, 2));
+            File file2 = new File(file, minecraftProfileTexture.getHash());
+            final ImageBufferDownload imageBufferDownload = type == Type.SKIN ? new ImageBufferDownload() : null;
+            ThreadDownloadImageData threadDownloadImageData = new ThreadDownloadImageData(file2, minecraftProfileTexture.getUrl(), DEFAULT_SKIN, new IImageBuffer() {
+                @Override
+                public BufferedImage parseUserSkin(BufferedImage bufferedImage) {
+                    if (imageBufferDownload != null) {
+                        bufferedImage = imageBufferDownload.parseUserSkin(bufferedImage);
+                    }
+
+                    return bufferedImage;
+                }
+
+                @Override
+                public void run() {
+                    if (imageBufferDownload != null) {
+                        imageBufferDownload.run();
+                    }
+
+                    if (skinAvailableCallback != null) {
+                        skinAvailableCallback.handleType(type, resourceLocation, minecraftProfileTexture);
+                    }
+                }
             });
-         }
-      });
-   }
+            this.textureManager.loadTexture(resourceLocation, threadDownloadImageData);
+        }
 
-   public Map<Type, MinecraftProfileTexture> loadSkinFromCache(GameProfile profile) {
-      return (Map<Type, MinecraftProfileTexture>)this.skinCacheLoader.getUnchecked(profile);
-   }
+        return resourceLocation;
+    }
 
-   public interface SkinAvailableCallback {
-      void skinAvailable(Type type, ResourceLocation resourceLocation, MinecraftProfileTexture minecraftProfileTexture);
-   }
+    public void handleGameProfile(final GameProfile gameProfile, final SkinManager.SkinAvailableCallback skinAvailableCallback, final boolean flag) {
+        THREAD_POOL.submit(new Runnable() {
+            @Override
+            public void run() {
+                final HashMap newHashMap = Maps.newHashMap();
+
+                try {
+                    newHashMap.putAll(SkinManager.this.sessionService.getTextures(gameProfile, flag));
+                } catch (InsecureTextureException e) {
+                }
+
+                if (newHashMap.isEmpty() && gameProfile.getId().equals(Minecraft.getMinecraft().getSession().getProfile().getId())) {
+                    newHashMap.putAll(SkinManager.this.sessionService.getTextures(SkinManager.this.sessionService.fillProfileProperties(gameProfile, false), false));
+                }
+
+                Minecraft.getMinecraft().addScheduledTask(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (newHashMap.containsKey(Type.SKIN)) {
+                            SkinManager.this.loadSkin((MinecraftProfileTexture)newHashMap.get(Type.SKIN), Type.SKIN, skinAvailableCallback);
+                        }
+
+                        if (newHashMap.containsKey(Type.CAPE)) {
+                            SkinManager.this.loadSkin((MinecraftProfileTexture)newHashMap.get(Type.CAPE), Type.CAPE, skinAvailableCallback);
+                        }
+                    }
+                });
+            }
+        });
+    }
+
+    public Map loadSkinFromCache(GameProfile gameProfile) {
+        return (Map)this.skinCacheLoader.getUnchecked(gameProfile);
+    }
+
+    public interface SkinAvailableCallback {
+        void handleType(Type type, ResourceLocation resourceLocation, MinecraftProfileTexture minecraftProfileTexture);
+    }
 }

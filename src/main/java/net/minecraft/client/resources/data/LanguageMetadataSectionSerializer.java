@@ -11,35 +11,35 @@ import java.util.Map.Entry;
 import net.minecraft.client.resources.Language;
 import net.minecraft.util.JsonUtils;
 
-public class LanguageMetadataSectionSerializer extends BaseMetadataSectionSerializer<LanguageMetadataSection> {
-   public LanguageMetadataSection deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-      JsonObject asJsonObject = jsonElement.getAsJsonObject();
-      HashSet newHashSet = Sets.newHashSet();
+public class LanguageMetadataSectionSerializer extends BaseMetadataSectionSerializer {
+    public LanguageMetadataSection deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
+        JsonObject asJsonObject = jsonElement.getAsJsonObject();
+        HashSet newHashSet = Sets.newHashSet();
 
-      for (Entry entry : asJsonObject.entrySet()) {
-         String key = (String)entry.getKey();
-         JsonObject jsonObject = JsonUtils.getJsonObject((JsonElement)entry.getValue(), "language");
-         String string = JsonUtils.getString(jsonObject, "region");
-         String string2 = JsonUtils.getString(jsonObject, "name");
-         boolean boolean2 = JsonUtils.getBoolean(jsonObject, "bidirectional", false);
-         if (string.isEmpty()) {
-            throw new JsonParseException("Invalid language->'" + key + "'->region: empty value");
-         }
+        for (Entry entry : asJsonObject.entrySet()) {
+            String key = (String)entry.getKey();
+            JsonObject elementAsJsonObject = JsonUtils.getElementAsJsonObject((JsonElement)entry.getValue(), "language");
+            String jsonObjectStringFieldValue = JsonUtils.getJsonObjectStringFieldValue(elementAsJsonObject, "region");
+            String jsonObjectStringFieldValue2 = JsonUtils.getJsonObjectStringFieldValue(elementAsJsonObject, "name");
+            boolean flag = JsonUtils.getJsonObjectBooleanFieldValueOrDefault(elementAsJsonObject, "bidirectional", false);
+            if (jsonObjectStringFieldValue.isEmpty()) {
+                throw new JsonParseException("Invalid language->'" + key + "'->region: empty value");
+            }
 
-         if (string2.isEmpty()) {
-            throw new JsonParseException("Invalid language->'" + key + "'->name: empty value");
-         }
+            if (jsonObjectStringFieldValue2.isEmpty()) {
+                throw new JsonParseException("Invalid language->'" + key + "'->name: empty value");
+            }
 
-         if (!newHashSet.add(new Language(key, string, string2, boolean2))) {
-            throw new JsonParseException("Duplicate language->'" + key + "' defined");
-         }
-      }
+            if (!newHashSet.add(new Language(key, jsonObjectStringFieldValue, jsonObjectStringFieldValue2, flag))) {
+                throw new JsonParseException("Duplicate language->'" + key + "' defined");
+            }
+        }
 
-      return new LanguageMetadataSection(newHashSet);
-   }
+        return new LanguageMetadataSection(newHashSet);
+    }
 
-   @Override
-   public String getSectionName() {
-      return "language";
-   }
+    @Override
+    public String getSectionName() {
+        return "language";
+    }
 }

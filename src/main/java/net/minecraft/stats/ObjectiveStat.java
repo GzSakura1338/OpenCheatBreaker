@@ -3,10 +3,10 @@ package net.minecraft.stats;
 import net.minecraft.scoreboard.ScoreDummyCriteria;
 
 public class ObjectiveStat extends ScoreDummyCriteria {
-   public StatBase stat;
+    public StatBase stat;
 
-   public ObjectiveStat(StatBase statIn) {
-      super(statIn.statId);
-      this.stat = statIn;
-   }
+    public ObjectiveStat(StatBase statBase) {
+        super(statBase.statId);
+        this.stat = statBase;
+    }
 }

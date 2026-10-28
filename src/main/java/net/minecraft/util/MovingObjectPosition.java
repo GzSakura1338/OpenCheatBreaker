@@ -3,59 +3,64 @@ package net.minecraft.util;
 import net.minecraft.entity.Entity;
 
 public class MovingObjectPosition {
-   public MovingObjectPosition.MovingObjectType typeOfHit;
-   public BlockPos blockPos;
-   public EnumFacing sideHit;
-   public Vec3 hitVec;
-   public Entity entityHit;
+    public MovingObjectPosition.MovingObjectType typeOfHit;
+    public int blockX;
+    public int blockY;
+    public int blockZ;
+    public int sideHit;
+    public Vec3 hitVec;
+    public Entity entityHit;
 
-   public MovingObjectPosition(Vec3 hitVecIn, EnumFacing facing, BlockPos blockPosIn) {
-      this(MovingObjectPosition.MovingObjectType.BLOCK, hitVecIn, facing, blockPosIn);
-   }
+    public MovingObjectPosition(int n, int n2, int n3, int n4, Vec3 vec3) {
+        this(n, n2, n3, n4, vec3, true);
+    }
 
-   public MovingObjectPosition(Vec3 vec3, EnumFacing facing) {
-      this(MovingObjectPosition.MovingObjectType.BLOCK, vec3, facing, BlockPos.ORIGIN);
-   }
+    public MovingObjectPosition(int n, int n2, int n3, int n4, Vec3 vec3, boolean flag) {
+        this.typeOfHit = flag ? MovingObjectPosition.MovingObjectType.BLOCK : MovingObjectPosition.MovingObjectType.MISS;
+        this.blockX = n;
+        this.blockY = n2;
+        this.blockZ = n3;
+        this.sideHit = n4;
+        this.hitVec = Vec3.createVectorHelper(vec3.xCoord, vec3.yCoord, vec3.zCoord);
+    }
 
-   public MovingObjectPosition(Entity entityIn) {
-      this(entityIn, new Vec3(entityIn.posX, entityIn.posY, entityIn.posZ));
-   }
+    public MovingObjectPosition(Entity entity) {
+        this(entity, Vec3.createVectorHelper(entity.posX, entity.posY, entity.posZ));
+    }
 
-   public MovingObjectPosition(MovingObjectPosition.MovingObjectType typeOfHitIn, Vec3 hitVecIn, EnumFacing sideHitIn, BlockPos blockPosIn) {
-      this.typeOfHit = typeOfHitIn;
-      this.blockPos = blockPosIn;
-      this.sideHit = sideHitIn;
-      this.hitVec = new Vec3(hitVecIn.xCoord, hitVecIn.yCoord, hitVecIn.zCoord);
-   }
+    public MovingObjectPosition(Entity entity, Vec3 vec3) {
+        this.typeOfHit = MovingObjectPosition.MovingObjectType.ENTITY;
+        this.entityHit = entity;
+        this.hitVec = vec3;
+    }
 
-   public MovingObjectPosition(Entity entityHitIn, Vec3 hitVecIn) {
-      this.typeOfHit = MovingObjectPosition.MovingObjectType.ENTITY;
-      this.entityHit = entityHitIn;
-      this.hitVec = hitVecIn;
-   }
+    @Override
+    public String toString() {
+        return "HitResult{type="
+            + this.typeOfHit
+            + ", x="
+            + this.blockX
+            + ", y="
+            + this.blockY
+            + ", z="
+            + this.blockZ
+            + ", f="
+            + this.sideHit
+            + ", pos="
+            + this.hitVec
+            + ", entity="
+            + this.entityHit
+            + '}';
+    }
 
-   public BlockPos getBlockPos() {
-      return this.blockPos;
-   }
+    public enum MovingObjectType {
+        MISS("MISS", 0),
+        BLOCK("BLOCK", 1),
+        ENTITY("ENTITY", 2);
 
-   @Override
-   public String toString() {
-      return "HitResult{type="
-         + this.typeOfHit
-         + ", blockpos="
-         + this.blockPos
-         + ", f="
-         + this.sideHit
-         + ", pos="
-         + this.hitVec
-         + ", entity="
-         + this.entityHit
-         + '}';
-   }
+        public static MovingObjectPosition.MovingObjectType[] movingObjectTypeArray = new MovingObjectPosition.MovingObjectType[]{MISS, BLOCK, ENTITY};
 
-   public enum MovingObjectType {
-      MISS,
-      BLOCK,
-      ENTITY;
-   }
+        MovingObjectType(String str, int n) {
+        }
+    }
 }

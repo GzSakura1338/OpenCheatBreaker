@@ -3,9 +3,9 @@ package net.minecraft.entity.boss;
 import net.minecraft.util.IChatComponent;
 
 public interface IBossDisplayData {
-   float getMaxHealth();
+    float getMaxHealth();
 
-   float getHealth();
+    float getHealth();
 
-   IChatComponent getDisplayName();
+    IChatComponent getFormattedCommandSenderName();
 }

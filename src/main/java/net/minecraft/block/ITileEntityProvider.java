@@ -4,5 +4,5 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
 public interface ITileEntityProvider {
-   TileEntity createNewTileEntity(World world, int n);
+    TileEntity createNewTileEntity(World world, int n);
 }

@@ -6,13 +6,13 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.ColorizerFoliage;
 
 public class FoliageColorReloadListener implements IResourceManagerReloadListener {
-   public static ResourceLocation LOC_FOLIAGE_PNG = new ResourceLocation("textures/colormap/foliage.png");
+    public static ResourceLocation FOLIAGE_TEXTURE = new ResourceLocation("textures/colormap/foliage.png");
 
-   @Override
-   public void onResourceManagerReload(IResourceManager resourceManager) {
-      try {
-         ColorizerFoliage.setFoliageBiomeColorizer(TextureUtil.readImageData(resourceManager, LOC_FOLIAGE_PNG));
-      } catch (IOException e) {
-      }
-   }
+    @Override
+    public void onResourceManagerReload(IResourceManager resourceManager) {
+        try {
+            ColorizerFoliage.setFoliageBiomeColorizer(TextureUtil.readImageData(resourceManager, FOLIAGE_TEXTURE));
+        } catch (IOException e) {
+        }
+    }
 }

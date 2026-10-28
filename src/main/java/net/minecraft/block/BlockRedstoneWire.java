@@ -1,416 +1,404 @@
 package net.minecraft.block;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.ArrayList;
-import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.util.IStringSerializable;
-import net.minecraft.util.MathHelper;
+import net.minecraft.util.Direction;
+import net.minecraft.util.IIcon;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockRedstoneWire extends Block {
-   public static PropertyEnum<BlockRedstoneWire.EnumAttachPosition> NORTH = PropertyEnum.create("north", BlockRedstoneWire.EnumAttachPosition.class);
-   public static PropertyEnum<BlockRedstoneWire.EnumAttachPosition> EAST = PropertyEnum.create("east", BlockRedstoneWire.EnumAttachPosition.class);
-   public static PropertyEnum<BlockRedstoneWire.EnumAttachPosition> SOUTH = PropertyEnum.create("south", BlockRedstoneWire.EnumAttachPosition.class);
-   public static PropertyEnum<BlockRedstoneWire.EnumAttachPosition> WEST = PropertyEnum.create("west", BlockRedstoneWire.EnumAttachPosition.class);
-   public static PropertyInteger POWER = PropertyInteger.create("power", 0, 15);
-   public boolean canProvidePower = true;
-   public Set<BlockPos> blocksNeedingUpdate = Sets.newHashSet();
+    public boolean canProvidePower = true;
+    public Set affectedNeighbors = new HashSet();
+    public IIcon redstoneCrossIcon;
+    public IIcon redstoneLineIcon;
+    public IIcon redstoneCrossOverlayIcon;
+    public IIcon redstoneLineOverlayIcon;
 
-   public BlockRedstoneWire() {
-      super(Material.circuits);
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(NORTH, BlockRedstoneWire.EnumAttachPosition.NONE)
-            .withProperty(EAST, BlockRedstoneWire.EnumAttachPosition.NONE)
-            .withProperty(SOUTH, BlockRedstoneWire.EnumAttachPosition.NONE)
-            .withProperty(WEST, BlockRedstoneWire.EnumAttachPosition.NONE)
-            .withProperty(POWER, 0)
-      );
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
-   }
+    public BlockRedstoneWire() {
+        super(Material.circuits);
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.0625F, 1.0F);
+    }
 
-   @Override
-   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-      state = state.withProperty(WEST, this.getAttachPosition(worldIn, pos, EnumFacing.WEST));
-      state = state.withProperty(EAST, this.getAttachPosition(worldIn, pos, EnumFacing.EAST));
-      state = state.withProperty(NORTH, this.getAttachPosition(worldIn, pos, EnumFacing.NORTH));
-      return state.withProperty(SOUTH, this.getAttachPosition(worldIn, pos, EnumFacing.SOUTH));
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-   public BlockRedstoneWire.EnumAttachPosition getAttachPosition(IBlockAccess worldIn, BlockPos pos, EnumFacing direction) {
-      BlockPos offset = pos.offset(direction);
-      Block block = worldIn.getBlockState(pos.offset(direction)).getBlock();
-      if (!canConnectTo(worldIn.getBlockState(offset), direction) && (block.isBlockNormalCube() || !canConnectUpwardsTo(worldIn.getBlockState(offset.down())))) {
-         Block block2 = worldIn.getBlockState(pos.up()).getBlock();
-         return !block2.isBlockNormalCube() && block.isBlockNormalCube() && canConnectUpwardsTo(worldIn.getBlockState(offset.up()))
-            ? BlockRedstoneWire.EnumAttachPosition.UP
-            : BlockRedstoneWire.EnumAttachPosition.NONE;
-      } else {
-         return BlockRedstoneWire.EnumAttachPosition.SIDE;
-      }
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public int getRenderType() {
+        return 5;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public int colorMultiplier(IBlockAccess worldIn, int x, int y, int z) {
+        return 8388608;
+    }
 
-   @Override
-   public int colorMultiplier(IBlockAccess worldIn, BlockPos pos, int renderPass) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      return blockState.getBlock() != this ? super.colorMultiplier(worldIn, pos, renderPass) : this.colorMultiplier(blockState.getValue(POWER));
-   }
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z) || worldIn.getBlock(x, y - 1, z) == Blocks.glowstone;
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      return World.doesBlockHaveSolidTopSurface(worldIn, pos.down()) || worldIn.getBlockState(pos.down()).getBlock() == Blocks.glowstone;
-   }
+    public void handleWorld(World world, int n, int n2, int n3) {
+        this.handleWorld(world, n, n2, n3, n, n2, n3);
+        ArrayList list = new ArrayList(this.affectedNeighbors);
+        this.affectedNeighbors.clear();
 
-   public IBlockState updateSurroundingRedstone(World worldIn, BlockPos pos, IBlockState state) {
-      state = this.calculateCurrentChanges(worldIn, pos, pos, state);
-      ArrayList newArrayList = Lists.newArrayList(this.blocksNeedingUpdate);
-      this.blocksNeedingUpdate.clear();
+        for (int i = 0; i < list.size(); i++) {
+            ChunkPosition chunkPosition = (ChunkPosition)list.get(i);
+            world.notifyBlocksOfNeighborChange(chunkPosition.chunkPosX, chunkPosition.chunkPosY, chunkPosition.chunkPosZ, this);
+        }
+    }
 
-      for (BlockPos blockPos : (Iterable<BlockPos>)newArrayList) {
-         worldIn.notifyNeighborsOfStateChange(blockPos, this);
-      }
+    public void handleWorld(World world, int n, int n2, int n3, int n4, int n5, int n6) {
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        byte b = 0;
+        int computeInt = this.computeInt(world, n4, n5, n6, b);
+        this.canProvidePower = false;
+        int strongestIndirectPower = world.getStrongestIndirectPower(n, n2, n3);
+        this.canProvidePower = true;
+        if (strongestIndirectPower > 0 && strongestIndirectPower > computeInt - 1) {
+            computeInt = strongestIndirectPower;
+        }
 
-      return state;
-   }
+        int n7 = 0;
 
-   public IBlockState calculateCurrentChanges(World worldIn, BlockPos pos1, BlockPos pos2, IBlockState state) {
-      IBlockState state2 = state;
-      int value = state.getValue(POWER);
-      int n = 0;
-      n = this.getMaxCurrentStrength(worldIn, pos2, n);
-      this.canProvidePower = false;
-      int isBlockIndirectlyGettingPowered = worldIn.isBlockIndirectlyGettingPowered(pos1);
-      this.canProvidePower = true;
-      if (isBlockIndirectlyGettingPowered > 0 && isBlockIndirectlyGettingPowered > n - 1) {
-         n = isBlockIndirectlyGettingPowered;
-      }
-
-      int n2 = 0;
-
-      for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-         BlockPos offset = pos1.offset(enumFacing);
-         boolean flag = offset.getX() != pos2.getX() || offset.getZ() != pos2.getZ();
-         if (flag) {
-            n2 = this.getMaxCurrentStrength(worldIn, offset, n2);
-         }
-
-         if (worldIn.getBlockState(offset).getBlock().isNormalCube() && !worldIn.getBlockState(pos1.up()).getBlock().isNormalCube()) {
-            if (flag && pos1.getY() >= pos2.getY()) {
-               n2 = this.getMaxCurrentStrength(worldIn, offset.up(), n2);
+        for (int i = 0; i < 4; i++) {
+            int n8 = n;
+            int n9 = n3;
+            if (i == 0) {
+                n8 = n - 1;
             }
-         } else if (!worldIn.getBlockState(offset).getBlock().isNormalCube() && flag && pos1.getY() <= pos2.getY()) {
-            n2 = this.getMaxCurrentStrength(worldIn, offset.down(), n2);
-         }
-      }
 
-      if (n2 > n) {
-         n = n2 - 1;
-      } else if (n > 0) {
-         n--;
-      } else {
-         n = 0;
-      }
+            if (i == 1) {
+                n8++;
+            }
 
-      if (isBlockIndirectlyGettingPowered > n - 1) {
-         n = isBlockIndirectlyGettingPowered;
-      }
+            if (i == 2) {
+                n9 = n3 - 1;
+            }
 
-      if (value != n) {
-         state = state.withProperty(POWER, n);
-         if (worldIn.getBlockState(pos1) == state2) {
-            worldIn.setBlockState(pos1, state, 2);
-         }
+            if (i == 3) {
+                n9++;
+            }
 
-         this.blocksNeedingUpdate.add(pos1);
+            if (n8 != n4 || n9 != n6) {
+                n7 = this.computeInt(world, n8, n2, n9, n7);
+            }
 
-         for (EnumFacing enumFacing : EnumFacing.values()) {
-            this.blocksNeedingUpdate.add(pos1.offset(enumFacing));
-         }
-      }
+            if (world.getBlock(n8, n2, n9).isNormalCube() && !world.getBlock(n, n2 + 1, n3).isNormalCube()) {
+                if ((n8 != n4 || n9 != n6) && n2 >= n5) {
+                    n7 = this.computeInt(world, n8, n2 + 1, n9, n7);
+                }
+            } else if (!world.getBlock(n8, n2, n9).isNormalCube() && (n8 != n4 || n9 != n6) && n2 <= n5) {
+                n7 = this.computeInt(world, n8, n2 - 1, n9, n7);
+            }
+        }
 
-      return state;
-   }
+        if (n7 > computeInt) {
+            computeInt = n7 - 1;
+        } else if (computeInt > 0) {
+            computeInt--;
+        } else {
+            computeInt = 0;
+        }
 
-   public void notifyWireNeighborsOfStateChange(World worldIn, BlockPos pos) {
-      if (worldIn.getBlockState(pos).getBlock() == this) {
-         worldIn.notifyNeighborsOfStateChange(pos, this);
+        if (strongestIndirectPower > computeInt - 1) {
+            computeInt = strongestIndirectPower;
+        }
 
-         for (EnumFacing enumFacing : EnumFacing.values()) {
-            worldIn.notifyNeighborsOfStateChange(pos.offset(enumFacing), this);
-         }
-      }
-   }
+        if (blockMetadata != computeInt) {
+            world.setBlockMetadataWithNotify(n, n2, n3, computeInt, 2);
+            this.affectedNeighbors.add(new ChunkPosition(n, n2, n3));
+            this.affectedNeighbors.add(new ChunkPosition(n - 1, n2, n3));
+            this.affectedNeighbors.add(new ChunkPosition(n + 1, n2, n3));
+            this.affectedNeighbors.add(new ChunkPosition(n, n2 - 1, n3));
+            this.affectedNeighbors.add(new ChunkPosition(n, n2 + 1, n3));
+            this.affectedNeighbors.add(new ChunkPosition(n, n2, n3 - 1));
+            this.affectedNeighbors.add(new ChunkPosition(n, n2, n3 + 1));
+        }
+    }
 
-   @Override
-   public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
-      if (!worldIn.isRemote) {
-         this.updateSurroundingRedstone(worldIn, pos, state);
+    public void handleWorld2(World world, int n, int n2, int n3) {
+        if (world.getBlock(n, n2, n3) == this) {
+            world.notifyBlocksOfNeighborChange(n, n2, n3, this);
+            world.notifyBlocksOfNeighborChange(n - 1, n2, n3, this);
+            world.notifyBlocksOfNeighborChange(n + 1, n2, n3, this);
+            world.notifyBlocksOfNeighborChange(n, n2, n3 - 1, this);
+            world.notifyBlocksOfNeighborChange(n, n2, n3 + 1, this);
+            world.notifyBlocksOfNeighborChange(n, n2 - 1, n3, this);
+            world.notifyBlocksOfNeighborChange(n, n2 + 1, n3, this);
+        }
+    }
 
-         for (EnumFacing enumFacing : Plane.VERTICAL) {
-            worldIn.notifyNeighborsOfStateChange(pos.offset(enumFacing), this);
-         }
-
-         for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-            this.notifyWireNeighborsOfStateChange(worldIn, pos.offset(enumFacing));
-         }
-
-         for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-            BlockPos offset = pos.offset(enumFacing);
-            if (worldIn.getBlockState(offset).getBlock().isNormalCube()) {
-               this.notifyWireNeighborsOfStateChange(worldIn, offset.up());
+    @Override
+    public void onBlockAdded(World worldIn, int x, int y, int z) {
+        super.onBlockAdded(worldIn, x, y, z);
+        if (!worldIn.isRemote) {
+            this.handleWorld(worldIn, x, y, z);
+            worldIn.notifyBlocksOfNeighborChange(x, y + 1, z, this);
+            worldIn.notifyBlocksOfNeighborChange(x, y - 1, z, this);
+            this.handleWorld2(worldIn, x - 1, y, z);
+            this.handleWorld2(worldIn, x + 1, y, z);
+            this.handleWorld2(worldIn, x, y, z - 1);
+            this.handleWorld2(worldIn, x, y, z + 1);
+            if (worldIn.getBlock(x - 1, y, z).isNormalCube()) {
+                this.handleWorld2(worldIn, x - 1, y + 1, z);
             } else {
-               this.notifyWireNeighborsOfStateChange(worldIn, offset.down());
+                this.handleWorld2(worldIn, x - 1, y - 1, z);
             }
-         }
-      }
-   }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      super.breakBlock(worldIn, pos, state);
-      if (!worldIn.isRemote) {
-         for (EnumFacing enumFacing : EnumFacing.values()) {
-            worldIn.notifyNeighborsOfStateChange(pos.offset(enumFacing), this);
-         }
-
-         this.updateSurroundingRedstone(worldIn, pos, state);
-
-         for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-            this.notifyWireNeighborsOfStateChange(worldIn, pos.offset(enumFacing));
-         }
-
-         for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-            BlockPos offset = pos.offset(enumFacing);
-            if (worldIn.getBlockState(offset).getBlock().isNormalCube()) {
-               this.notifyWireNeighborsOfStateChange(worldIn, offset.up());
+            if (worldIn.getBlock(x + 1, y, z).isNormalCube()) {
+                this.handleWorld2(worldIn, x + 1, y + 1, z);
             } else {
-               this.notifyWireNeighborsOfStateChange(worldIn, offset.down());
+                this.handleWorld2(worldIn, x + 1, y - 1, z);
             }
-         }
-      }
-   }
 
-   public int getMaxCurrentStrength(World worldIn, BlockPos pos, int strength) {
-      if (worldIn.getBlockState(pos).getBlock() != this) {
-         return strength;
-      }
+            if (worldIn.getBlock(x, y, z - 1).isNormalCube()) {
+                this.handleWorld2(worldIn, x, y + 1, z - 1);
+            } else {
+                this.handleWorld2(worldIn, x, y - 1, z - 1);
+            }
 
-      int value = worldIn.getBlockState(pos).getValue(POWER);
-      return value > strength ? value : strength;
-   }
+            if (worldIn.getBlock(x, y, z + 1).isNormalCube()) {
+                this.handleWorld2(worldIn, x, y + 1, z + 1);
+            } else {
+                this.handleWorld2(worldIn, x, y - 1, z + 1);
+            }
+        }
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!worldIn.isRemote) {
-         if (this.canPlaceBlockAt(worldIn, pos)) {
-            this.updateSurroundingRedstone(worldIn, pos, state);
-         } else {
-            this.dropBlockAsItem(worldIn, pos, state, 0);
-            worldIn.setBlockToAir(pos);
-         }
-      }
-   }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+        if (!worldIn.isRemote) {
+            worldIn.notifyBlocksOfNeighborChange(x, y + 1, z, this);
+            worldIn.notifyBlocksOfNeighborChange(x, y - 1, z, this);
+            worldIn.notifyBlocksOfNeighborChange(x + 1, y, z, this);
+            worldIn.notifyBlocksOfNeighborChange(x - 1, y, z, this);
+            worldIn.notifyBlocksOfNeighborChange(x, y, z + 1, this);
+            worldIn.notifyBlocksOfNeighborChange(x, y, z - 1, this);
+            this.handleWorld(worldIn, x, y, z);
+            this.handleWorld2(worldIn, x - 1, y, z);
+            this.handleWorld2(worldIn, x + 1, y, z);
+            this.handleWorld2(worldIn, x, y, z - 1);
+            this.handleWorld2(worldIn, x, y, z + 1);
+            if (worldIn.getBlock(x - 1, y, z).isNormalCube()) {
+                this.handleWorld2(worldIn, x - 1, y + 1, z);
+            } else {
+                this.handleWorld2(worldIn, x - 1, y - 1, z);
+            }
 
-   @Override
-   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-      return Items.redstone;
-   }
+            if (worldIn.getBlock(x + 1, y, z).isNormalCube()) {
+                this.handleWorld2(worldIn, x + 1, y + 1, z);
+            } else {
+                this.handleWorld2(worldIn, x + 1, y - 1, z);
+            }
 
-   @Override
-   public int getStrongPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      return !this.canProvidePower ? 0 : this.getWeakPower(worldIn, pos, state, side);
-   }
+            if (worldIn.getBlock(x, y, z - 1).isNormalCube()) {
+                this.handleWorld2(worldIn, x, y + 1, z - 1);
+            } else {
+                this.handleWorld2(worldIn, x, y - 1, z - 1);
+            }
 
-   @Override
-   public int getWeakPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      if (!this.canProvidePower) {
-         return 0;
-      }
+            if (worldIn.getBlock(x, y, z + 1).isNormalCube()) {
+                this.handleWorld2(worldIn, x, y + 1, z + 1);
+            } else {
+                this.handleWorld2(worldIn, x, y - 1, z + 1);
+            }
+        }
+    }
 
-      int value = state.getValue(POWER);
-      if (value == 0) {
-         return 0;
-      }
+    public int computeInt(World world, int n, int n2, int n3, int n4) {
+        if (world.getBlock(n, n2, n3) != this) {
+            return n4;
+        }
 
-      if (side == EnumFacing.UP) {
-         return value;
-      }
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        return blockMetadata > n4 ? blockMetadata : n4;
+    }
 
-      EnumSet noneOf = EnumSet.noneOf(EnumFacing.class);
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!worldIn.isRemote) {
+            boolean canPlaceBlockAt = this.canPlaceBlockAt(worldIn, x, y, z);
+            if (canPlaceBlockAt) {
+                this.handleWorld(worldIn, x, y, z);
+            } else {
+                this.dropBlockAsItem(worldIn, x, y, z, 0, 0);
+                worldIn.setBlockToAir(x, y, z);
+            }
 
-      for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-         if (this.connectsTo(worldIn, pos, enumFacing)) {
-            noneOf.add(enumFacing);
-         }
-      }
+            super.onNeighborBlockChange(worldIn, x, y, z, neighbor);
+        }
+    }
 
-      if (side.getAxis().isHorizontal() && noneOf.isEmpty()) {
-         return value;
-      } else {
-         return noneOf.contains(side) && !noneOf.contains(side.rotateYCCW()) && !noneOf.contains(side.rotateY()) ? value : 0;
-      }
-   }
+    @Override
+    public Item getItemDropped(int meta, Random random, int fortune) {
+        return Items.redstone;
+    }
 
-   public boolean connectsTo(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-      BlockPos offset = pos.offset(side);
-      IBlockState blockState = worldIn.getBlockState(offset);
-      Block block = blockState.getBlock();
-      boolean isNormalCube = block.isNormalCube();
-      boolean isNormalCube2 = worldIn.getBlockState(pos.up()).getBlock().isNormalCube();
-      return !isNormalCube2 && isNormalCube && canConnectUpwardsTo(worldIn, offset.up())
-         ? true
-         : (
-            canConnectTo(blockState, side)
-               ? true
-               : (
-                  block == Blocks.powered_repeater && blockState.getValue(BlockRedstoneDiode.FACING) == side
-                     ? true
-                     : !isNormalCube && canConnectUpwardsTo(worldIn, offset.down())
-               )
-         );
-   }
+    @Override
+    public int isProvidingStrongPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        return !this.canProvidePower ? 0 : this.isProvidingWeakPower(worldIn, x, y, z, side);
+    }
 
-   public static boolean canConnectUpwardsTo(IBlockAccess worldIn, BlockPos pos) {
-      return canConnectUpwardsTo(worldIn.getBlockState(pos));
-   }
+    @Override
+    public int isProvidingWeakPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        if (!this.canProvidePower) {
+            return 0;
+        }
 
-   public static boolean canConnectUpwardsTo(IBlockState state) {
-      return canConnectTo(state, (EnumFacing)null);
-   }
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (blockMetadata == 0) {
+            return 0;
+        }
 
-   public static boolean canConnectTo(IBlockState blockState, EnumFacing side) {
-      Block block = blockState.getBlock();
-      if (block == Blocks.redstone_wire) {
-         return true;
-      } else if (Blocks.unpowered_repeater.isAssociated(block)) {
-         EnumFacing value = blockState.getValue(BlockRedstoneRepeater.FACING);
-         return value == side || value.getOpposite() == side;
-      } else {
-         return block.canProvidePower() && side != null;
-      }
-   }
+        if (side == 1) {
+            return blockMetadata;
+        }
 
-   @Override
-   public boolean canProvidePower() {
-      return this.canProvidePower;
-   }
+        boolean flag = checkIBlockAccess(worldIn, x - 1, y, z, 1)
+            || !worldIn.getBlock(x - 1, y, z).isNormalCube() && checkIBlockAccess(worldIn, x - 1, y - 1, z, -1);
+        boolean flag2 = checkIBlockAccess(worldIn, x + 1, y, z, 3)
+            || !worldIn.getBlock(x + 1, y, z).isNormalCube() && checkIBlockAccess(worldIn, x + 1, y - 1, z, -1);
+        boolean flag3 = checkIBlockAccess(worldIn, x, y, z - 1, 2)
+            || !worldIn.getBlock(x, y, z - 1).isNormalCube() && checkIBlockAccess(worldIn, x, y - 1, z - 1, -1);
+        boolean flag4 = checkIBlockAccess(worldIn, x, y, z + 1, 0)
+            || !worldIn.getBlock(x, y, z + 1).isNormalCube() && checkIBlockAccess(worldIn, x, y - 1, z + 1, -1);
+        if (!worldIn.getBlock(x, y + 1, z).isNormalCube()) {
+            if (worldIn.getBlock(x - 1, y, z).isNormalCube() && checkIBlockAccess(worldIn, x - 1, y + 1, z, -1)) {
+                flag = true;
+            }
 
-   public int colorMultiplier(int powerLevel) {
-      float f = powerLevel / 15.0F;
-      float f2 = f * 0.6F + 0.4F;
-      if (powerLevel == 0) {
-         f2 = 0.3F;
-      }
+            if (worldIn.getBlock(x + 1, y, z).isNormalCube() && checkIBlockAccess(worldIn, x + 1, y + 1, z, -1)) {
+                flag2 = true;
+            }
 
-      float f3 = f * f * 0.7F - 0.5F;
-      float f4 = f * f * 0.6F - 0.7F;
-      if (f3 < 0.0F) {
-         f3 = 0.0F;
-      }
+            if (worldIn.getBlock(x, y, z - 1).isNormalCube() && checkIBlockAccess(worldIn, x, y + 1, z - 1, -1)) {
+                flag3 = true;
+            }
 
-      if (f4 < 0.0F) {
-         f4 = 0.0F;
-      }
+            if (worldIn.getBlock(x, y, z + 1).isNormalCube() && checkIBlockAccess(worldIn, x, y + 1, z + 1, -1)) {
+                flag4 = true;
+            }
+        }
 
-      int n = MathHelper.clamp_int((int)(f2 * 255.0F), 0, 255);
-      int n2 = MathHelper.clamp_int((int)(f3 * 255.0F), 0, 255);
-      int n3 = MathHelper.clamp_int((int)(f4 * 255.0F), 0, 255);
-      return 0xFF000000 | n << 16 | n2 << 8 | n3;
-   }
+        return !flag3 && !flag2 && !flag && !flag4 && side >= 2 && side <= 5
+            ? blockMetadata
+            : (
+                side == 2 && flag3 && !flag && !flag2
+                    ? blockMetadata
+                    : (
+                        side == 3 && flag4 && !flag && !flag2
+                            ? blockMetadata
+                            : (side == 4 && flag && !flag3 && !flag4 ? blockMetadata : (side == 5 && flag2 && !flag3 && !flag4 ? blockMetadata : 0))
+                    )
+            );
+    }
 
-   @Override
-   public void randomDisplayTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      int value = state.getValue(POWER);
-      if (value != 0) {
-         double d = pos.getX() + 0.5 + (rand.nextFloat() - 0.5) * 0.2;
-         double d2 = pos.getY() + 0.0625F;
-         double d3 = pos.getZ() + 0.5 + (rand.nextFloat() - 0.5) * 0.2;
-         float f = value / 15.0F;
-         float f2 = f * 0.6F + 0.4F;
-         float max = Math.max(0.0F, f * f * 0.7F - 0.5F);
-         float max2 = Math.max(0.0F, f * f * 0.6F - 0.7F);
-         worldIn.spawnParticle(EnumParticleTypes.REDSTONE, d, d2, d3, f2, max, max2);
-      }
-   }
+    @Override
+    public boolean canProvidePower() {
+        return this.canProvidePower;
+    }
 
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return Items.redstone;
-   }
+    @Override
+    public void randomDisplayTick(World worldIn, int x, int y, int z, Random random) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (blockMetadata > 0) {
+            double d = x + 0.5 + (random.nextFloat() - 0.5) * 0.2;
+            double d2 = y + 0.0625F;
+            double d3 = z + 0.5 + (random.nextFloat() - 0.5) * 0.2;
+            float f = blockMetadata / 15.0F;
+            float f2 = f * 0.6F + 0.4F;
+            if (blockMetadata == 0) {
+                f2 = 0.0F;
+            }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.CUTOUT;
-   }
+            float f3 = f * f * 0.7F - 0.5F;
+            float f4 = f * f * 0.6F - 0.7F;
+            if (f3 < 0.0F) {
+                f3 = 0.0F;
+            }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(POWER, meta);
-   }
+            if (f4 < 0.0F) {
+                f4 = 0.0F;
+            }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(POWER);
-   }
+            worldIn.spawnParticle("reddust", d, d2, d3, f2, f3, f4);
+        }
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, NORTH, EAST, SOUTH, WEST, POWER);
-   }
+    public static boolean isPowerProviderOrWire(IBlockAccess blockAccess, int n, int n2, int n3, int n4) {
+        Block block = blockAccess.getBlock(n, n2, n3);
+        if (block == Blocks.redstone_wire) {
+            return true;
+        }
 
-   enum EnumAttachPosition implements IStringSerializable {
-      UP("up"),
-      SIDE("side"),
-      NONE("none");
+        if (!Blocks.unpowered_repeater.isComparator(block)) {
+            return block.canProvidePower() && n4 != -1;
+        }
 
-      public String name;
+        int blockMetadata = blockAccess.getBlockMetadata(n, n2, n3);
+        return n4 == (blockMetadata & 3) || n4 == Direction.rotateOpposite[blockMetadata & 3];
+    }
 
-      EnumAttachPosition(String name) {
-         this.name = name;
-      }
+    public static boolean checkIBlockAccess(IBlockAccess blockAccess, int n, int n2, int n3, int n4) {
+        if (isPowerProviderOrWire(blockAccess, n, n2, n3, n4)) {
+            return true;
+        } else if (blockAccess.getBlock(n, n2, n3) == Blocks.powered_repeater) {
+            int blockMetadata = blockAccess.getBlockMetadata(n, n2, n3);
+            return n4 == (blockMetadata & 3);
+        } else {
+            return false;
+        }
+    }
 
-      @Override
-      public String toString() {
-         return this.getName();
-      }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        return Items.redstone;
+    }
 
-      @Override
-      public String getName() {
-         return this.name;
-      }
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.redstoneCrossIcon = reg.registerIcon(this.getTextureName() + "_cross");
+        this.redstoneLineIcon = reg.registerIcon(this.getTextureName() + "_line");
+        this.redstoneCrossOverlayIcon = reg.registerIcon(this.getTextureName() + "_cross_overlay");
+        this.redstoneLineOverlayIcon = reg.registerIcon(this.getTextureName() + "_line_overlay");
+        this.blockIcon = this.redstoneCrossIcon;
+    }
+
+    public static IIcon getRedstoneWireIcon(String str) {
+        return str.equals("cross")
+            ? Blocks.redstone_wire.redstoneCrossIcon
+            : (
+                str.equals("line")
+                    ? Blocks.redstone_wire.redstoneLineIcon
+                    : (
+                        str.equals("cross_overlay")
+                            ? Blocks.redstone_wire.redstoneCrossOverlayIcon
+                            : (str.equals("line_overlay") ? Blocks.redstone_wire.redstoneLineOverlayIcon : null)
+                    )
+            );
+    }
 }

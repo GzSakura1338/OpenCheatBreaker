@@ -5,44 +5,60 @@ import com.google.common.collect.HashBiMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class RegistryNamespaced<K, V> extends RegistrySimple<K, V> implements IObjectIntIterable<V> {
-   public ObjectIntIdentityMap<V> underlyingIntegerMap = new ObjectIntIdentityMap<>();
-   public Map<V, K> inverseObjectRegistry = ((BiMap)this.registryObjects).inverse();
+public class RegistryNamespaced extends RegistrySimple implements IObjectIntIterable {
+    public ObjectIntIdentityMap underlyingIntegerMap = new ObjectIntIdentityMap();
+    public Map objects = ((BiMap)this.registryObjects).inverse();
 
-   public void register(int id, K key, V value) {
-      this.underlyingIntegerMap.put((V)value, id);
-      this.putObject((K)key, (V)value);
-   }
+    public void addObject(int n, String str, Object obj) {
+        this.underlyingIntegerMap.set(obj, n);
+        this.putObject(ensureNamespaced(str), obj);
+    }
 
-   @Override
-   public Map<K, V> createUnderlyingMap() {
-      return HashBiMap.create();
-   }
+    @Override
+    public Map createUnderlyingMap() {
+        return HashBiMap.create();
+    }
 
-   @Override
-   public V getObject(K name) {
-      return super.getObject((K)name);
-   }
+    public Object getObject(String str) {
+        return super.getObject(ensureNamespaced(str));
+    }
 
-   public K getNameForObject(V value) {
-      return this.inverseObjectRegistry.get(value);
-   }
+    public String getNameForObject(Object obj) {
+        return (String)this.objects.get(obj);
+    }
 
-   @Override
-   public boolean containsKey(K key) {
-      return super.containsKey((K)key);
-   }
+    public boolean containsKey(String str) {
+        return super.containsKey(ensureNamespaced(str));
+    }
 
-   public int getIDForObject(V value) {
-      return this.underlyingIntegerMap.get((V)value);
-   }
+    public int getIDForObject(Object obj) {
+        return this.underlyingIntegerMap.getId(obj);
+    }
 
-   public V getObjectById(int id) {
-      return this.underlyingIntegerMap.getByValue(id);
-   }
+    public Object getObjectById(int n) {
+        return this.underlyingIntegerMap.fromId(n);
+    }
 
-   @Override
-   public Iterator<V> iterator() {
-      return this.underlyingIntegerMap.iterator();
-   }
+    @Override
+    public Iterator iterator() {
+        return this.underlyingIntegerMap.iterator();
+    }
+
+    public boolean containsId(int n) {
+        return this.underlyingIntegerMap.hasId(n);
+    }
+
+    public static String ensureNamespaced(String str) {
+        return str.indexOf(58) == -1 ? "minecraft:" + str : str;
+    }
+
+    @Override
+    public boolean containsKey(Object obj) {
+        return this.containsKey((String)obj);
+    }
+
+    @Override
+    public Object getObject(Object obj) {
+        return this.getObject((String)obj);
+    }
 }

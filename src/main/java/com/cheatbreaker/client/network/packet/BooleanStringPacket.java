@@ -6,39 +6,39 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.WebsocketPacketHandler;
 
 public class BooleanStringPacket extends AbstractPacket {
-   public boolean flag;
-   public String text;
+    public boolean flag;
+    public String text;
 
-   public BooleanStringPacket(boolean flag, String str) {
-      this.flag = flag;
-      this.text = str;
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.flag = packetBuffer.getByteBuf().readBoolean();
+        this.text = packetBuffer.readString();
+    }
 
-   public String getText() {
-      return this.text;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeBoolean(this.flag);
+        packetBuffer.writeString(this.text);
+    }
 
-   public boolean isFlag() {
-      return this.flag;
-   }
+    public String getText() {
+        return this.text;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.flag = packetBuffer.getByteBuf().readBoolean();
-      this.text = packetBuffer.readString();
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handleBooleanString(this);
+    }
 
-   public BooleanStringPacket() {
-   }
+    public boolean isFlag() {
+        return this.flag;
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handleBooleanString(this);
-   }
+    public BooleanStringPacket(boolean flag, String str) {
+        this.flag = flag;
+        this.text = str;
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeBoolean(this.flag);
-      packetBuffer.writeString(this.text);
-   }
+    public BooleanStringPacket() {
+    }
 }

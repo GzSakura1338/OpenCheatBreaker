@@ -1,28 +1,28 @@
 package net.minecraft.dispenser;
 
 public class PositionImpl implements IPosition {
-   public double x;
-   public double y;
-   public double z;
+    public double x;
+    public double y;
+    public double z;
 
-   public PositionImpl(double xCoord, double yCoord, double zCoord) {
-      this.x = xCoord;
-      this.y = yCoord;
-      this.z = zCoord;
-   }
+    public PositionImpl(double xCoord, double yCoord, double zCoord) {
+        this.x = xCoord;
+        this.y = yCoord;
+        this.z = zCoord;
+    }
 
-   @Override
-   public double getX() {
-      return this.x;
-   }
+    @Override
+    public double getX() {
+        return this.x;
+    }
 
-   @Override
-   public double getY() {
-      return this.y;
-   }
+    @Override
+    public double getY() {
+        return this.y;
+    }
 
-   @Override
-   public double getZ() {
-      return this.z;
-   }
+    @Override
+    public double getZ() {
+        return this.z;
+    }
 }

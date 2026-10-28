@@ -1,44 +1,45 @@
 package net.minecraft.block;
 
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Facing;
 import net.minecraft.world.IBlockAccess;
 
 public class BlockBreakable extends Block {
-   public boolean ignoreSimilarity;
+    public boolean ignoreSimilarity;
+    public String name;
 
-   public BlockBreakable(Material materialIn, boolean ignoreSimilarityIn) {
-      this(materialIn, ignoreSimilarityIn, materialIn.getMaterialMapColor());
-   }
+    public BlockBreakable(String name, Material materialIn, boolean ignoreSimilarity) {
+        super(materialIn);
+        this.ignoreSimilarity = ignoreSimilarity;
+        this.name = name;
+    }
 
-   public BlockBreakable(Material material, boolean flag, MapColor mapColor) {
-      super(material, mapColor);
-      this.ignoreSimilarity = flag;
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public boolean shouldSideBeRendered(IBlockAccess worldIn, int x, int y, int z, int side) {
+        Block block = worldIn.getBlock(x, y, z);
+        if (this == Blocks.glass || this == Blocks.stained_glass) {
+            if (worldIn.getBlockMetadata(x, y, z)
+                != worldIn.getBlockMetadata(x - Facing.offsetsXForSide[side], y - Facing.offsetsYForSide[side], z - Facing.offsetsZForSide[side])) {
+                return true;
+            }
 
-   @Override
-   public boolean shouldSideBeRendered(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      Block block = blockState.getBlock();
-      if (this == Blocks.glass || this == Blocks.stained_glass) {
-         if (worldIn.getBlockState(pos.offset(side.getOpposite())) != blockState) {
-            return true;
-         }
+            if (block == this) {
+                return false;
+            }
+        }
 
-         if (block == this) {
-            return false;
-         }
-      }
+        return (this.ignoreSimilarity || block != this) && super.shouldSideBeRendered(worldIn, x, y, z, side);
+    }
 
-      return !this.ignoreSimilarity && block == this ? false : super.shouldSideBeRendered(worldIn, pos, side);
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.blockIcon = reg.registerIcon(this.name);
+    }
 }

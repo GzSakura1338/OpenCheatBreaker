@@ -6,59 +6,59 @@ import java.util.Random;
 import net.minecraft.entity.EntityLivingBase;
 
 public class EmoteDefinition {
-   public Random random = new Random();
-   public String name;
-   public int durationTicks;
-   public boolean looping;
+    public Random random = new Random();
+    public String name;
+    public int durationTicks;
+    public boolean looping;
 
-   public void onStart(PlayerMeshRenderer playerMeshRenderer) {
-   }
+    public void onStop(PlayerMeshRenderer playerMeshRenderer) {
+    }
 
-   public EmoteDefinition createInstance() {
-      return this;
-   }
+    public boolean stopsOnMovement() {
+        return false;
+    }
 
-   public boolean hasRepeatLimit() {
-      return this.getMaxRepeats() > 0;
-   }
+    public boolean rendersCape() {
+        return true;
+    }
 
-   public void onStop(PlayerMeshRenderer playerMeshRenderer) {
-   }
+    public void onTick(EntityLivingBase entityLivingBase, BobjArmature bobjArmature, PlayerMeshRenderer playerMeshRenderer, int n, float f) {
+    }
 
-   public int getMaxRepeats() {
-      return -1;
-   }
+    public float randomOffset(float f) {
+        return this.random.nextFloat() * f - f / 2.0F;
+    }
 
-   public boolean stopsOnMovement() {
-      return false;
-   }
+    public EmoteDefinition createVariant(String str) {
+        return this;
+    }
 
-   public float randomOffset(float f) {
-      return this.random.nextFloat() * f - f / 2.0F;
-   }
+    public EmoteDefinition createInstance() {
+        return this;
+    }
 
-   public String getDisplayName() {
-      return this.name;
-   }
+    public void onStart(PlayerMeshRenderer playerMeshRenderer) {
+    }
 
-   public boolean rendersWings() {
-      return true;
-   }
+    public int getMaxRepeats() {
+        return -1;
+    }
 
-   public EmoteDefinition(String str, int n, boolean flag) {
-      this.name = str;
-      this.durationTicks = n;
-      this.looping = flag;
-   }
+    public String getDisplayName() {
+        return this.name;
+    }
 
-   public boolean rendersCape() {
-      return true;
-   }
+    public boolean hasRepeatLimit() {
+        return this.getMaxRepeats() > 0;
+    }
 
-   public EmoteDefinition createVariant(String str) {
-      return this;
-   }
+    public EmoteDefinition(String str, int n, boolean flag) {
+        this.name = str;
+        this.durationTicks = n;
+        this.looping = flag;
+    }
 
-   public void onTick(EntityLivingBase entityLivingBase, BobjArmature bobjArmature, PlayerMeshRenderer playerMeshRenderer, int n, float f) {
-   }
+    public boolean rendersWings() {
+        return true;
+    }
 }

@@ -1,143 +1,173 @@
 package net.minecraft.world.chunk.storage;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.chunk.NibbleArray;
-import net.optifine.reflect.Reflector;
 
 public class ExtendedBlockStorage {
-   public int yBase;
-   public int blockRefCount;
-   public int tickRefCount;
-   public char[] data;
-   public NibbleArray blocklightArray;
-   public NibbleArray skylightArray;
+    public int yBase;
+    public int blockRefCount;
+    public int tickRefCount;
+    public byte[] blockLSBArray;
+    public NibbleArray blockMSBArray;
+    public NibbleArray blockMetadataArray;
+    public NibbleArray blocklightArray;
+    public NibbleArray skylightArray;
 
-   public ExtendedBlockStorage(int y, boolean storeSkylight) {
-      this.yBase = y;
-      this.data = new char[4096];
-      this.blocklightArray = new NibbleArray();
-      if (storeSkylight) {
-         this.skylightArray = new NibbleArray();
-      }
-   }
+    public ExtendedBlockStorage(int n, boolean flag) {
+        this.yBase = n;
+        this.blockLSBArray = new byte[4096];
+        this.blockMetadataArray = new NibbleArray(this.blockLSBArray.length, 4);
+        this.blocklightArray = new NibbleArray(this.blockLSBArray.length, 4);
+        if (flag) {
+            this.skylightArray = new NibbleArray(this.blockLSBArray.length, 4);
+        }
+    }
 
-   public IBlockState get(int x, int y, int z) {
-      IBlockState byValue = Block.BLOCK_STATE_IDS.getByValue(this.data[y << 8 | z << 4 | x]);
-      return byValue != null ? byValue : Blocks.air.getDefaultState();
-   }
+    public Block getBlockByExtId(int n, int n2, int n3) {
+        int n4 = this.blockLSBArray[n2 << 8 | n3 << 4 | n] & 255;
+        if (this.blockMSBArray != null) {
+            n4 |= this.blockMSBArray.get(n, n2, n3) << 8;
+        }
 
-   public void set(int x, int y, int z, IBlockState state) {
-      if (Reflector.IExtendedBlockState.isInstance(state)) {
-         state = (IBlockState)Reflector.call(state, Reflector.IExtendedBlockState_getClean);
-      }
+        return Block.getBlockById(n4);
+    }
 
-      IBlockState blockState = this.get(x, y, z);
-      Block block = blockState.getBlock();
-      Block block2 = state.getBlock();
-      if (block != Blocks.air) {
-         this.blockRefCount--;
-         if (block.getTickRandomly()) {
-            this.tickRefCount--;
-         }
-      }
+    public void setExtBlockID(int n, int n2, int n3, Block block) {
+        int n4 = this.blockLSBArray[n2 << 8 | n3 << 4 | n] & 255;
+        if (this.blockMSBArray != null) {
+            n4 |= this.blockMSBArray.get(n, n2, n3) << 8;
+        }
 
-      if (block2 != Blocks.air) {
-         this.blockRefCount++;
-         if (block2.getTickRandomly()) {
-            this.tickRefCount++;
-         }
-      }
-
-      this.data[y << 8 | z << 4 | x] = (char)Block.BLOCK_STATE_IDS.get(state);
-   }
-
-   public Block getBlockByExtId(int x, int y, int z) {
-      return this.get(x, y, z).getBlock();
-   }
-
-   public int getExtBlockMetadata(int x, int y, int z) {
-      IBlockState blockState = this.get(x, y, z);
-      return blockState.getBlock().getMetaFromState(blockState);
-   }
-
-   public boolean isEmpty() {
-      return this.blockRefCount == 0;
-   }
-
-   public boolean getNeedsRandomTick() {
-      return this.tickRefCount > 0;
-   }
-
-   public int getYLocation() {
-      return this.yBase;
-   }
-
-   public void setExtSkylightValue(int x, int y, int z, int value) {
-      this.skylightArray.set(x, y, z, value);
-   }
-
-   public int getExtSkylightValue(int x, int y, int z) {
-      return this.skylightArray.get(x, y, z);
-   }
-
-   public void setExtBlocklightValue(int x, int y, int z, int value) {
-      this.blocklightArray.set(x, y, z, value);
-   }
-
-   public int getExtBlocklightValue(int x, int y, int z) {
-      return this.blocklightArray.get(x, y, z);
-   }
-
-   public void removeInvalidBlocks() {
-      IBlockState defaultState = Blocks.air.getDefaultState();
-      int n = 0;
-      int n2 = 0;
-
-      for (int i = 0; i < 16; i++) {
-         for (int j = 0; j < 16; j++) {
-            for (int k = 0; k < 16; k++) {
-               Block blockByExtId = this.getBlockByExtId(k, i, j);
-               if (blockByExtId != Blocks.air) {
-                  n++;
-                  if (blockByExtId.getTickRandomly()) {
-                     n2++;
-                  }
-               }
+        Block blockById = Block.getBlockById(n4);
+        if (blockById != Blocks.air) {
+            this.blockRefCount--;
+            if (blockById.getTickRandomly()) {
+                this.tickRefCount--;
             }
-         }
-      }
+        }
 
-      this.blockRefCount = n;
-      this.tickRefCount = n2;
-   }
+        if (block != Blocks.air) {
+            this.blockRefCount++;
+            if (block.getTickRandomly()) {
+                this.tickRefCount++;
+            }
+        }
 
-   public char[] getData() {
-      return this.data;
-   }
+        int idFromBlock = Block.getIdFromBlock(block);
+        this.blockLSBArray[n2 << 8 | n3 << 4 | n] = (byte)(idFromBlock & 0xFF);
+        if (idFromBlock > 255) {
+            if (this.blockMSBArray == null) {
+                this.blockMSBArray = new NibbleArray(this.blockLSBArray.length, 4);
+            }
 
-   public void setData(char[] dataArray) {
-      this.data = dataArray;
-   }
+            this.blockMSBArray.set(n, n2, n3, (idFromBlock & 3840) >> 8);
+        } else if (this.blockMSBArray != null) {
+            this.blockMSBArray.set(n, n2, n3, 0);
+        }
+    }
 
-   public NibbleArray getBlocklightArray() {
-      return this.blocklightArray;
-   }
+    public int getExtBlockMetadata(int n, int n2, int n3) {
+        return this.blockMetadataArray.get(n, n2, n3);
+    }
 
-   public NibbleArray getSkylightArray() {
-      return this.skylightArray;
-   }
+    public void setExtBlockMetadata(int n, int n2, int n3, int n4) {
+        this.blockMetadataArray.set(n, n2, n3, n4);
+    }
 
-   public void setBlocklightArray(NibbleArray newBlocklightArray) {
-      this.blocklightArray = newBlocklightArray;
-   }
+    public boolean isEmpty() {
+        return this.blockRefCount == 0;
+    }
 
-   public void setSkylightArray(NibbleArray newSkylightArray) {
-      this.skylightArray = newSkylightArray;
-   }
+    public boolean getNeedsRandomTick() {
+        return this.tickRefCount > 0;
+    }
 
-   public int getBlockRefCount() {
-      return this.blockRefCount;
-   }
+    public int getYLocation() {
+        return this.yBase;
+    }
+
+    public void setExtSkylightValue(int n, int n2, int n3, int n4) {
+        this.skylightArray.set(n, n2, n3, n4);
+    }
+
+    public int getExtSkylightValue(int n, int n2, int n3) {
+        return this.skylightArray.get(n, n2, n3);
+    }
+
+    public void setExtBlocklightValue(int n, int n2, int n3, int n4) {
+        this.blocklightArray.set(n, n2, n3, n4);
+    }
+
+    public int getExtBlocklightValue(int n, int n2, int n3) {
+        return this.blocklightArray.get(n, n2, n3);
+    }
+
+    public void removeInvalidBlocks() {
+        this.blockRefCount = 0;
+        this.tickRefCount = 0;
+
+        for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 16; j++) {
+                for (int k = 0; k < 16; k++) {
+                    Block blockByExtId = this.getBlockByExtId(i, j, k);
+                    if (blockByExtId != Blocks.air) {
+                        this.blockRefCount++;
+                        if (blockByExtId.getTickRandomly()) {
+                            this.tickRefCount++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public byte[] getBlockLSBArray() {
+        return this.blockLSBArray;
+    }
+
+    public void clearMSBArray() {
+        this.blockMSBArray = null;
+    }
+
+    public NibbleArray getBlockMSBArray() {
+        return this.blockMSBArray;
+    }
+
+    public NibbleArray getMetadataArray() {
+        return this.blockMetadataArray;
+    }
+
+    public NibbleArray getBlocklightArray() {
+        return this.blocklightArray;
+    }
+
+    public NibbleArray getSkylightArray() {
+        return this.skylightArray;
+    }
+
+    public void setBlockLSBArray(byte[] bytes) {
+        this.blockLSBArray = bytes;
+    }
+
+    public void setBlockMSBArray(NibbleArray nibbleArray) {
+        this.blockMSBArray = nibbleArray;
+    }
+
+    public void setBlockMetadataArray(NibbleArray nibbleArray) {
+        this.blockMetadataArray = nibbleArray;
+    }
+
+    public void setBlocklightArray(NibbleArray nibbleArray) {
+        this.blocklightArray = nibbleArray;
+    }
+
+    public void setSkylightArray(NibbleArray nibbleArray) {
+        this.skylightArray = nibbleArray;
+    }
+
+    public NibbleArray createBlockMSBArray() {
+        this.blockMSBArray = new NibbleArray(this.blockLSBArray.length, 4);
+        return this.blockMSBArray;
+    }
 }

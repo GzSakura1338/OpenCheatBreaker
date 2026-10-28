@@ -10,28 +10,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import net.minecraft.client.Minecraft;
 
 public class ClickTracker {
-    public static TimestampBuffer clicks = new TimestampBuffer();
-    public static int tickCounter;
+    public static boolean enabled;
+    public static TimestampBuffer clicks;
     public static TimestampBuffer reportedClicks;
     public static Deque<Long> pendingClicks;
+    public static int tickCounter;
     public static double allowance;
-    public static boolean enabled;
-
-    public static void onClickTick() {
-        if (!enabled) {
-            ClickTracker.getInputClickCount();
-            return;
-        }
-        if (Minecraft.getMinecraft().currentScreen != null && !Minecraft.getMinecraft().currentScreen.allowUserInput) {
-            ClickTracker.getInputClickCount();
-            return;
-        }
-        int n = ClickTracker.getInputClickCount();
-        long l = System.nanoTime();
-        for (int i = 0; i < n; ++i) {
-            pendingClicks.add(l);
-        }
-    }
 
     public static void onTick(int n) {
         ClickTracker.checkEveryFiveTicks(n);
@@ -43,18 +27,12 @@ public class ClickTracker {
         }
     }
 
-    public static boolean setEnabled(boolean bl) {
-        enabled = bl;
-        return enabled;
+    public static int nextTick() {
+        return tickCounter++;
     }
 
-    public static void flush(List<Long> list) {
-        while (!pendingClicks.isEmpty()) {
-            clicks.add(pendingClicks.removeFirst());
-        }
-        for (Long l : list) {
-            reportedClicks.add(l);
-        }
+    public static int getTickCounter() {
+        return tickCounter;
     }
 
     public static boolean tryConsumeAllowance() {
@@ -64,9 +42,6 @@ public class ClickTracker {
             allowance += 1.0;
         }
         return bl;
-    }
-
-    public static void unused() {
     }
 
     public static void analyze() {
@@ -86,25 +61,47 @@ public class ClickTracker {
         }
     }
 
+    public static int getInputClickCount() {
+        return -1;
+    }
+
     static {
+        clicks = new TimestampBuffer();
         reportedClicks = new TimestampBuffer();
         pendingClicks = new ConcurrentLinkedDeque<Long>();
         allowance = 0.0;
     }
 
-    public static int getInputClickCount() {
-        return -1;
+    public static void onClickTick() {
+        if (!enabled) {
+            ClickTracker.getInputClickCount();
+            return;
+        }
+        if (Minecraft.getMinecraft().currentScreen != null && !Minecraft.getMinecraft().currentScreen.allowUserInput) {
+            ClickTracker.getInputClickCount();
+            return;
+        }
+        int n = ClickTracker.getInputClickCount();
+        long l = System.nanoTime();
+        for (int i = 0; i < n; ++i) {
+            pendingClicks.add(l);
+        }
     }
 
-    public static int getTickCounter() {
-        return tickCounter;
+    public static void unused() {
     }
 
-    public static boolean isAllowed() {
-        return ClickTracker.tryConsumeAllowance();
+    public static boolean setEnabled(boolean bl) {
+        enabled = bl;
+        return enabled;
     }
 
-    public static int nextTick() {
-        return tickCounter++;
+    public static void flush(List<Long> list) {
+        while (!pendingClicks.isEmpty()) {
+            clicks.add(pendingClicks.removeFirst());
+        }
+        for (Long l : list) {
+            reportedClicks.add(l);
+        }
     }
 }

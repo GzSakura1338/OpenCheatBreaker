@@ -1,7 +1,7 @@
 package net.minecraft.util;
 
-public interface IRegistry<K, V> extends Iterable<V> {
-   V getObject(K value);
+public interface IRegistry {
+    Object getObject(Object obj);
 
-   void putObject(K value, V value2);
+    void putObject(Object obj, Object obj2);
 }

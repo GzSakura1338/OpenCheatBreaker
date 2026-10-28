@@ -8,43 +8,43 @@ import io.netty.channel.ChannelPromise;
 import javax.crypto.SecretKey;
 
 public class ChannelEncryptionHandler extends ChannelOutboundHandlerAdapter {
-   public byte[] byteArray = "ZB9hEJy5l+u8QARAlX9T0w".getBytes();
-   public long longValue = 1L;
-   public long longValue2 = 0L;
-   public long longValue3;
+    public long checksum;
+    public byte[] byteArray = "ZB9hEJy5l+u8QARAlX9T0w".getBytes();
+    public long adlerSum1 = 1L;
+    public long adlerSum2 = 0L;
 
-   public ChannelEncryptionHandler(SecretKey secretKey) {
-      for (byte b : secretKey.getEncoded()) {
-         this.longValue = (this.longValue + (b & 0xFF)) % 65521L;
-         this.longValue2 = (this.longValue2 + this.longValue) % 65521L;
-      }
-   }
+    public ChannelEncryptionHandler(SecretKey secretKey) {
+        for (byte b : secretKey.getEncoded()) {
+            this.adlerSum1 = (this.adlerSum1 + (b & 0xFF)) % 65521L;
+            this.adlerSum2 = (this.adlerSum2 + this.adlerSum1) % 65521L;
+        }
+    }
 
-   public void write(ChannelHandlerContext channelHandlerContext, Object obj, ChannelPromise channelPromise) {
-      try {
-         ByteBuf byteBuf = (ByteBuf)obj;
+    public long getChecksum() {
+        return this.checksum;
+    }
 
-         while (byteBuf.readableBytes() > 0) {
-            int n = byteBuf.readByte() & 255;
-            this.longValue = (this.longValue + n) % 65521L;
-            this.longValue2 = (this.longValue2 + this.longValue) % 65521L;
-         }
+    public void write(ChannelHandlerContext channelHandlerContext, Object obj, ChannelPromise channelPromise) {
+        try {
+            ByteBuf byteBuf = (ByteBuf)obj;
 
-         byteBuf.readerIndex(0);
+            while (byteBuf.readableBytes() > 0) {
+                int n = byteBuf.readByte() & 255;
+                this.adlerSum1 = (this.adlerSum1 + n) % 65521L;
+                this.adlerSum2 = (this.adlerSum2 + this.adlerSum1) % 65521L;
+            }
 
-         for (byte b : this.byteArray) {
-            this.longValue = (this.longValue + (b & 0xFF)) % 65521L;
-            this.longValue2 = (this.longValue2 + this.longValue) % 65521L;
-         }
+            byteBuf.readerIndex(0);
 
-         this.longValue3 = this.longValue2 << 16 | this.longValue;
-         super.write(channelHandlerContext, obj, channelPromise);
-      } catch (Throwable e) {
-         throw SneakyThrow.sneakyThrow(e);
-      }
-   }
+            for (byte b : this.byteArray) {
+                this.adlerSum1 = (this.adlerSum1 + (b & 0xFF)) % 65521L;
+                this.adlerSum2 = (this.adlerSum2 + this.adlerSum1) % 65521L;
+            }
 
-   public long getLongValue3() {
-      return this.longValue3;
-   }
+            this.checksum = this.adlerSum2 << 16 | this.adlerSum1;
+            super.write(channelHandlerContext, obj, channelPromise);
+        } catch (Throwable e) {
+            throw SneakyThrow.sneakyThrow(e);
+        }
+    }
 }

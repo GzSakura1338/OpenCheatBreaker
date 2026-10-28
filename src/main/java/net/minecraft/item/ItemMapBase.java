@@ -5,12 +5,12 @@ import net.minecraft.network.Packet;
 import net.minecraft.world.World;
 
 public class ItemMapBase extends Item {
-   @Override
-   public boolean isMap() {
-      return true;
-   }
+    @Override
+    public boolean isMap() {
+        return true;
+    }
 
-   public Packet createMapDataPacket(ItemStack stack, World worldIn, EntityPlayer player) {
-      return null;
-   }
+    public Packet createMapDataPacket(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
+        return null;
+    }
 }

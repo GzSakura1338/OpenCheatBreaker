@@ -7,40 +7,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RecentCosmeticsPacket extends AbstractPacket {
-   public List<String> values = new ArrayList<>();
+    public List<String> values = new ArrayList<>();
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeInt(this.values.size());
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        int readInt = packetBuffer.getByteBuf().readInt();
+        this.values = new ArrayList<>();
 
-      for (String str : this.values) {
-         packetBuffer.writeString(str);
-      }
-   }
+        for (int i = 0; i < readInt; i++) {
+            this.values.add(packetBuffer.readString());
+        }
+    }
 
-   public RecentCosmeticsPacket() {
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        packetHandler.handleRecentCosmetics(this);
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      packetHandler.handleRecentCosmetics(this);
-   }
+    public RecentCosmeticsPacket() {
+    }
 
-   public List<String> getValues() {
-      return this.values;
-   }
+    public RecentCosmeticsPacket(List<String> list) {
+        this.values = list;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      int readInt = packetBuffer.getByteBuf().readInt();
-      this.values = new ArrayList<>();
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeInt(this.values.size());
 
-      for (int i = 0; i < readInt; i++) {
-         this.values.add(packetBuffer.readString());
-      }
-   }
+        for (String str : this.values) {
+            packetBuffer.writeString(str);
+        }
+    }
 
-   public RecentCosmeticsPacket(List<String> list) {
-      this.values = list;
-   }
+    public List<String> getValues() {
+        return this.values;
+    }
 }

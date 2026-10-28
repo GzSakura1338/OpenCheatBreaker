@@ -2,90 +2,93 @@ package net.minecraft.block;
 
 import java.util.List;
 import java.util.Random;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 
 public class BlockEndPortalFrame extends Block {
-   public static PropertyDirection FACING = PropertyDirection.create("facing", Plane.HORIZONTAL);
-   public static PropertyBool EYE = PropertyBool.create("eye");
+    public IIcon iconEndPortalFrameTop;
+    public IIcon iconEndPortalFrameEye;
 
-   public BlockEndPortalFrame() {
-      super(Material.rock, MapColor.greenColor);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(EYE, false));
-   }
+    public BlockEndPortalFrame() {
+        super(Material.rock);
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return side == 1 ? this.iconEndPortalFrameTop : (side == 0 ? Blocks.end_stone.getBlockTextureFromSide(side) : this.blockIcon);
+    }
 
-   @Override
-   public void setBlockBoundsForItemRender() {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.8125F, 1.0F);
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.blockIcon = reg.registerIcon(this.getTextureName() + "_side");
+        this.iconEndPortalFrameTop = reg.registerIcon(this.getTextureName() + "_top");
+        this.iconEndPortalFrameEye = reg.registerIcon(this.getTextureName() + "_eye");
+    }
 
-   @Override
-   public void addCollisionBoxesToList(World worldIn, BlockPos pos, IBlockState state, AxisAlignedBB mask, List<AxisAlignedBB> list, Entity collidingEntity) {
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.8125F, 1.0F);
-      super.addCollisionBoxesToList(worldIn, pos, state, mask, list, collidingEntity);
-      if (worldIn.getBlockState(pos).getValue(EYE)) {
-         this.setBlockBounds(0.3125F, 0.8125F, 0.3125F, 0.6875F, 1.0F, 0.6875F);
-         super.addCollisionBoxesToList(worldIn, pos, state, mask, list, collidingEntity);
-      }
+    public IIcon getIconEndPortalFrameEye() {
+        return this.iconEndPortalFrameEye;
+    }
 
-      this.setBlockBoundsForItemRender();
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-      return null;
-   }
+    @Override
+    public int getRenderType() {
+        return 26;
+    }
 
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      return this.getDefaultState().withProperty(FACING, placer.getHorizontalFacing().getOpposite()).withProperty(EYE, false);
-   }
+    @Override
+    public void setBlockBoundsForItemRender() {
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.8125F, 1.0F);
+    }
 
-   @Override
-   public boolean hasComparatorInputOverride() {
-      return true;
-   }
+    @Override
+    public void addCollisionBoxesToList(World worldIn, int x, int y, int z, AxisAlignedBB mask, List list, Entity collider) {
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.8125F, 1.0F);
+        super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (isEnderEyeInserted(blockMetadata)) {
+            this.setBlockBounds(0.3125F, 0.8125F, 0.3125F, 0.6875F, 1.0F, 0.6875F);
+            super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+        }
 
-   @Override
-   public int getComparatorInputOverride(World worldIn, BlockPos pos) {
-      return worldIn.getBlockState(pos).getValue(EYE) ? 15 : 0;
-   }
+        this.setBlockBoundsForItemRender();
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(EYE, (meta & 4) != 0).withProperty(FACING, EnumFacing.getHorizontal(meta & 3));
-   }
+    public static boolean isEnderEyeInserted(int n) {
+        return (n & 4) != 0;
+    }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(FACING).getHorizontalIndex();
-      if (state.getValue(EYE)) {
-         n |= 4;
-      }
+    @Override
+    public Item getItemDropped(int meta, Random random, int fortune) {
+        return null;
+    }
 
-      return n;
-   }
+    @Override
+    public void onBlockPlacedBy(World worldIn, int x, int y, int z, EntityLivingBase placer, ItemStack itemIn) {
+        int n = ((MathHelper.floor_double(placer.rotationYaw * 4.0F / 360.0F + 0.5) & 3) + 2) % 4;
+        worldIn.setBlockMetadataWithNotify(x, y, z, n, 2);
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, EYE);
-   }
+    @Override
+    public boolean hasComparatorInputOverride() {
+        return true;
+    }
+
+    @Override
+    public int getComparatorInputOverride(World worldIn, int x, int y, int z, int side) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        return isEnderEyeInserted(blockMetadata) ? 15 : 0;
+    }
 }

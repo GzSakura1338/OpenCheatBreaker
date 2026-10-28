@@ -1,39 +1,49 @@
 package net.minecraft.client.renderer;
 
-import net.minecraft.util.BlockPos;
-
 public class DestroyBlockProgress {
-   public int miningPlayerEntId;
-   public BlockPos position;
-   public int partialBlockProgress;
-   public int createdAtCloudUpdateTick;
+    public int miningPlayerEntId;
+    public int partialBlockX;
+    public int partialBlockY;
+    public int partialBlockZ;
+    public int partialBlockProgress;
+    public int createdAtCloudUpdateTick;
 
-   public DestroyBlockProgress(int miningPlayerEntIdIn, BlockPos positionIn) {
-      this.miningPlayerEntId = miningPlayerEntIdIn;
-      this.position = positionIn;
-   }
+    public DestroyBlockProgress(int n, int n2, int n3, int n4) {
+        this.miningPlayerEntId = n;
+        this.partialBlockX = n2;
+        this.partialBlockY = n3;
+        this.partialBlockZ = n4;
+    }
 
-   public BlockPos getPosition() {
-      return this.position;
-   }
+    public int getPartialBlockX() {
+        return this.partialBlockX;
+    }
 
-   public void setPartialBlockDamage(int damage) {
-      if (damage > 10) {
-         damage = 10;
-      }
+    public int getPartialBlockY() {
+        return this.partialBlockY;
+    }
 
-      this.partialBlockProgress = damage;
-   }
+    public int getPartialBlockZ() {
+        return this.partialBlockZ;
+    }
 
-   public int getPartialBlockDamage() {
-      return this.partialBlockProgress;
-   }
+    public void setPartialBlockDamage(int damage) {
+        if (damage > 10) {
+            damage = 10;
+        }
 
-   public void setCloudUpdateTick(int createdAtCloudUpdateTickIn) {
-      this.createdAtCloudUpdateTick = createdAtCloudUpdateTickIn;
-   }
+        this.partialBlockProgress = damage;
+    }
 
-   public int getCreationCloudUpdateTick() {
-      return this.createdAtCloudUpdateTick;
-   }
+    public int getPartialBlockDamage() {
+        return this.partialBlockProgress;
+    }
+
+    public void setCloudUpdateTick(int n) {
+        this.createdAtCloudUpdateTick = n;
+    }
+
+    public int getCreationCloudUpdateTick() {
+        return this.createdAtCloudUpdateTick;
+    }
 }

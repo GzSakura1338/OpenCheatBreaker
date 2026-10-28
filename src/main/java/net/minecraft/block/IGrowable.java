@@ -1,14 +1,12 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public interface IGrowable {
-   boolean canGrow(World world, BlockPos blockPos, IBlockState blockState, boolean flag);
+    boolean canFertilize(World world, int n, int n2, int n3, boolean flag);
 
-   boolean canUseBonemeal(World world, Random random, BlockPos blockPos, IBlockState blockState);
+    boolean shouldFertilize(World world, Random random, int n, int n2, int n3);
 
-   void grow(World world, Random random, BlockPos blockPos, IBlockState blockState);
+    void fertilize(World world, Random random, int n, int n2, int n3);
 }

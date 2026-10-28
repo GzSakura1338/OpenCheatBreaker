@@ -1,25 +1,23 @@
 package net.minecraft.enchantment;
 
-import net.minecraft.util.ResourceLocation;
-
 public class EnchantmentArrowKnockback extends Enchantment {
-   public EnchantmentArrowKnockback(int enchID, ResourceLocation enchName, int enchWeight) {
-      super(enchID, enchName, enchWeight, EnumEnchantmentType.BOW);
-      this.setName("arrowKnockback");
-   }
+    public EnchantmentArrowKnockback(int n, int n2) {
+        super(n, n2, EnumEnchantmentType.bow);
+        this.setName("arrowKnockback");
+    }
 
-   @Override
-   public int getMinEnchantability(int enchantmentLevel) {
-      return 12 + (enchantmentLevel - 1) * 20;
-   }
+    @Override
+    public int getMinEnchantability(int n) {
+        return 12 + (n - 1) * 20;
+    }
 
-   @Override
-   public int getMaxEnchantability(int enchantmentLevel) {
-      return this.getMinEnchantability(enchantmentLevel) + 25;
-   }
+    @Override
+    public int getMaxEnchantability(int n) {
+        return this.getMinEnchantability(n) + 25;
+    }
 
-   @Override
-   public int getMaxLevel() {
-      return 2;
-   }
+    @Override
+    public int getMaxLevel() {
+        return 2;
+    }
 }

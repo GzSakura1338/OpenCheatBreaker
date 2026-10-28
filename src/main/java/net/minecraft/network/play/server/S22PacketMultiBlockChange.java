@@ -1,87 +1,101 @@
 package net.minecraft.network.play.server;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.ChunkCoordIntPair;
 import net.minecraft.world.chunk.Chunk;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-public class S22PacketMultiBlockChange implements Packet<INetHandlerPlayClient> {
-   public ChunkCoordIntPair chunkPosCoord;
-   public S22PacketMultiBlockChange.BlockUpdateData[] changedBlocks;
+public class S22PacketMultiBlockChange extends Packet {
+    public static Logger logger = LogManager.getLogger();
+    public ChunkCoordIntPair pos;
+    public int intValue;
+    public byte[] byteArray;
 
-   public S22PacketMultiBlockChange() {
-   }
+    public S22PacketMultiBlockChange() {
+    }
 
-   public S22PacketMultiBlockChange(int n, short[] crammedPositionsIn, Chunk chunkIn) {
-      this.chunkPosCoord = new ChunkCoordIntPair(chunkIn.xPosition, chunkIn.zPosition);
-      this.changedBlocks = new S22PacketMultiBlockChange.BlockUpdateData[n];
+    public S22PacketMultiBlockChange(int n, short[] shorts, Chunk chunk) {
+        this.pos = new ChunkCoordIntPair(chunk.xPosition, chunk.zPosition);
+        this.intValue = n;
+        int n2 = 4 * n;
 
-      for (int i = 0; i < this.changedBlocks.length; i++) {
-         this.changedBlocks[i] = new S22PacketMultiBlockChange.BlockUpdateData(crammedPositionsIn[i], chunkIn);
-      }
-   }
+        try {
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(n2);
+            DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.chunkPosCoord = new ChunkCoordIntPair(buf.readInt(), buf.readInt());
-      this.changedBlocks = new S22PacketMultiBlockChange.BlockUpdateData[buf.readVarIntFromBuffer()];
+            for (int i = 0; i < n; i++) {
+                int n3 = shorts[i] >> 12 & 15;
+                int n4 = shorts[i] >> 8 & 15;
+                int n5 = shorts[i] & 255;
+                dataOutputStream.writeShort(shorts[i]);
+                dataOutputStream.writeShort((short)((Block.getIdFromBlock(chunk.getBlock(n3, n5, n4)) & 4095) << 4 | chunk.getBlockMetadata(n3, n5, n4) & 15));
+            }
 
-      for (int i = 0; i < this.changedBlocks.length; i++) {
-         this.changedBlocks[i] = new S22PacketMultiBlockChange.BlockUpdateData(buf.readShort(), Block.BLOCK_STATE_IDS.getByValue(buf.readVarIntFromBuffer()));
-      }
-   }
+            this.byteArray = byteArrayOutputStream.toByteArray();
+            if (this.byteArray.length != n2) {
+                throw new RuntimeException("Expected length " + n2 + " doesn't match received length " + this.byteArray.length);
+            }
+        } catch (IOException e) {
+            logger.error("Couldn't create bulk block update packet", e);
+            this.byteArray = null;
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeInt(this.chunkPosCoord.chunkXPos);
-      buf.writeInt(this.chunkPosCoord.chunkZPos);
-      buf.writeVarIntToBuffer(this.changedBlocks.length);
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.pos = new ChunkCoordIntPair(data.readInt(), data.readInt());
+        this.intValue = data.readShort() & '\uffff';
+        int readInt = data.readInt();
+        if (readInt > 0) {
+            this.byteArray = new byte[readInt];
+            data.readBytes(this.byteArray);
+        }
+    }
 
-      for (S22PacketMultiBlockChange.BlockUpdateData blockUpdateData : this.changedBlocks) {
-         buf.writeShort(blockUpdateData.getPosShort());
-         buf.writeVarIntToBuffer(Block.BLOCK_STATE_IDS.get(blockUpdateData.getBlockState()));
-      }
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.pos.chunkXPos);
+        data.writeInt(this.pos.chunkZPos);
+        data.writeShort((short)this.intValue);
+        if (this.byteArray != null) {
+            data.writeInt(this.byteArray.length);
+            data.writeBytes(this.byteArray);
+        } else {
+            data.writeInt(0);
+        }
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleMultiBlockChange(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleMultiBlockChange(this);
+    }
 
-   public S22PacketMultiBlockChange.BlockUpdateData[] getChangedBlocks() {
-      return this.changedBlocks;
-   }
+    @Override
+    public String serialize() {
+        return String.format("xc=%d, zc=%d, count=%d", this.pos.chunkXPos, this.pos.chunkZPos, this.intValue);
+    }
 
-   public class BlockUpdateData {
-      public short chunkPosCrammed;
-      public IBlockState blockState;
+    public ChunkCoordIntPair getPos() {
+        return this.pos;
+    }
 
-      public BlockUpdateData(short s, IBlockState state) {
-         this.chunkPosCrammed = s;
-         this.blockState = state;
-      }
+    public byte[] getByteArray() {
+        return this.byteArray;
+    }
 
-      public BlockUpdateData(short s, Chunk chunkIn) {
-         this.chunkPosCrammed = s;
-         this.blockState = chunkIn.getBlockState(this.getPos());
-      }
+    public int getIntValue() {
+        return this.intValue;
+    }
 
-      public BlockPos getPos() {
-         return new BlockPos(
-            S22PacketMultiBlockChange.this.chunkPosCoord.getBlock(this.chunkPosCrammed >> 12 & 15, this.chunkPosCrammed & 255, this.chunkPosCrammed >> 8 & 15)
-         );
-      }
-
-      public short getPosShort() {
-         return this.chunkPosCrammed;
-      }
-
-      public IBlockState getBlockState() {
-         return this.blockState;
-      }
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

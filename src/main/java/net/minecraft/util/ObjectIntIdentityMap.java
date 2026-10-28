@@ -7,31 +7,35 @@ import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class ObjectIntIdentityMap<T> implements IObjectIntIterable<T> {
-   public IdentityHashMap<T, Integer> identityMap = new IdentityHashMap<>(512);
-   public List<T> objectList = Lists.newArrayList();
+public class ObjectIntIdentityMap implements IObjectIntIterable {
+    public IdentityHashMap idMap = new IdentityHashMap(512);
+    public List list = Lists.newArrayList();
 
-   public void put(T key, int value) {
-      this.identityMap.put((T)key, value);
+    public void set(Object obj, int n) {
+        this.idMap.put(obj, n);
 
-      while (this.objectList.size() <= value) {
-         this.objectList.add(null);
-      }
+        while (this.list.size() <= n) {
+            this.list.add(null);
+        }
 
-      this.objectList.set(value, (T)key);
-   }
+        this.list.set(n, obj);
+    }
 
-   public int get(T key) {
-      Integer integer = this.identityMap.get(key);
-      return integer == null ? -1 : integer;
-   }
+    public int getId(Object obj) {
+        Integer integer = (Integer)this.idMap.get(obj);
+        return integer == null ? -1 : integer;
+    }
 
-   public T getByValue(int value) {
-      return value >= 0 && value < this.objectList.size() ? this.objectList.get(value) : null;
-   }
+    public Object fromId(int n) {
+        return n >= 0 && n < this.list.size() ? this.list.get(n) : null;
+    }
 
-   @Override
-   public Iterator<T> iterator() {
-      return Iterators.filter(this.objectList.iterator(), Predicates.notNull());
-   }
+    @Override
+    public Iterator iterator() {
+        return Iterators.filter(this.list.iterator(), Predicates.notNull());
+    }
+
+    public boolean hasId(int n) {
+        return this.fromId(n) != null;
+    }
 }

@@ -2,17 +2,18 @@ package net.minecraft.world.gen.structure;
 
 import java.util.Random;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureMineshaftPieces.Room;
 
 public class StructureMineshaftStart extends StructureStart {
-   public StructureMineshaftStart() {
-   }
+    public StructureMineshaftStart() {
+    }
 
-   public StructureMineshaftStart(World worldIn, Random rand, int chunkX, int chunkZ) {
-      super(chunkX, chunkZ);
-      StructureMineshaftPieces.Room room = new StructureMineshaftPieces.Room(0, rand, (chunkX << 4) + 2, (chunkZ << 4) + 2);
-      this.components.add(room);
-      room.buildComponent(room, this.components, rand);
-      this.updateBoundingBox();
-      this.markAvailableHeight(worldIn, rand, 10);
-   }
+    public StructureMineshaftStart(World world, Random random, int n, int n2) {
+        super(n, n2);
+        Room room = new Room(0, random, (n << 4) + 2, (n2 << 4) + 2);
+        this.components.add(room);
+        room.buildComponent(room, this.components, random);
+        this.updateBoundingBox();
+        this.markAvailableHeight(world, random, 10);
+    }
 }

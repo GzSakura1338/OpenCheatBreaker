@@ -13,108 +13,71 @@ import net.minecraft.util.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 
 public class SimpleResource implements IResource {
-   public Map<String, IMetadataSection> mapMetadataSections = Maps.newHashMap();
-   public String resourcePackName;
-   public ResourceLocation srResourceLocation;
-   public InputStream resourceInputStream;
-   public InputStream mcmetaInputStream;
-   public IMetadataSerializer srMetadataSerializer;
-   public boolean mcmetaJsonChecked;
-   public JsonObject mcmetaJson;
+    public Map mapMetadataSections = Maps.newHashMap();
+    public ResourceLocation srResourceLocation;
+    public InputStream resourceInputStream;
+    public InputStream mcmetaInputStream;
+    public IMetadataSerializer srMetadataSerializer;
+    public boolean mcmetaJsonChecked;
+    public JsonObject mcmetaJson;
 
-   public SimpleResource(
-      String resourcePackNameIn,
-      ResourceLocation srResourceLocationIn,
-      InputStream resourceInputStreamIn,
-      InputStream mcmetaInputStreamIn,
-      IMetadataSerializer srMetadataSerializerIn
-   ) {
-      this.resourcePackName = resourcePackNameIn;
-      this.srResourceLocation = srResourceLocationIn;
-      this.resourceInputStream = resourceInputStreamIn;
-      this.mcmetaInputStream = mcmetaInputStreamIn;
-      this.srMetadataSerializer = srMetadataSerializerIn;
-   }
+    public SimpleResource(ResourceLocation resourceLocation, InputStream inputStream, InputStream inputStream2, IMetadataSerializer metadataSerializer) {
+        this.srResourceLocation = resourceLocation;
+        this.resourceInputStream = inputStream;
+        this.mcmetaInputStream = inputStream2;
+        this.srMetadataSerializer = metadataSerializer;
+    }
 
-   @Override
-   public ResourceLocation getResourceLocation() {
-      return this.srResourceLocation;
-   }
+    @Override
+    public InputStream getInputStream() {
+        return this.resourceInputStream;
+    }
 
-   @Override
-   public InputStream getInputStream() {
-      return this.resourceInputStream;
-   }
+    @Override
+    public boolean hasMetadata() {
+        return this.mcmetaInputStream != null;
+    }
 
-   @Override
-   public boolean hasMetadata() {
-      return this.mcmetaInputStream != null;
-   }
+    @Override
+    public IMetadataSection getMetadata(String str) {
+        if (!this.hasMetadata()) {
+            return null;
+        }
 
-   @Override
-   public <T extends IMetadataSection> T getMetadata(String str) {
-      if (!this.hasMetadata()) {
-         return null;
-      }
+        if (this.mcmetaJson == null && !this.mcmetaJsonChecked) {
+            this.mcmetaJsonChecked = true;
+            BufferedReader bufferedReader = null;
 
-      if (this.mcmetaJson == null && !this.mcmetaJsonChecked) {
-         this.mcmetaJsonChecked = true;
-         BufferedReader bufferedReader = null;
+            try {
+                bufferedReader = new BufferedReader(new InputStreamReader(this.mcmetaInputStream));
+                this.mcmetaJson = new JsonParser().parse(bufferedReader).getAsJsonObject();
+            } finally {
+                IOUtils.closeQuietly(bufferedReader);
+            }
+        }
 
-         try {
-            bufferedReader = new BufferedReader(new InputStreamReader(this.mcmetaInputStream));
-            this.mcmetaJson = new JsonParser().parse(bufferedReader).getAsJsonObject();
-         } finally {
-            IOUtils.closeQuietly(bufferedReader);
-         }
-      }
+        IMetadataSection metadataSection = (IMetadataSection)this.mapMetadataSections.get(str);
+        if (metadataSection == null) {
+            metadataSection = this.srMetadataSerializer.parseMetadataSection(str, this.mcmetaJson);
+        }
 
-      IMetadataSection metadataSection = this.mapMetadataSections.get(str);
-      if (metadataSection == null) {
-         metadataSection = this.srMetadataSerializer.parseMetadataSection(str, this.mcmetaJson);
-      }
+        return metadataSection;
+    }
 
-      return (T)metadataSection;
-   }
-
-   @Override
-   public String getResourcePackName() {
-      return this.resourcePackName;
-   }
-
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj) {
-         return true;
-      }
-
-      if (!(obj instanceof SimpleResource)) {
-         return false;
-      }
-
-      SimpleResource simpleResource = (SimpleResource)obj;
-      if (this.srResourceLocation != null) {
-         if (!this.srResourceLocation.equals(simpleResource.srResourceLocation)) {
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        } else if (obj instanceof SimpleResource) {
+            SimpleResource simpleResource = (SimpleResource)obj;
+            return this.srResourceLocation != null ? this.srResourceLocation.equals(simpleResource.srResourceLocation) : simpleResource.srResourceLocation == null;
+        } else {
             return false;
-         }
-      } else if (simpleResource.srResourceLocation != null) {
-         return false;
-      }
+        }
+    }
 
-      if (this.resourcePackName != null) {
-         if (!this.resourcePackName.equals(simpleResource.resourcePackName)) {
-            return false;
-         }
-      } else if (simpleResource.resourcePackName != null) {
-         return false;
-      }
-
-      return true;
-   }
-
-   @Override
-   public int hashCode() {
-      int n = this.resourcePackName != null ? this.resourcePackName.hashCode() : 0;
-      return 31 * n + (this.srResourceLocation != null ? this.srResourceLocation.hashCode() : 0);
-   }
+    @Override
+    public int hashCode() {
+        return this.srResourceLocation == null ? 0 : this.srResourceLocation.hashCode();
+    }
 }

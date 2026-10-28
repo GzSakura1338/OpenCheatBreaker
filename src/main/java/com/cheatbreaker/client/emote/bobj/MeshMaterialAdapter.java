@@ -11,56 +11,56 @@ import com.google.gson.JsonSerializer;
 import java.lang.reflect.Type;
 
 public class MeshMaterialAdapter implements JsonDeserializer<MeshMaterial>, JsonSerializer<MeshMaterial> {
-   public MeshMaterial deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
-      if (!jsonElement.isJsonObject()) {
-         return null;
-      }
+    public JsonElement serialize(MeshMaterial meshMaterial, Type type, JsonSerializationContext jsonSerializationContext) {
+        JsonObject jsonObject = new JsonObject();
+        if (meshMaterial.texture != null) {
+            jsonObject.add("texture", ResourceLocationUtils.toJson(meshMaterial.texture));
+        }
 
-      JsonObject asJsonObject = jsonElement.getAsJsonObject();
-      MeshMaterial meshMaterial = new MeshMaterial();
-      if (asJsonObject.has("texture")) {
-         meshMaterial.texture = ResourceLocationUtils.createCustomResourceLocation(asJsonObject.get("texture"));
-      }
+        jsonObject.addProperty("filtering", meshMaterial.textureFilter == 9729 ? "linear" : "nearest");
+        jsonObject.addProperty("normals", meshMaterial.normals);
+        jsonObject.addProperty("smooth", meshMaterial.smooth);
+        jsonObject.addProperty("visible", meshMaterial.visible);
+        jsonObject.addProperty("lighting", meshMaterial.lighting);
+        jsonObject.addProperty("color", meshMaterial.color);
+        return jsonObject;
+    }
 
-      if (asJsonObject.has("filtering")) {
-         meshMaterial.textureFilter = asJsonObject.get("filtering").getAsString().equalsIgnoreCase("linear") ? 9729 : 9728;
-      }
+    public MeshMaterial deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
+        if (!jsonElement.isJsonObject()) {
+            return null;
+        }
 
-      if (asJsonObject.has("normals")) {
-         meshMaterial.normals = asJsonObject.get("normals").getAsBoolean();
-      }
+        JsonObject asJsonObject = jsonElement.getAsJsonObject();
+        MeshMaterial meshMaterial = new MeshMaterial();
+        if (asJsonObject.has("texture")) {
+            meshMaterial.texture = ResourceLocationUtils.fromJson(asJsonObject.get("texture"));
+        }
 
-      if (asJsonObject.has("smooth")) {
-         meshMaterial.smooth = asJsonObject.get("smooth").getAsBoolean();
-      }
+        if (asJsonObject.has("filtering")) {
+            meshMaterial.textureFilter = asJsonObject.get("filtering").getAsString().equalsIgnoreCase("linear") ? 9729 : 9728;
+        }
 
-      if (asJsonObject.has("visible")) {
-         meshMaterial.visible = asJsonObject.get("visible").getAsBoolean();
-      }
+        if (asJsonObject.has("normals")) {
+            meshMaterial.normals = asJsonObject.get("normals").getAsBoolean();
+        }
 
-      if (asJsonObject.has("lighting")) {
-         meshMaterial.lighting = asJsonObject.get("lighting").getAsBoolean();
-      }
+        if (asJsonObject.has("smooth")) {
+            meshMaterial.smooth = asJsonObject.get("smooth").getAsBoolean();
+        }
 
-      if (asJsonObject.has("color")) {
-         meshMaterial.color = asJsonObject.get("color").getAsInt();
-      }
+        if (asJsonObject.has("visible")) {
+            meshMaterial.visible = asJsonObject.get("visible").getAsBoolean();
+        }
 
-      return meshMaterial;
-   }
+        if (asJsonObject.has("lighting")) {
+            meshMaterial.lighting = asJsonObject.get("lighting").getAsBoolean();
+        }
 
-   public JsonElement serialize(MeshMaterial meshMaterial, Type type, JsonSerializationContext jsonSerializationContext) {
-      JsonObject jsonObject = new JsonObject();
-      if (meshMaterial.texture != null) {
-         jsonObject.add("texture", ResourceLocationUtils.findJsonElement(meshMaterial.texture));
-      }
+        if (asJsonObject.has("color")) {
+            meshMaterial.color = asJsonObject.get("color").getAsInt();
+        }
 
-      jsonObject.addProperty("filtering", meshMaterial.textureFilter == 9729 ? "linear" : "nearest");
-      jsonObject.addProperty("normals", meshMaterial.normals);
-      jsonObject.addProperty("smooth", meshMaterial.smooth);
-      jsonObject.addProperty("visible", meshMaterial.visible);
-      jsonObject.addProperty("lighting", meshMaterial.lighting);
-      jsonObject.addProperty("color", meshMaterial.color);
-      return jsonObject;
-   }
+        return meshMaterial;
+    }
 }

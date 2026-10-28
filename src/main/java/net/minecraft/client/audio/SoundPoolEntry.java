@@ -3,46 +3,46 @@ package net.minecraft.client.audio;
 import net.minecraft.util.ResourceLocation;
 
 public class SoundPoolEntry {
-   public ResourceLocation location;
-   public double pitch;
-   public double volume;
-   public boolean streamingSound;
+    public ResourceLocation id;
+    public double volume;
+    public double pitch;
+    public boolean flag;
 
-   public SoundPoolEntry(ResourceLocation locationIn, double pitchIn, double volumeIn, boolean streamingSoundIn) {
-      this.location = locationIn;
-      this.pitch = pitchIn;
-      this.volume = volumeIn;
-      this.streamingSound = streamingSoundIn;
-   }
+    public SoundPoolEntry(ResourceLocation resourceLocation, double d, double d2, boolean flag) {
+        this.id = resourceLocation;
+        this.volume = d;
+        this.pitch = d2;
+        this.flag = flag;
+    }
 
-   public SoundPoolEntry(SoundPoolEntry locationIn) {
-      this.location = locationIn.location;
-      this.pitch = locationIn.pitch;
-      this.volume = locationIn.volume;
-      this.streamingSound = locationIn.streamingSound;
-   }
+    public SoundPoolEntry(SoundPoolEntry soundPoolEntry) {
+        this.id = soundPoolEntry.id;
+        this.volume = soundPoolEntry.volume;
+        this.pitch = soundPoolEntry.pitch;
+        this.flag = soundPoolEntry.flag;
+    }
 
-   public ResourceLocation getSoundPoolEntryLocation() {
-      return this.location;
-   }
+    public ResourceLocation getSoundPoolEntryLocation() {
+        return this.id;
+    }
 
-   public double getPitch() {
-      return this.pitch;
-   }
+    public double getPitch() {
+        return this.volume;
+    }
 
-   public void setPitch(double pitchIn) {
-      this.pitch = pitchIn;
-   }
+    public void setPitch(double d) {
+        this.volume = d;
+    }
 
-   public double getVolume() {
-      return this.volume;
-   }
+    public double getVolume() {
+        return this.pitch;
+    }
 
-   public void setVolume(double volumeIn) {
-      this.volume = volumeIn;
-   }
+    public void setVolume(double d) {
+        this.pitch = d;
+    }
 
-   public boolean isStreamingSound() {
-      return this.streamingSound;
-   }
+    public boolean isStreamingSound() {
+        return this.flag;
+    }
 }

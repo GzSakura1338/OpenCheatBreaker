@@ -4,43 +4,48 @@ import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import java.io.File;
 
-public class UserListBans extends UserList<GameProfile, UserListBansEntry> {
-   public UserListBans(File bansFile) {
-      super(bansFile);
-   }
+public class UserListBans extends UserList {
+    public UserListBans(File bansFile) {
+        super(bansFile);
+    }
 
-   @Override
-   public UserListEntry<GameProfile> createEntry(JsonObject entryData) {
-      return new UserListBansEntry(entryData);
-   }
+    @Override
+    public UserListEntry createEntry(JsonObject entryData) {
+        return new UserListBansEntry(entryData);
+    }
 
-   public boolean isBanned(GameProfile profile) {
-      return this.hasEntry(profile);
-   }
+    public boolean isBanned(GameProfile profile) {
+        return this.hasEntry(profile);
+    }
 
-   @Override
-   public String[] getKeys() {
-      String[] strs = new String[this.getValues().size()];
-      int n = 0;
+    @Override
+    public String[] getKeys() {
+        String[] strs = new String[this.getValues().size()];
+        int n = 0;
 
-      for (UserListBansEntry userListBansEntry : this.getValues().values()) {
-         strs[n++] = userListBansEntry.getValue().getName();
-      }
+        for (UserListBansEntry userListBansEntry : (Iterable<UserListBansEntry>)this.getValues().values()) {
+            strs[n++] = ((GameProfile)userListBansEntry.getValue()).getName();
+        }
 
-      return strs;
-   }
+        return strs;
+    }
 
-   public String getObjectKey(GameProfile obj) {
-      return obj.getId().toString();
-   }
+    public String getObjectKey(GameProfile profile) {
+        return profile.getId().toString();
+    }
 
-   public GameProfile isUsernameBanned(String username) {
-      for (UserListBansEntry userListBansEntry : this.getValues().values()) {
-         if (username.equalsIgnoreCase(userListBansEntry.getValue().getName())) {
-            return userListBansEntry.getValue();
-         }
-      }
+    public GameProfile isUsernameBanned(String username) {
+        for (UserListBansEntry userListBansEntry : (Iterable<UserListBansEntry>)this.getValues().values()) {
+            if (username.equalsIgnoreCase(((GameProfile)userListBansEntry.getValue()).getName())) {
+                return (GameProfile)userListBansEntry.getValue();
+            }
+        }
 
-      return null;
-   }
+        return null;
+    }
+
+    @Override
+    public String getObjectKey(Object obj) {
+        return this.getObjectKey((GameProfile)obj);
+    }
 }

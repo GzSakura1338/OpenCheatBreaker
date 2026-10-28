@@ -8,51 +8,51 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CosmeticSettingsPacket extends AbstractPacket {
-   public List<CosmeticSettingData> cosmetics = new ArrayList<>();
+    public List<CosmeticSettingData> cosmetics = new ArrayList<>();
 
-   public CosmeticSettingsPacket(List<CosmeticSettingData> list) {
-      this.cosmetics = list;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleCosmeticSettings(this);
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleCosmeticSettings(this);
-   }
+    public CosmeticSettingsPacket(List<CosmeticSettingData> list) {
+        this.cosmetics = list;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      int readInt = packetBuffer.getByteBuf().readInt();
-      this.cosmetics = new ArrayList<>();
+    public List<CosmeticSettingData> getCosmetics() {
+        return this.cosmetics;
+    }
 
-      for (int i = 0; i < readInt; i++) {
-         long readLong = packetBuffer.getByteBuf().readLong();
-         boolean readBoolean = packetBuffer.getByteBuf().readBoolean();
-         String readString = packetBuffer.readString();
-         String readString2 = packetBuffer.readString();
-         float readFloat = packetBuffer.getByteBuf().readFloat();
-         String readString3 = packetBuffer.readString();
-         this.cosmetics.add(new CosmeticSettingData(readLong, readBoolean, readString, readString2, readFloat, readString3));
-      }
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeInt(this.cosmetics.size());
 
-   public List<CosmeticSettingData> getCosmetics() {
-      return this.cosmetics;
-   }
+        for (CosmeticSettingData cosmeticSettingData : this.cosmetics) {
+            packetBuffer.getByteBuf().writeLong(cosmeticSettingData.getId());
+            packetBuffer.getByteBuf().writeBoolean(cosmeticSettingData.isEquipped());
+            packetBuffer.writeString(cosmeticSettingData.getType());
+            packetBuffer.writeString(cosmeticSettingData.getName());
+            packetBuffer.getByteBuf().writeFloat(cosmeticSettingData.getScale());
+            packetBuffer.writeString(cosmeticSettingData.getTexture());
+        }
+    }
 
-   public CosmeticSettingsPacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        int readInt = packetBuffer.getByteBuf().readInt();
+        this.cosmetics = new ArrayList<>();
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeInt(this.cosmetics.size());
+        for (int i = 0; i < readInt; i++) {
+            long readLong = packetBuffer.getByteBuf().readLong();
+            boolean readBoolean = packetBuffer.getByteBuf().readBoolean();
+            String readString = packetBuffer.readString();
+            String readString2 = packetBuffer.readString();
+            float readFloat = packetBuffer.getByteBuf().readFloat();
+            String readString3 = packetBuffer.readString();
+            this.cosmetics.add(new CosmeticSettingData(readLong, readBoolean, readString, readString2, readFloat, readString3));
+        }
+    }
 
-      for (CosmeticSettingData cosmeticSettingData : this.cosmetics) {
-         packetBuffer.getByteBuf().writeLong(cosmeticSettingData.getId());
-         packetBuffer.getByteBuf().writeBoolean(cosmeticSettingData.isEquipped());
-         packetBuffer.writeString(cosmeticSettingData.getType());
-         packetBuffer.writeString(cosmeticSettingData.getName());
-         packetBuffer.getByteBuf().writeFloat(cosmeticSettingData.getScale());
-         packetBuffer.writeString(cosmeticSettingData.getTexture());
-      }
-   }
+    public CosmeticSettingsPacket() {
+    }
 }

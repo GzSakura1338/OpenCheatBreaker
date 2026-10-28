@@ -1,17 +1,17 @@
 package com.cheatbreaker.client.event;
 
 public class DoubleEvent1 extends CancellableEvent {
-   public double doubleValue;
+    public double doubleValue;
 
-   public double getDoubleValue() {
-      return this.doubleValue;
-   }
+    public void setDoubleValue(double d) {
+        this.doubleValue = d;
+    }
 
-   public DoubleEvent1(double d) {
-      this.doubleValue = d;
-   }
+    public double getDoubleValue() {
+        return this.doubleValue;
+    }
 
-   public void setDoubleValue(double d) {
-      this.doubleValue = d;
-   }
+    public DoubleEvent1(double d) {
+        this.doubleValue = d;
+    }
 }

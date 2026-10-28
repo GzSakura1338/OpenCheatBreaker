@@ -1,43 +1,49 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 
-public class S0DPacketCollectItem implements Packet<INetHandlerPlayClient> {
-   public int collectedItemEntityId;
-   public int entityId;
+public class S0DPacketCollectItem extends Packet {
+    public int chunkX;
+    public int chunkZ;
 
-   public S0DPacketCollectItem() {
-   }
+    public S0DPacketCollectItem() {
+    }
 
-   public S0DPacketCollectItem(int collectedItemEntityIdIn, int entityIdIn) {
-      this.collectedItemEntityId = collectedItemEntityIdIn;
-      this.entityId = entityIdIn;
-   }
+    public S0DPacketCollectItem(int n, int n2) {
+        this.chunkX = n;
+        this.chunkZ = n2;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.collectedItemEntityId = buf.readVarIntFromBuffer();
-      this.entityId = buf.readVarIntFromBuffer();
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.chunkX = data.readInt();
+        this.chunkZ = data.readInt();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeVarIntToBuffer(this.collectedItemEntityId);
-      buf.writeVarIntToBuffer(this.entityId);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.chunkX);
+        data.writeInt(this.chunkZ);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleCollectItem(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleCollectItem(this);
+    }
 
-   public int getCollectedItemEntityID() {
-      return this.collectedItemEntityId;
-   }
+    public int getChunkX() {
+        return this.chunkX;
+    }
 
-   public int getEntityID() {
-      return this.entityId;
-   }
+    public int getChunkZ() {
+        return this.chunkZ;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

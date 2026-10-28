@@ -4,38 +4,38 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.GlStateManager;
+import org.lwjgl.opengl.GL11;
 
 public class AbstractMinimapScreen extends GuiScreen {
-   public FontRenderer getFontRendererObj() {
-      return this.fontRendererObj;
-   }
+    public int getWidth() {
+        return this.width;
+    }
 
-   public Minecraft getMc() {
-      return this.mc;
-   }
+    @Override
+    public void onGuiClosed() {
+        MinimapSettings.instance.save();
+    }
 
-   public int getWidth() {
-      return this.width;
-   }
+    public List getButtonList() {
+        return this.buttonList;
+    }
 
-   public List getButtonList() {
-      return this.buttonList;
-   }
+    public Minecraft getMc() {
+        return this.mc;
+    }
 
-   @Override
-   public void onGuiClosed() {
-      MinimapSettings.instance.save();
-   }
+    public void drawMinimapBackground() {
+        if (!AbstractVoxelMap.instance.getMapOptions().showInScreens) {
+            AbstractVoxelMap.instance.getMap().drawMinimap(this.mc);
+            GL11.glClear(256);
+        }
+    }
 
-   public void run8() {
-      if (!AbstractVoxelMap.instance.getMapOptions().showInScreens) {
-         AbstractVoxelMap.instance.getMap().drawMinimap(this.mc);
-         GlStateManager.clear(256);
-      }
-   }
+    public int getHeight() {
+        return this.height;
+    }
 
-   public int getHeight() {
-      return this.height;
-   }
+    public FontRenderer getFontRendererObj() {
+        return this.fontRendererObj;
+    }
 }

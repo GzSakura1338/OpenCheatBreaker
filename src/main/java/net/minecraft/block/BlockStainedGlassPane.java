@@ -1,84 +1,65 @@
 package net.minecraft.block;
 
 import java.util.List;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemDye;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.world.World;
+import net.minecraft.util.IIcon;
 
 public class BlockStainedGlassPane extends BlockPane {
-   public static PropertyEnum<EnumDyeColor> COLOR = PropertyEnum.create("color", EnumDyeColor.class);
+    public static IIcon[] iIconArray = new IIcon[16];
+    public static IIcon[] iIconArray2 = new IIcon[16];
 
-   public BlockStainedGlassPane() {
-      super(Material.glass, false);
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(NORTH, false)
-            .withProperty(EAST, false)
-            .withProperty(SOUTH, false)
-            .withProperty(WEST, false)
-            .withProperty(COLOR, EnumDyeColor.WHITE)
-      );
-      this.setCreativeTab(CreativeTabs.tabDecorations);
-   }
+    public BlockStainedGlassPane() {
+        super("glass", "glass_pane_top", Material.glass, false);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
+    }
 
-   @Override
-   public int damageDropped(IBlockState state) {
-      return state.getValue(COLOR).getMetadata();
-   }
+    @Override
+    public IIcon getItemIcon(int side, int meta) {
+        return iIconArray[meta % iIconArray.length];
+    }
 
-   @Override
-   public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-      for (int i = 0; i < EnumDyeColor.values().length; i++) {
-         list.add(new ItemStack(itemIn, 1, i));
-      }
-   }
+    public IIcon findIIcon(int n) {
+        return iIconArray2[~n & 15];
+    }
 
-   @Override
-   public MapColor getMapColor(IBlockState state) {
-      return state.getValue(COLOR).getMapColor();
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return this.getItemIcon(side, ~meta & 15);
+    }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.TRANSLUCENT;
-   }
+    @Override
+    public int damageDropped(int meta) {
+        return meta;
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(COLOR, EnumDyeColor.byMetadata(meta));
-   }
+    public static int computeInt(int n) {
+        return n & 15;
+    }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(COLOR).getMetadata();
-   }
+    @Override
+    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+        for (int i = 0; i < iIconArray.length; i++) {
+            list.add(new ItemStack(itemIn, 1, i));
+        }
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, NORTH, EAST, WEST, SOUTH, COLOR);
-   }
+    @Override
+    public int getRenderBlockPass() {
+        return 1;
+    }
 
-   @Override
-   public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
-      if (!worldIn.isRemote) {
-         BlockBeacon.updateColorAsync(worldIn, pos);
-      }
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        super.registerIcons(reg);
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      if (!worldIn.isRemote) {
-         BlockBeacon.updateColorAsync(worldIn, pos);
-      }
-   }
+        for (int i = 0; i < iIconArray.length; i++) {
+            iIconArray[i] = reg.registerIcon(this.getTextureName() + "_" + ItemDye.dyeIcons[computeInt(i)]);
+            iIconArray2[i] = reg.registerIcon(this.getTextureName() + "_pane_top_" + ItemDye.dyeIcons[computeInt(i)]);
+        }
+    }
 }

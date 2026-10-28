@@ -1,84 +1,77 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.scoreboard.Score;
-import net.minecraft.scoreboard.ScoreObjective;
 
-public class S3CPacketUpdateScore implements Packet<INetHandlerPlayClient> {
-   public String name = "";
-   public String objective = "";
-   public int value;
-   public S3CPacketUpdateScore.Action action;
+public class S3CPacketUpdateScore extends Packet {
+    public String playerName = "";
+    public String objectiveName = "";
+    public int score;
+    public int intValue;
 
-   public S3CPacketUpdateScore() {
-   }
+    public S3CPacketUpdateScore() {
+    }
 
-   public S3CPacketUpdateScore(Score scoreIn) {
-      this.name = scoreIn.getPlayerName();
-      this.objective = scoreIn.getObjective().getName();
-      this.value = scoreIn.getScorePoints();
-      this.action = S3CPacketUpdateScore.Action.CHANGE;
-   }
+    public S3CPacketUpdateScore(Score score, int n) {
+        this.playerName = score.getPlayerName();
+        this.objectiveName = score.getObjective().getName();
+        this.score = score.getScorePoints();
+        this.intValue = n;
+    }
 
-   public S3CPacketUpdateScore(String nameIn) {
-      this.name = nameIn;
-      this.objective = "";
-      this.value = 0;
-      this.action = S3CPacketUpdateScore.Action.REMOVE;
-   }
+    public S3CPacketUpdateScore(String str) {
+        this.playerName = str;
+        this.objectiveName = "";
+        this.score = 0;
+        this.intValue = 1;
+    }
 
-   public S3CPacketUpdateScore(String nameIn, ScoreObjective objectiveIn) {
-      this.name = nameIn;
-      this.objective = objectiveIn.getName();
-      this.value = 0;
-      this.action = S3CPacketUpdateScore.Action.REMOVE;
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.playerName = data.readStringFromBuffer(16);
+        this.intValue = data.readByte();
+        if (this.intValue != 1) {
+            this.objectiveName = data.readStringFromBuffer(16);
+            this.score = data.readInt();
+        }
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.name = buf.readStringFromBuffer(40);
-      this.action = buf.readEnumValue(S3CPacketUpdateScore.Action.class);
-      this.objective = buf.readStringFromBuffer(16);
-      if (this.action != S3CPacketUpdateScore.Action.REMOVE) {
-         this.value = buf.readVarIntFromBuffer();
-      }
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeStringToBuffer(this.playerName);
+        data.writeByte(this.intValue);
+        if (this.intValue != 1) {
+            data.writeStringToBuffer(this.objectiveName);
+            data.writeInt(this.score);
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeString(this.name);
-      buf.writeEnumValue(this.action);
-      buf.writeString(this.objective);
-      if (this.action != S3CPacketUpdateScore.Action.REMOVE) {
-         buf.writeVarIntToBuffer(this.value);
-      }
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleUpdateScore(this);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleUpdateScore(this);
-   }
+    public String getPlayerName() {
+        return this.playerName;
+    }
 
-   public String getPlayerName() {
-      return this.name;
-   }
+    public String getObjectiveName() {
+        return this.objectiveName;
+    }
 
-   public String getObjectiveName() {
-      return this.objective;
-   }
+    public int getScore() {
+        return this.score;
+    }
 
-   public int getScoreValue() {
-      return this.value;
-   }
+    public int getIntValue() {
+        return this.intValue;
+    }
 
-   public S3CPacketUpdateScore.Action getScoreAction() {
-      return this.action;
-   }
-
-   public enum Action {
-      CHANGE,
-      REMOVE;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

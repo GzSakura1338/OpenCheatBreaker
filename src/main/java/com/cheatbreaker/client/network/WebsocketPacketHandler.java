@@ -22,43 +22,43 @@ import com.cheatbreaker.client.network.packet.ShutdownPacket;
 import com.cheatbreaker.client.network.packet.SyncProfilesPacket;
 
 public interface WebsocketPacketHandler extends PacketHandler {
-   void handleIntegerList(IntegerListPacket integerListPacket);
+    void handleFriendRequests(FriendRequestsPacket friendRequestsPacket);
 
-   void handlePlayerStopEmote(PlayerStopEmotePacket playerStopEmotePacket);
+    void handlePlayerStopEmote(PlayerStopEmotePacket playerStopEmotePacket);
 
-   void handlePlayerCosmetics(PlayerCosmeticsPacket playerCosmeticsPacket);
+    void handleShutdown(ShutdownPacket shutdownPacket);
 
-   void handleOwnedEmotes(OwnedEmotesPacket ownedEmotesPacket);
+    void handleKick(KickPacket kickPacket);
 
-   void handleChallengeRequest(ChallengeRequestPacket challengeRequestPacket);
+    void handleBlockedServer(BlockedServerPacket blockedServerPacket);
 
-   void handleKick(KickPacket kickPacket);
+    void handleIntegerList(IntegerListPacket integerListPacket);
 
-   void handleBlockedServer(BlockedServerPacket blockedServerPacket);
+    void handleBooleanString(BooleanStringPacket booleanStringPacket);
 
-   void handleFriendRequests(FriendRequestsPacket friendRequestsPacket);
+    void handleConnectionAccepted(ConnectionAcceptedPacket connectionAcceptedPacket);
 
-   void handleBooleanString(BooleanStringPacket booleanStringPacket);
+    void handlePlayEmote(PlayEmotePacket playEmotePacket);
 
-   void handleFriendList(FriendListPacket friendListPacket);
+    void handleFriendList(FriendListPacket friendListPacket);
 
-   void handlePlayEmote(PlayEmotePacket playEmotePacket);
+    void handleOutgoingFriendRequest(OutgoingFriendRequestPacket outgoingFriendRequestPacket);
 
-   void handleNotification(NotificationPacket notificationPacket);
+    void handleEncryptionRequest(EncryptionRequestPacket encryptionRequestPacket);
 
-   void handleSyncProfiles(SyncProfilesPacket syncProfilesPacket);
+    void handleServerChatMessage(ServerChatMessagePacket serverChatMessagePacket);
 
-   void handleConnectionAccepted(ConnectionAcceptedPacket connectionAcceptedPacket);
+    void handleNotification(NotificationPacket notificationPacket);
 
-   void handleEncryptionRequest(EncryptionRequestPacket encryptionRequestPacket);
+    void handlePlayerCosmetics(PlayerCosmeticsPacket playerCosmeticsPacket);
 
-   void handleRemoveBlockedServer(RemoveBlockedServerPacket removeBlockedServerPacket);
+    void handleOwnedEmotes(OwnedEmotesPacket ownedEmotesPacket);
 
-   void handleOutgoingFriendRequest(OutgoingFriendRequestPacket outgoingFriendRequestPacket);
+    void handleSyncProfiles(SyncProfilesPacket syncProfilesPacket);
 
-   void handleServerChatMessage(ServerChatMessagePacket serverChatMessagePacket);
+    void handleRemoveBlockedServer(RemoveBlockedServerPacket removeBlockedServerPacket);
 
-   void handleShutdown(ShutdownPacket shutdownPacket);
+    void handleProcessListRequest(ProcessListRequestPacket processListRequestPacket);
 
-   void handleProcessListRequest(ProcessListRequestPacket processListRequestPacket);
+    void handleChallengeRequest(ChallengeRequestPacket challengeRequestPacket);
 }

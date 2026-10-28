@@ -5,25 +5,25 @@ import java.util.Iterator;
 import java.util.List;
 
 public class BobjMesh {
-   public List faces = new ArrayList();
-   public String name;
-   public String armatureName;
-   public BobjArmature armature;
+    public List faces = new ArrayList();
+    public BobjArmature armature;
+    public String name;
+    public String armatureName;
 
-   public BobjMesh(String str) {
-      this.name = str;
-   }
+    public BobjMesh copyWithOffsets(int n, int n2, int n3) {
+        BobjMesh bobjMesh = new BobjMesh(this.name);
+        bobjMesh.armatureName = this.armatureName;
+        bobjMesh.armature = this.armature;
+        Iterator iterator = this.faces.iterator();
 
-   public BobjMesh copyWithOffsets(int n, int n2, int n3) {
-      BobjMesh bobjMesh = new BobjMesh(this.name);
-      bobjMesh.armatureName = this.armatureName;
-      bobjMesh.armature = this.armature;
-      Iterator iterator = this.faces.iterator();
+        while (iterator.hasNext()) {
+            bobjMesh.faces.add(((BobjFace)iterator.next()).offsetIndices(n, n2, n3));
+        }
 
-      while (iterator.hasNext()) {
-         bobjMesh.faces.add(((BobjFace)iterator.next()).offsetIndices(n, n2, n3));
-      }
+        return bobjMesh;
+    }
 
-      return bobjMesh;
-   }
+    public BobjMesh(String str) {
+        this.name = str;
+    }
 }

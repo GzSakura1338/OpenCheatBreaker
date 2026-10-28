@@ -1,73 +1,66 @@
 package net.minecraft.world.gen.feature;
 
-import java.util.List;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.WeightedRandomChestContent;
 import net.minecraft.world.World;
 
 public class WorldGeneratorBonusChest extends WorldGenerator {
-   public List<WeightedRandomChestContent> chestItems;
-   public int itemsToGenerateInBonusChest;
+    public WeightedRandomChestContent[] theBonusChestGenerator;
+    public int itemsToGenerateInBonusChest;
 
-   public WorldGeneratorBonusChest(List<WeightedRandomChestContent> list, int n) {
-      this.chestItems = list;
-      this.itemsToGenerateInBonusChest = n;
-   }
+    public WorldGeneratorBonusChest(WeightedRandomChestContent[] weightedRandomChestContents, int n) {
+        this.theBonusChestGenerator = weightedRandomChestContents;
+        this.itemsToGenerateInBonusChest = n;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      Block block;
-      while (
-         ((block = worldIn.getBlockState(position).getBlock()).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && position.getY() > 1
-      ) {
-         position = position.down();
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        Block block;
+        while (((block = world.getBlock(n, n2, n3)).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && n2 > 1) {
+            n2--;
+        }
 
-      if (position.getY() < 1) {
-         return false;
-      }
+        if (n2 < 1) {
+            return false;
+        }
 
-      position = position.up();
+        n2++;
 
-      for (int i = 0; i < 4; i++) {
-         BlockPos blockPos = position.add(rand.nextInt(4) - rand.nextInt(4), rand.nextInt(3) - rand.nextInt(3), rand.nextInt(4) - rand.nextInt(4));
-         if (worldIn.isAirBlock(blockPos) && World.doesBlockHaveSolidTopSurface(worldIn, blockPos.down())) {
-            worldIn.setBlockState(blockPos, Blocks.chest.getDefaultState(), 2);
-            TileEntity tileEntity = worldIn.getTileEntity(blockPos);
-            if (tileEntity instanceof TileEntityChest) {
-               WeightedRandomChestContent.generateChestContents(rand, this.chestItems, (TileEntityChest)tileEntity, this.itemsToGenerateInBonusChest);
+        for (int i = 0; i < 4; i++) {
+            int n4 = n + random.nextInt(4) - random.nextInt(4);
+            int n5 = n2 + random.nextInt(3) - random.nextInt(3);
+            int n6 = n3 + random.nextInt(4) - random.nextInt(4);
+            if (world.isAirBlock(n4, n5, n6) && World.doesBlockHaveSolidTopSurface(world, n4, n5 - 1, n6)) {
+                world.setBlock(n4, n5, n6, Blocks.chest, 0, 2);
+                TileEntityChest tileEntity = (TileEntityChest)world.getTileEntity(n4, n5, n6);
+                if (tileEntity != null && tileEntity != null) {
+                    WeightedRandomChestContent.generateChestContents(random, this.theBonusChestGenerator, tileEntity, this.itemsToGenerateInBonusChest);
+                }
+
+                if (world.isAirBlock(n4 - 1, n5, n6) && World.doesBlockHaveSolidTopSurface(world, n4 - 1, n5 - 1, n6)) {
+                    world.setBlock(n4 - 1, n5, n6, Blocks.torch, 0, 2);
+                }
+
+                if (world.isAirBlock(n4 + 1, n5, n6) && World.doesBlockHaveSolidTopSurface(world, n4 - 1, n5 - 1, n6)) {
+                    world.setBlock(n4 + 1, n5, n6, Blocks.torch, 0, 2);
+                }
+
+                if (world.isAirBlock(n4, n5, n6 - 1) && World.doesBlockHaveSolidTopSurface(world, n4 - 1, n5 - 1, n6)) {
+                    world.setBlock(n4, n5, n6 - 1, Blocks.torch, 0, 2);
+                }
+
+                if (world.isAirBlock(n4, n5, n6 + 1) && World.doesBlockHaveSolidTopSurface(world, n4 - 1, n5 - 1, n6)) {
+                    world.setBlock(n4, n5, n6 + 1, Blocks.torch, 0, 2);
+                }
+
+                return true;
             }
+        }
 
-            BlockPos east = blockPos.east();
-            BlockPos west = blockPos.west();
-            BlockPos north = blockPos.north();
-            BlockPos south = blockPos.south();
-            if (worldIn.isAirBlock(west) && World.doesBlockHaveSolidTopSurface(worldIn, west.down())) {
-               worldIn.setBlockState(west, Blocks.torch.getDefaultState(), 2);
-            }
-
-            if (worldIn.isAirBlock(east) && World.doesBlockHaveSolidTopSurface(worldIn, east.down())) {
-               worldIn.setBlockState(east, Blocks.torch.getDefaultState(), 2);
-            }
-
-            if (worldIn.isAirBlock(north) && World.doesBlockHaveSolidTopSurface(worldIn, north.down())) {
-               worldIn.setBlockState(north, Blocks.torch.getDefaultState(), 2);
-            }
-
-            if (worldIn.isAirBlock(south) && World.doesBlockHaveSolidTopSurface(worldIn, south.down())) {
-               worldIn.setBlockState(south, Blocks.torch.getDefaultState(), 2);
-            }
-
-            return true;
-         }
-      }
-
-      return false;
-   }
+        return false;
+    }
 }

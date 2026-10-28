@@ -1,136 +1,87 @@
 package net.minecraft.block;
 
-import com.google.common.base.Predicate;
 import java.util.List;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.stats.StatList;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.ColorizerFoliage;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockOldLeaf extends BlockLeaves {
-   public static PropertyEnum<BlockPlanks.EnumType> VARIANT = PropertyEnum.create(
-      "variant", BlockPlanks.EnumType.class, new Predicate<BlockPlanks.EnumType>() {
-         public boolean apply(BlockPlanks.EnumType enumType) {
-            return enumType.getMetadata() < 4;
-         }
-      }
-   );
+    public static String[][] stringMatrix = new String[][]{
+        {"leaves_oak", "leaves_spruce", "leaves_birch", "leaves_jungle"},
+        {"leaves_oak_opaque", "leaves_spruce_opaque", "leaves_birch_opaque", "leaves_jungle_opaque"}
+    };
+    public static String[] stringArray = new String[]{"oak", "spruce", "birch", "jungle"};
 
-   public BlockOldLeaf() {
-      this.setDefaultState(
-         this.blockState.getBaseState().withProperty(VARIANT, BlockPlanks.EnumType.OAK).withProperty(CHECK_DECAY, true).withProperty(DECAYABLE, true)
-      );
-   }
+    @Override
+    public int getRenderColor(int meta) {
+        return (meta & 3) == 1
+            ? ColorizerFoliage.getFoliageColorPine()
+            : ((meta & 3) == 2 ? ColorizerFoliage.getFoliageColorBirch() : super.getRenderColor(meta));
+    }
 
-   @Override
-   public int getRenderColor(IBlockState state) {
-      if (state.getBlock() != this) {
-         return super.getRenderColor(state);
-      }
+    @Override
+    public int colorMultiplier(IBlockAccess worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        return (blockMetadata & 3) == 1
+            ? ColorizerFoliage.getFoliageColorPine()
+            : ((blockMetadata & 3) == 2 ? ColorizerFoliage.getFoliageColorBirch() : super.colorMultiplier(worldIn, x, y, z));
+    }
 
-      BlockPlanks.EnumType value = state.getValue(VARIANT);
-      return value == BlockPlanks.EnumType.SPRUCE
-         ? ColorizerFoliage.getFoliageColorPine()
-         : (value == BlockPlanks.EnumType.BIRCH ? ColorizerFoliage.getFoliageColorBirch() : super.getRenderColor(state));
-   }
+    @Override
+    public void handleWorld(World world, int n, int n2, int n3, int n4, int n5) {
+        if ((n4 & 3) == 0 && world.rand.nextInt(n5) == 0) {
+            this.dropBlockAsItem(world, n, n2, n3, new ItemStack(Items.apple, 1, 0));
+        }
+    }
 
-   @Override
-   public int colorMultiplier(IBlockAccess worldIn, BlockPos pos, int renderPass) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() == this) {
-         BlockPlanks.EnumType value = blockState.getValue(VARIANT);
-         if (value == BlockPlanks.EnumType.SPRUCE) {
-            return ColorizerFoliage.getFoliageColorPine();
-         }
+    @Override
+    public int computeInt(int n) {
+        int computeInt = super.computeInt(n);
+        if ((n & 3) == 3) {
+            computeInt = 40;
+        }
 
-         if (value == BlockPlanks.EnumType.BIRCH) {
-            return ColorizerFoliage.getFoliageColorBirch();
-         }
-      }
+        return computeInt;
+    }
 
-      return super.colorMultiplier(worldIn, pos, renderPass);
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return (meta & 3) == 1
+            ? this.iIconMatrix[this.fancyIndex][1]
+            : (
+                (meta & 3) == 3
+                    ? this.iIconMatrix[this.fancyIndex][3]
+                    : ((meta & 3) == 2 ? this.iIconMatrix[this.fancyIndex][2] : this.iIconMatrix[this.fancyIndex][0])
+            );
+    }
 
-   @Override
-   public void dropApple(World worldIn, BlockPos pos, IBlockState state, int chance) {
-      if (state.getValue(VARIANT) == BlockPlanks.EnumType.OAK && worldIn.rand.nextInt(chance) == 0) {
-         spawnAsEntity(worldIn, pos, new ItemStack(Items.apple, 1, 0));
-      }
-   }
+    @Override
+    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+        list.add(new ItemStack(itemIn, 1, 0));
+        list.add(new ItemStack(itemIn, 1, 1));
+        list.add(new ItemStack(itemIn, 1, 2));
+        list.add(new ItemStack(itemIn, 1, 3));
+    }
 
-   @Override
-   public int getSaplingDropChance(IBlockState state) {
-      return state.getValue(VARIANT) == BlockPlanks.EnumType.JUNGLE ? 40 : super.getSaplingDropChance(state);
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        for (int i = 0; i < stringMatrix.length; i++) {
+            this.iIconMatrix[i] = new IIcon[stringMatrix[i].length];
 
-   @Override
-   public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.OAK.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.SPRUCE.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.BIRCH.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.JUNGLE.getMetadata()));
-   }
+            for (int j = 0; j < stringMatrix[i].length; j++) {
+                this.iIconMatrix[i][j] = reg.registerIcon(stringMatrix[i][j]);
+            }
+        }
+    }
 
-   @Override
-   public ItemStack createStackedBlock(IBlockState state) {
-      return new ItemStack(Item.getItemFromBlock(this), 1, state.getValue(VARIANT).getMetadata());
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(VARIANT, this.getWoodType(meta))
-         .withProperty(DECAYABLE, (meta & 4) == 0)
-         .withProperty(CHECK_DECAY, (meta & 8) > 0);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(VARIANT).getMetadata();
-      if (!state.getValue(DECAYABLE)) {
-         n |= 4;
-      }
-
-      if (state.getValue(CHECK_DECAY)) {
-         n |= 8;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockPlanks.EnumType getWoodType(int meta) {
-      return BlockPlanks.EnumType.byMetadata((meta & 3) % 4);
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, VARIANT, CHECK_DECAY, DECAYABLE);
-   }
-
-   @Override
-   public int damageDropped(IBlockState state) {
-      return state.getValue(VARIANT).getMetadata();
-   }
-
-   @Override
-   public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te) {
-      if (!worldIn.isRemote && player.getCurrentEquippedItem() != null && player.getCurrentEquippedItem().getItem() == Items.shears) {
-         player.triggerAchievement(StatList.mineBlockStatArray[Block.getIdFromBlock(this)]);
-         spawnAsEntity(worldIn, pos, new ItemStack(Item.getItemFromBlock(this), 1, state.getValue(VARIANT).getMetadata()));
-      } else {
-         super.harvestBlock(worldIn, player, pos, state, te);
-      }
-   }
+    @Override
+    public String[] getStringArray() {
+        return stringArray;
+    }
 }

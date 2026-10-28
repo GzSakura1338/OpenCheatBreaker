@@ -1,25 +1,23 @@
 package net.minecraft.enchantment;
 
-import net.minecraft.util.ResourceLocation;
-
 public class EnchantmentWaterWorker extends Enchantment {
-   public EnchantmentWaterWorker(int n, ResourceLocation resourceLocation, int n2) {
-      super(n, resourceLocation, n2, EnumEnchantmentType.ARMOR_HEAD);
-      this.setName("waterWorker");
-   }
+    public EnchantmentWaterWorker(int n, int n2) {
+        super(n, n2, EnumEnchantmentType.armor_head);
+        this.setName("waterWorker");
+    }
 
-   @Override
-   public int getMinEnchantability(int enchantmentLevel) {
-      return 1;
-   }
+    @Override
+    public int getMinEnchantability(int n) {
+        return 1;
+    }
 
-   @Override
-   public int getMaxEnchantability(int enchantmentLevel) {
-      return this.getMinEnchantability(enchantmentLevel) + 40;
-   }
+    @Override
+    public int getMaxEnchantability(int n) {
+        return this.getMinEnchantability(n) + 40;
+    }
 
-   @Override
-   public int getMaxLevel() {
-      return 1;
-   }
+    @Override
+    public int getMaxLevel() {
+        return 1;
+    }
 }

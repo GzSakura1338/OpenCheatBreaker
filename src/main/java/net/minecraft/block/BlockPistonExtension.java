@@ -3,230 +3,207 @@ package net.minecraft.block;
 import java.util.List;
 import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.Facing;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockPistonExtension extends Block {
-   public static PropertyDirection FACING = PropertyDirection.create("facing");
-   public static PropertyEnum<BlockPistonExtension.EnumPistonType> TYPE = PropertyEnum.create("type", BlockPistonExtension.EnumPistonType.class);
-   public static PropertyBool SHORT = PropertyBool.create("short");
+    public IIcon iIcon2;
 
-   public BlockPistonExtension() {
-      super(Material.piston);
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(FACING, EnumFacing.NORTH)
-            .withProperty(TYPE, BlockPistonExtension.EnumPistonType.DEFAULT)
-            .withProperty(SHORT, false)
-      );
-      this.setStepSound(soundTypePiston);
-      this.setHardness(0.5F);
-   }
+    public BlockPistonExtension() {
+        super(Material.piston);
+        this.setStepSound(soundTypePiston);
+        this.setHardness(0.5F);
+    }
 
-   @Override
-   public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player) {
-      if (player.capabilities.isCreativeMode) {
-         EnumFacing value = state.getValue(FACING);
-         if (value != null) {
-            BlockPos offset = pos.offset(value.getOpposite());
-            Block block = worldIn.getBlockState(offset).getBlock();
+    public void setIIcon(IIcon icon) {
+        this.iIcon2 = icon;
+    }
+
+    public void run() {
+        this.iIcon2 = null;
+    }
+
+    @Override
+    public void onBlockHarvested(World worldIn, int x, int y, int z, int meta, EntityPlayer player) {
+        if (player.capabilities.isCreativeMode) {
+            int directionMeta = getDirectionMeta(meta);
+            Block block = worldIn.getBlock(x - Facing.offsetsXForSide[directionMeta], y - Facing.offsetsYForSide[directionMeta], z - Facing.offsetsZForSide[directionMeta]);
             if (block == Blocks.piston || block == Blocks.sticky_piston) {
-               worldIn.setBlockToAir(offset);
+                worldIn.setBlockToAir(x - Facing.offsetsXForSide[directionMeta], y - Facing.offsetsYForSide[directionMeta], z - Facing.offsetsZForSide[directionMeta]);
             }
-         }
-      }
+        }
 
-      super.onBlockHarvested(worldIn, pos, state, player);
-   }
+        super.onBlockHarvested(worldIn, x, y, z, meta, player);
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      super.breakBlock(worldIn, pos, state);
-      EnumFacing opposite = state.getValue(FACING).getOpposite();
-      pos = pos.offset(opposite);
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if ((blockState.getBlock() == Blocks.piston || blockState.getBlock() == Blocks.sticky_piston) && blockState.getValue(BlockPistonBase.EXTENDED)) {
-         blockState.getBlock().dropBlockAsItem(worldIn, pos, blockState, 0);
-         worldIn.setBlockToAir(pos);
-      }
-   }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+        int n = Facing.oppositeSide[getDirectionMeta(meta)];
+        x += Facing.offsetsXForSide[n];
+        y += Facing.offsetsYForSide[n];
+        z += Facing.offsetsZForSide[n];
+        Block block = worldIn.getBlock(x, y, z);
+        if (block == Blocks.piston || block == Blocks.sticky_piston) {
+            meta = worldIn.getBlockMetadata(x, y, z);
+            if (BlockPistonBase.isExtended(meta)) {
+                block.dropBlockAsItem(worldIn, x, y, z, meta, 0);
+                worldIn.setBlockToAir(x, y, z);
+            }
+        }
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        int directionMeta = getDirectionMeta(meta);
+        return side == directionMeta
+            ? (
+                this.iIcon2 != null
+                    ? this.iIcon2
+                    : ((meta & 8) != 0 ? BlockPistonBase.getPistonBaseIcon("piston_top_sticky") : BlockPistonBase.getPistonBaseIcon("piston_top_normal"))
+            )
+            : (
+                directionMeta < 6 && side == Facing.oppositeSide[directionMeta]
+                    ? BlockPistonBase.getPistonBaseIcon("piston_top_normal")
+                    : BlockPistonBase.getPistonBaseIcon("piston_side")
+            );
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      return false;
-   }
+    @Override
+    public int getRenderType() {
+        return 17;
+    }
 
-   @Override
-   public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side) {
-      return false;
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public int quantityDropped(Random random) {
-      return 0;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public void addCollisionBoxesToList(World worldIn, BlockPos pos, IBlockState state, AxisAlignedBB mask, List<AxisAlignedBB> list, Entity collidingEntity) {
-      this.applyHeadBounds(state);
-      super.addCollisionBoxesToList(worldIn, pos, state, mask, list, collidingEntity);
-      this.applyCoreBounds(state);
-      super.addCollisionBoxesToList(worldIn, pos, state, mask, list, collidingEntity);
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-   }
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return false;
+    }
 
-   public void applyCoreBounds(IBlockState state) {
-      float f = 0.25F;
-      float f2 = 0.375F;
-      float f3 = 0.625F;
-      float f4 = 0.25F;
-      float f5 = 0.75F;
-      switch (state.getValue(FACING)) {
-         case DOWN:
-            this.setBlockBounds(0.375F, 0.25F, 0.375F, 0.625F, 1.0F, 0.625F);
-            break;
-         case UP:
-            this.setBlockBounds(0.375F, 0.0F, 0.375F, 0.625F, 0.75F, 0.625F);
-            break;
-         case NORTH:
-            this.setBlockBounds(0.25F, 0.375F, 0.25F, 0.75F, 0.625F, 1.0F);
-            break;
-         case SOUTH:
-            this.setBlockBounds(0.25F, 0.375F, 0.0F, 0.75F, 0.625F, 0.75F);
-            break;
-         case WEST:
-            this.setBlockBounds(0.375F, 0.25F, 0.25F, 0.625F, 0.75F, 1.0F);
-            break;
-         case EAST:
-            this.setBlockBounds(0.0F, 0.375F, 0.25F, 0.75F, 0.625F, 0.75F);
-      }
-   }
+    @Override
+    public boolean canPlaceBlockOnSide(World worldIn, int x, int y, int z, int side) {
+        return false;
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      this.applyHeadBounds(worldIn.getBlockState(pos));
-   }
+    @Override
+    public int quantityDropped(Random random) {
+        return 0;
+    }
 
-   public void applyHeadBounds(IBlockState state) {
-      float f = 0.25F;
-      EnumFacing value = state.getValue(FACING);
-      if (value != null) {
-         switch (value) {
-            case DOWN:
-               this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.25F, 1.0F);
-               break;
-            case UP:
-               this.setBlockBounds(0.0F, 0.75F, 0.0F, 1.0F, 1.0F, 1.0F);
-               break;
-            case NORTH:
-               this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.25F);
-               break;
-            case SOUTH:
-               this.setBlockBounds(0.0F, 0.0F, 0.75F, 1.0F, 1.0F, 1.0F);
-               break;
-            case WEST:
-               this.setBlockBounds(0.0F, 0.0F, 0.0F, 0.25F, 1.0F, 1.0F);
-               break;
-            case EAST:
-               this.setBlockBounds(0.75F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-         }
-      }
-   }
+    @Override
+    public void addCollisionBoxesToList(World worldIn, int x, int y, int z, AxisAlignedBB mask, List list, Entity collider) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        float f = 0.25F;
+        float f2 = 0.375F;
+        float f3 = 0.625F;
+        float f4 = 0.25F;
+        float f5 = 0.75F;
+        switch (getDirectionMeta(blockMetadata)) {
+            case 0:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.25F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.375F, 0.25F, 0.375F, 0.625F, 1.0F, 0.625F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                break;
+            case 1:
+                this.setBlockBounds(0.0F, 0.75F, 0.0F, 1.0F, 1.0F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.375F, 0.0F, 0.375F, 0.625F, 0.75F, 0.625F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                break;
+            case 2:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.25F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.25F, 0.375F, 0.25F, 0.75F, 0.625F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                break;
+            case 3:
+                this.setBlockBounds(0.0F, 0.0F, 0.75F, 1.0F, 1.0F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.25F, 0.375F, 0.0F, 0.75F, 0.625F, 0.75F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                break;
+            case 4:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 0.25F, 1.0F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.375F, 0.25F, 0.25F, 0.625F, 0.75F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                break;
+            case 5:
+                this.setBlockBounds(0.75F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+                this.setBlockBounds(0.0F, 0.375F, 0.25F, 0.75F, 0.625F, 0.75F);
+                super.addCollisionBoxesToList(worldIn, x, y, z, mask, list, collider);
+        }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      EnumFacing value = state.getValue(FACING);
-      BlockPos offset = pos.offset(value.getOpposite());
-      IBlockState blockState = worldIn.getBlockState(offset);
-      if (blockState.getBlock() != Blocks.piston && blockState.getBlock() != Blocks.sticky_piston) {
-         worldIn.setBlockToAir(pos);
-      } else {
-         blockState.getBlock().onNeighborBlockChange(worldIn, offset, blockState, neighborBlock);
-      }
-   }
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+    }
 
-   @Override
-   public boolean shouldSideBeRendered(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-      return true;
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        float f = 0.25F;
+        switch (getDirectionMeta(blockMetadata)) {
+            case 0:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.25F, 1.0F);
+                break;
+            case 1:
+                this.setBlockBounds(0.0F, 0.75F, 0.0F, 1.0F, 1.0F, 1.0F);
+                break;
+            case 2:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.25F);
+                break;
+            case 3:
+                this.setBlockBounds(0.0F, 0.0F, 0.75F, 1.0F, 1.0F, 1.0F);
+                break;
+            case 4:
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 0.25F, 1.0F, 1.0F);
+                break;
+            case 5:
+                this.setBlockBounds(0.75F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+        }
+    }
 
-   public static EnumFacing getFacing(int meta) {
-      int n = meta & 7;
-      return n > 5 ? null : EnumFacing.getFront(n);
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        int directionMeta = getDirectionMeta(worldIn.getBlockMetadata(x, y, z));
+        Block block = worldIn.getBlock(x - Facing.offsetsXForSide[directionMeta], y - Facing.offsetsYForSide[directionMeta], z - Facing.offsetsZForSide[directionMeta]);
+        if (block != Blocks.piston && block != Blocks.sticky_piston) {
+            worldIn.setBlockToAir(x, y, z);
+        } else {
+            block.onNeighborBlockChange(worldIn, x - Facing.offsetsXForSide[directionMeta], y - Facing.offsetsYForSide[directionMeta], z - Facing.offsetsZForSide[directionMeta], neighbor);
+        }
+    }
 
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return worldIn.getBlockState(pos).getValue(TYPE) == BlockPistonExtension.EnumPistonType.STICKY
-         ? Item.getItemFromBlock(Blocks.sticky_piston)
-         : Item.getItemFromBlock(Blocks.piston);
-   }
+    public static int getDirectionMeta(int n) {
+        return MathHelper.clamp_int(n & 7, 0, Facing.offsetsXForSide.length - 1);
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(FACING, getFacing(meta))
-         .withProperty(TYPE, (meta & 8) > 0 ? BlockPistonExtension.EnumPistonType.STICKY : BlockPistonExtension.EnumPistonType.DEFAULT);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(FACING).getIndex();
-      if (state.getValue(TYPE) == BlockPistonExtension.EnumPistonType.STICKY) {
-         n |= 8;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, TYPE, SHORT);
-   }
-
-   public enum EnumPistonType implements IStringSerializable {
-      DEFAULT("normal"),
-      STICKY("sticky");
-
-      public String VARIANT;
-
-      EnumPistonType(String name) {
-         this.VARIANT = name;
-      }
-
-      @Override
-      public String toString() {
-         return this.VARIANT;
-      }
-
-      @Override
-      public String getName() {
-         return this.VARIANT;
-      }
-   }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        return (blockMetadata & 8) != 0 ? Item.getItemFromBlock(Blocks.sticky_piston) : Item.getItemFromBlock(Blocks.piston);
+    }
 }

@@ -4,45 +4,79 @@ import java.util.Collection;
 import java.util.Random;
 
 public class WeightedRandom {
-   public static int getTotalWeight(Collection<? extends WeightedRandom.Item> collection) {
-      int n = 0;
+    public static int getTotalWeight(Collection collection) {
+        int n = 0;
 
-      for (WeightedRandom.Item item : collection) {
-         n += item.itemWeight;
-      }
+        for (WeightedRandom.Item item : (Iterable<WeightedRandom.Item>)collection) {
+            n += item.itemWeight;
+        }
 
-      return n;
-   }
+        return n;
+    }
 
-   public static <T extends WeightedRandom.Item> T getRandomItem(Random random, Collection<T> collection, int totalWeight) {
-      if (totalWeight <= 0) {
-         throw new IllegalArgumentException();
-      }
+    public static WeightedRandom.Item getRandomItem(Random random, Collection collection, int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException();
+        }
 
-      int nextInt = random.nextInt(totalWeight);
-      return getRandomItem(collection, nextInt);
-   }
+        int nextInt = random.nextInt(n);
 
-   public static <T extends WeightedRandom.Item> T getRandomItem(Collection<T> collection, int weight) {
-      for (WeightedRandom.Item item : collection) {
-         weight -= item.itemWeight;
-         if (weight < 0) {
-            return (T)item;
-         }
-      }
+        for (WeightedRandom.Item item : (Iterable<WeightedRandom.Item>)collection) {
+            nextInt -= item.itemWeight;
+            if (nextInt < 0) {
+                return item;
+            }
+        }
 
-      return null;
-   }
+        return null;
+    }
 
-   public static <T extends WeightedRandom.Item> T getRandomItem(Random random, Collection<T> collection) {
-      return getRandomItem(random, collection, getTotalWeight(collection));
-   }
+    public static WeightedRandom.Item getRandomItem(Random random, Collection collection) {
+        return getRandomItem(random, collection, getTotalWeight(collection));
+    }
 
-   public static class Item {
-      public int itemWeight;
+    public static int getTotalWeight(WeightedRandom.Item[] items) {
+        int n = 0;
+        WeightedRandom.Item[] items2 = items;
+        int length = items.length;
 
-      public Item(int itemWeightIn) {
-         this.itemWeight = itemWeightIn;
-      }
-   }
+        for (int i = 0; i < length; i++) {
+            WeightedRandom.Item item = items2[i];
+            n += item.itemWeight;
+        }
+
+        return n;
+    }
+
+    public static WeightedRandom.Item getRandomItem(Random random, WeightedRandom.Item[] items, int n) {
+        if (n <= 0) {
+            throw new IllegalArgumentException();
+        }
+
+        int nextInt = random.nextInt(n);
+        WeightedRandom.Item[] items2 = items;
+        int length = items.length;
+
+        for (int i = 0; i < length; i++) {
+            WeightedRandom.Item item = items2[i];
+            nextInt -= item.itemWeight;
+            if (nextInt < 0) {
+                return item;
+            }
+        }
+
+        return null;
+    }
+
+    public static WeightedRandom.Item getRandomItem(Random random, WeightedRandom.Item[] items) {
+        return getRandomItem(random, items, getTotalWeight(items));
+    }
+
+    public static class Item {
+        public int itemWeight;
+
+        public Item(int n) {
+            this.itemWeight = n;
+        }
+    }
 }

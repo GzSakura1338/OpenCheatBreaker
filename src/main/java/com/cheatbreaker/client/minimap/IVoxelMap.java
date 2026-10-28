@@ -1,25 +1,25 @@
 package com.cheatbreaker.client.minimap;
 
 public interface IVoxelMap {
-   IMap getMap();
+    void setSubworldName(String str);
 
-   RadarSettings getRadarSettings();
+    void setSubworldHash(String str);
 
-   IDimensionManager getDimensionManager();
+    IColorManager getColorManager();
 
-   void setPermissions(boolean flag, boolean flag2);
+    IRadar getRadar();
 
-   IWaypointManager getWaypointManager();
+    IWaypointManager getWaypointManager();
 
-   IRadar getRadar();
+    RadarSettings getRadarSettings();
 
-   IChangeNotifier getChangeNotifier();
+    MinimapSettings getMapOptions();
 
-   MinimapSettings getMapOptions();
+    IChangeNotifier getChangeNotifier();
 
-   IColorManager getColorManager();
+    void setPermissions(boolean flag, boolean flag2);
 
-   void setSubworldName(String str);
+    IDimensionManager getDimensionManager();
 
-   void setSubworldHash(String str);
+    IMap getMap();
 }

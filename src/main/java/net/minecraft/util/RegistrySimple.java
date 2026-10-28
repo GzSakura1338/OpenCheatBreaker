@@ -2,47 +2,38 @@ package net.minecraft.util;
 
 import com.google.common.collect.Maps;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang3.Validate;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class RegistrySimple<K, V> implements IRegistry<K, V> {
-   public static Logger logger = LogManager.getLogger();
-   public Map<K, V> registryObjects = this.createUnderlyingMap();
+public class RegistrySimple implements IRegistry {
+    public static Logger logger = LogManager.getLogger();
+    public Map registryObjects = this.createUnderlyingMap();
 
-   public Map<K, V> createUnderlyingMap() {
-      return Maps.newHashMap();
-   }
+    public Map createUnderlyingMap() {
+        return Maps.newHashMap();
+    }
 
-   @Override
-   public V getObject(K name) {
-      return this.registryObjects.get(name);
-   }
+    @Override
+    public Object getObject(Object obj) {
+        return this.registryObjects.get(obj);
+    }
 
-   @Override
-   public void putObject(K key, V value) {
-      Validate.notNull(key);
-      Validate.notNull(value);
-      if (this.registryObjects.containsKey(key)) {
-         logger.debug("Adding duplicate key '" + key + "' to registry");
-      }
+    @Override
+    public void putObject(Object obj, Object obj2) {
+        if (this.registryObjects.containsKey(obj)) {
+            logger.debug("Adding duplicate key '" + obj + "' to registry");
+        }
 
-      this.registryObjects.put((K)key, (V)value);
-   }
+        this.registryObjects.put(obj, obj2);
+    }
 
-   public Set<K> getKeys() {
-      return Collections.unmodifiableSet(this.registryObjects.keySet());
-   }
+    public Set getKeys() {
+        return Collections.unmodifiableSet(this.registryObjects.keySet());
+    }
 
-   public boolean containsKey(K key) {
-      return this.registryObjects.containsKey(key);
-   }
-
-   @Override
-   public Iterator<V> iterator() {
-      return this.registryObjects.values().iterator();
-   }
+    public boolean containsKey(Object obj) {
+        return this.registryObjects.containsKey(obj);
+    }
 }

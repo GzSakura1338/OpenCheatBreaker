@@ -1,395 +1,334 @@
 package net.minecraft.block;
 
-import com.google.common.cache.LoadingCache;
 import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.BlockWorldState;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.block.state.pattern.BlockPattern;
-import net.minecraft.block.state.pattern.BlockPattern.PatternHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemMonsterPlacer;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.EnumFacing.AxisDirection;
-import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.Direction;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockPortal extends BlockBreakable {
-   public static PropertyEnum<Axis> AXIS = PropertyEnum.create("axis", Axis.class, Axis.X, Axis.Z);
+    public static int[][] intMatrix = new int[][]{new int[0], {3, 1}, {2, 0}};
 
-   public BlockPortal() {
-      super(Material.portal, false);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(AXIS, Axis.X));
-      this.setTickRandomly(true);
-   }
+    public BlockPortal() {
+        super("portal", Material.portal, false);
+        this.setTickRandomly(true);
+    }
 
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      super.updateTick(worldIn, pos, state, rand);
-      if (worldIn.provider.isSurfaceWorld()
-         && worldIn.getGameRules().getBoolean("doMobSpawning")
-         && rand.nextInt(2000) < worldIn.getDifficulty().getDifficultyId()) {
-         int n = pos.getY();
-         BlockPos pos2 = pos;
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        super.updateTick(worldIn, x, y, z, random);
+        if (worldIn.provider.isSurfaceWorld()
+            && worldIn.getGameRules().getGameRuleBooleanValue("doMobSpawning")
+            && random.nextInt(2000) < worldIn.difficultySetting.getDifficultyId()) {
+            int n = y;
 
-         while (!World.doesBlockHaveSolidTopSurface(worldIn, pos2) && pos2.getY() > 0) {
-            pos2 = pos2.down();
-         }
-
-         if (n > 0 && !worldIn.getBlockState(pos2.up()).getBlock().isNormalCube()) {
-            Entity spawnCreature = ItemMonsterPlacer.spawnCreature(worldIn, 57, pos2.getX() + 0.5, pos2.getY() + 1.1, pos2.getZ() + 0.5);
-            if (spawnCreature != null) {
-               spawnCreature.timeUntilPortal = spawnCreature.getPortalCooldown();
+            while (!World.doesBlockHaveSolidTopSurface(worldIn, x, n, z) && n > 0) {
+                n--;
             }
-         }
-      }
-   }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+            if (n > 0 && !worldIn.getBlock(x, n + 1, z).isNormalCube()) {
+                Entity spawnCreature = ItemMonsterPlacer.spawnCreature(worldIn, 57, x + 0.5, n + 1.1, z + 0.5);
+                if (spawnCreature != null) {
+                    spawnCreature.timeUntilPortal = spawnCreature.getPortalCooldown();
+                }
+            }
+        }
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      Axis value = worldIn.getBlockState(pos).getValue(AXIS);
-      float f = 0.125F;
-      float f2 = 0.125F;
-      if (value == Axis.X) {
-         f = 0.5F;
-      }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-      if (value == Axis.Z) {
-         f2 = 0.5F;
-      }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int computeInt2 = computeInt(worldIn.getBlockMetadata(x, y, z));
+        if (computeInt2 == 0) {
+            if (worldIn.getBlock(x - 1, y, z) != this && worldIn.getBlock(x + 1, y, z) != this) {
+                computeInt2 = 2;
+            } else {
+                computeInt2 = 1;
+            }
 
-      this.setBlockBounds(0.5F - f, 0.0F, 0.5F - f2, 0.5F + f, 1.0F, 0.5F + f2);
-   }
+            if (worldIn instanceof World && !((World)worldIn).isRemote) {
+                ((World)worldIn).setBlockMetadataWithNotify(x, y, z, computeInt2, 2);
+            }
+        }
 
-   public static int getMetaForAxis(Axis axis) {
-      return axis == Axis.X ? 1 : (axis == Axis.Z ? 2 : 0);
-   }
+        float f = 0.125F;
+        float f2 = 0.125F;
+        if (computeInt2 == 1) {
+            f = 0.5F;
+        }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+        if (computeInt2 == 2) {
+            f2 = 0.5F;
+        }
 
-   public boolean createPortalAt(World worldIn, BlockPos blockPos) {
-      BlockPortal.Size size = new BlockPortal.Size(worldIn, blockPos, Axis.X);
-      if (size.isValid() && size.foundPortalBlocks == 0) {
-         size.createPortal();
-         return true;
-      } else {
-         BlockPortal.Size size2 = new BlockPortal.Size(worldIn, blockPos, Axis.Z);
-         if (size2.isValid() && size2.foundPortalBlocks == 0) {
-            size2.createPortal();
+        this.setBlockBounds(0.5F - f, 0.0F, 0.5F - f2, 0.5F + f, 1.0F, 0.5F + f2);
+    }
+
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
+
+    public boolean tryToCreatePortal(World world, int n, int n2, int n3) {
+        BlockPortal.Size size = new BlockPortal.Size(world, n, n2, n3, 1);
+        BlockPortal.Size size2 = new BlockPortal.Size(world, n, n2, n3, 2);
+        if (size.check() && size.intValue == 0) {
+            size.setBlock();
             return true;
-         } else {
+        } else if (size2.check() && size2.intValue == 0) {
+            size2.setBlock();
+            return true;
+        } else {
             return false;
-         }
-      }
-   }
+        }
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      Axis value = state.getValue(AXIS);
-      if (value == Axis.X) {
-         BlockPortal.Size size = new BlockPortal.Size(worldIn, pos, Axis.X);
-         if (!size.isValid() || size.foundPortalBlocks < size.width * size.height) {
-            worldIn.setBlockState(pos, Blocks.air.getDefaultState());
-         }
-      } else if (value == Axis.Z) {
-         BlockPortal.Size size = new BlockPortal.Size(worldIn, pos, Axis.Z);
-         if (!size.isValid() || size.foundPortalBlocks < size.width * size.height) {
-            worldIn.setBlockState(pos, Blocks.air.getDefaultState());
-         }
-      }
-   }
-
-   @Override
-   public boolean shouldSideBeRendered(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-      Axis axis = null;
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (worldIn.getBlockState(pos).getBlock() == this) {
-         axis = blockState.getValue(AXIS);
-         if (axis == null) {
-            return false;
-         }
-
-         if (axis == Axis.Z && side != EnumFacing.EAST && side != EnumFacing.WEST) {
-            return false;
-         }
-
-         if (axis == Axis.X && side != EnumFacing.SOUTH && side != EnumFacing.NORTH) {
-            return false;
-         }
-      }
-
-      boolean flag = worldIn.getBlockState(pos.west()).getBlock() == this && worldIn.getBlockState(pos.west(2)).getBlock() != this;
-      boolean flag2 = worldIn.getBlockState(pos.east()).getBlock() == this && worldIn.getBlockState(pos.east(2)).getBlock() != this;
-      boolean flag3 = worldIn.getBlockState(pos.north()).getBlock() == this && worldIn.getBlockState(pos.north(2)).getBlock() != this;
-      boolean flag4 = worldIn.getBlockState(pos.south()).getBlock() == this && worldIn.getBlockState(pos.south(2)).getBlock() != this;
-      boolean flag5 = flag || flag2 || axis == Axis.X;
-      boolean flag6 = flag3 || flag4 || axis == Axis.Z;
-      return flag5 && side == EnumFacing.WEST
-         ? true
-         : (flag5 && side == EnumFacing.EAST ? true : (flag6 && side == EnumFacing.NORTH ? true : flag6 && side == EnumFacing.SOUTH));
-   }
-
-   @Override
-   public int quantityDropped(Random random) {
-      return 0;
-   }
-
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.TRANSLUCENT;
-   }
-
-   @Override
-   public void onEntityCollidedWithBlock(World worldIn, BlockPos pos, IBlockState state, Entity entityIn) {
-      if (entityIn.ridingEntity == null && entityIn.riddenByEntity == null) {
-         entityIn.setPortal(pos);
-      }
-   }
-
-   @Override
-   public void randomDisplayTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      if (rand.nextInt(100) == 0) {
-         worldIn.playSound(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, "portal.portal", 0.5F, rand.nextFloat() * 0.4F + 0.8F, false);
-      }
-
-      for (int i = 0; i < 4; i++) {
-         double d = pos.getX() + rand.nextFloat();
-         double d2 = pos.getY() + rand.nextFloat();
-         double d3 = pos.getZ() + rand.nextFloat();
-         double d4 = (rand.nextFloat() - 0.5) * 0.5;
-         double d5 = (rand.nextFloat() - 0.5) * 0.5;
-         double d6 = (rand.nextFloat() - 0.5) * 0.5;
-         int n = rand.nextInt(2) * 2 - 1;
-         if (worldIn.getBlockState(pos.west()).getBlock() != this && worldIn.getBlockState(pos.east()).getBlock() != this) {
-            d = pos.getX() + 0.5 + 0.25 * n;
-            d4 = rand.nextFloat() * 2.0F * n;
-         } else {
-            d3 = pos.getZ() + 0.5 + 0.25 * n;
-            d6 = rand.nextFloat() * 2.0F * n;
-         }
-
-         worldIn.spawnParticle(EnumParticleTypes.PORTAL, d, d2, d3, d4, d5, d6);
-      }
-   }
-
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return null;
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(AXIS, (meta & 3) == 2 ? Axis.Z : Axis.X);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return getMetaForAxis(state.getValue(AXIS));
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, AXIS);
-   }
-
-   public PatternHelper findPortal(World world, BlockPos blockPos) {
-      Axis axis = Axis.Z;
-      BlockPortal.Size size = new BlockPortal.Size(world, blockPos, Axis.X);
-      LoadingCache createLoadingCache = BlockPattern.createLoadingCache(world, true);
-      if (!size.isValid()) {
-         axis = Axis.X;
-         size = new BlockPortal.Size(world, blockPos, Axis.Z);
-      }
-
-      if (!size.isValid()) {
-         return new PatternHelper(blockPos, EnumFacing.NORTH, EnumFacing.UP, createLoadingCache, 1, 1, 1);
-      }
-
-      int[] ints = new int[AxisDirection.values().length];
-      EnumFacing rotateYCCW = size.direction1.rotateYCCW();
-      BlockPos up = size.oppositeCorner.up(size.getHeight() - 1);
-
-      for (AxisDirection axisDirection : AxisDirection.values()) {
-         PatternHelper patternHelper = new PatternHelper(
-            rotateYCCW.getAxisDirection() == axisDirection ? up : up.offset(size.direction1, size.getWidth() - 1),
-            EnumFacing.getFacingFromAxis(axisDirection, axis),
-            EnumFacing.UP,
-            createLoadingCache,
-            size.getWidth(),
-            size.getHeight(),
-            1
-         );
-
-         for (int i = 0; i < size.getWidth(); i++) {
-            for (int j = 0; j < size.getHeight(); j++) {
-               BlockWorldState translateOffset = patternHelper.translateOffset(i, j, 1);
-               if (translateOffset.getBlockState() != null && translateOffset.getBlockState().getBlock().getMaterial() != Material.air) {
-                  ints[axisDirection.ordinal()]++;
-               }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        int computeInt2 = computeInt(worldIn.getBlockMetadata(x, y, z));
+        BlockPortal.Size size = new BlockPortal.Size(worldIn, x, y, z, 1);
+        BlockPortal.Size size2 = new BlockPortal.Size(worldIn, x, y, z, 2);
+        if (computeInt2 != 1 || size.check() && size.intValue >= size.intValue5 * size.intValue6) {
+            if (computeInt2 != 2 || size2.check() && size2.intValue >= size2.intValue5 * size2.intValue6) {
+                if (computeInt2 == 0 && !size.check() && !size2.check()) {
+                    worldIn.setBlock(x, y, z, Blocks.air);
+                }
+            } else {
+                worldIn.setBlock(x, y, z, Blocks.air);
             }
-         }
-      }
+        } else {
+            worldIn.setBlock(x, y, z, Blocks.air);
+        }
+    }
 
-      AxisDirection axisDirection = AxisDirection.POSITIVE;
-
-      for (AxisDirection axisDirection2 : AxisDirection.values()) {
-         if (ints[axisDirection2.ordinal()] < ints[axisDirection.ordinal()]) {
-            axisDirection = axisDirection2;
-         }
-      }
-
-      return new PatternHelper(
-         rotateYCCW.getAxisDirection() == axisDirection ? up : up.offset(size.direction1, size.getWidth() - 1),
-         EnumFacing.getFacingFromAxis(axisDirection, axis),
-         EnumFacing.UP,
-         createLoadingCache,
-         size.getWidth(),
-         size.getHeight(),
-         1
-      );
-   }
-
-   public static class Size {
-      public int foundPortalBlocks = 0;
-      public World world;
-      public Axis axis;
-      public EnumFacing direction2;
-      public EnumFacing direction1;
-      public BlockPos oppositeCorner;
-      public int width;
-      public int height;
-
-      public Size(World worldIn, BlockPos blockPos, Axis axis) {
-         this.world = worldIn;
-         this.axis = axis;
-         if (axis == Axis.X) {
-            this.direction2 = EnumFacing.EAST;
-            this.direction1 = EnumFacing.WEST;
-         } else {
-            this.direction2 = EnumFacing.NORTH;
-            this.direction1 = EnumFacing.SOUTH;
-         }
-
-         BlockPos blockPos2 = blockPos;
-
-         while (blockPos.getY() > blockPos2.getY() - 21 && blockPos.getY() > 0 && this.canCreatePortal(worldIn.getBlockState(blockPos.down()).getBlock())) {
-            blockPos = blockPos.down();
-         }
-
-         int n = this.distanceToPortalEdge(blockPos, this.direction2) - 1;
-         if (n >= 0) {
-            this.oppositeCorner = blockPos.offset(this.direction2, n);
-            this.width = this.distanceToPortalEdge(this.oppositeCorner, this.direction1);
-            if (this.width < 2 || this.width > 21) {
-               this.oppositeCorner = null;
-               this.width = 0;
+    @Override
+    public boolean shouldSideBeRendered(IBlockAccess worldIn, int x, int y, int z, int side) {
+        int n = 0;
+        if (worldIn.getBlock(x, y, z) == this) {
+            n = computeInt(worldIn.getBlockMetadata(x, y, z));
+            if (n == 0) {
+                return false;
             }
-         }
 
-         if (this.oppositeCorner != null) {
-            this.height = this.findHeight();
-         }
-      }
-
-      public int distanceToPortalEdge(BlockPos blockPos, EnumFacing enumFacing) {
-         int n;
-         for (n = 0; n < 22; n++) {
-            BlockPos offset = blockPos.offset(enumFacing, n);
-            if (!this.canCreatePortal(this.world.getBlockState(offset).getBlock()) || this.world.getBlockState(offset.down()).getBlock() != Blocks.obsidian) {
-               break;
+            if (n == 2 && side != 5 && side != 4) {
+                return false;
             }
-         }
 
-         Block block = this.world.getBlockState(blockPos.offset(enumFacing, n)).getBlock();
-         return block == Blocks.obsidian ? n : 0;
-      }
-
-      public int getHeight() {
-         return this.height;
-      }
-
-      public int getWidth() {
-         return this.width;
-      }
-
-      public int findHeight() {
-         label56:
-         for (this.height = 0; this.height < 21; this.height++) {
-            for (int i = 0; i < this.width; i++) {
-               BlockPos up = this.oppositeCorner.offset(this.direction1, i).up(this.height);
-               Block block = this.world.getBlockState(up).getBlock();
-               if (!this.canCreatePortal(block)) {
-                  break label56;
-               }
-
-               if (block == Blocks.portal) {
-                  this.foundPortalBlocks++;
-               }
-
-               if (i == 0) {
-                  block = this.world.getBlockState(up.offset(this.direction2)).getBlock();
-                  if (block != Blocks.obsidian) {
-                     break label56;
-                  }
-               } else if (i == this.width - 1) {
-                  block = this.world.getBlockState(up.offset(this.direction1)).getBlock();
-                  if (block != Blocks.obsidian) {
-                     break label56;
-                  }
-               }
+            if (n == 1 && side != 3 && side != 2) {
+                return false;
             }
-         }
+        }
 
-         for (int i = 0; i < this.width; i++) {
-            if (this.world.getBlockState(this.oppositeCorner.offset(this.direction1, i).up(this.height)).getBlock() != Blocks.obsidian) {
-               this.height = 0;
-               break;
+        boolean flag = worldIn.getBlock(x - 1, y, z) == this && worldIn.getBlock(x - 2, y, z) != this;
+        boolean flag2 = worldIn.getBlock(x + 1, y, z) == this && worldIn.getBlock(x + 2, y, z) != this;
+        boolean flag3 = worldIn.getBlock(x, y, z - 1) == this && worldIn.getBlock(x, y, z - 2) != this;
+        boolean flag4 = worldIn.getBlock(x, y, z + 1) == this && worldIn.getBlock(x, y, z + 2) != this;
+        boolean flag5 = flag || flag2 || n == 1;
+        boolean flag6 = flag3 || flag4 || n == 2;
+        return flag5 && side == 4 || flag5 && side == 5 || flag6 && side == 2 || flag6 && side == 3;
+    }
+
+    @Override
+    public int quantityDropped(Random random) {
+        return 0;
+    }
+
+    @Override
+    public int getRenderBlockPass() {
+        return 1;
+    }
+
+    @Override
+    public void onEntityCollidedWithBlock(World worldIn, int x, int y, int z, Entity entityIn) {
+        if (entityIn.ridingEntity == null && entityIn.riddenByEntity == null) {
+            entityIn.setInPortal();
+        }
+    }
+
+    @Override
+    public void randomDisplayTick(World worldIn, int x, int y, int z, Random random) {
+        if (random.nextInt(100) == 0) {
+            worldIn.playSound(x + 0.5, y + 0.5, z + 0.5, "portal.portal", 0.5F, random.nextFloat() * 0.4F + 0.8F, false);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            double d = x + random.nextFloat();
+            double d2 = y + random.nextFloat();
+            double d3 = z + random.nextFloat();
+            double d4 = 0.0;
+            double d5 = 0.0;
+            double d6 = 0.0;
+            int n = random.nextInt(2) * 2 - 1;
+            d4 = (random.nextFloat() - 0.5) * 0.5;
+            d5 = (random.nextFloat() - 0.5) * 0.5;
+            d6 = (random.nextFloat() - 0.5) * 0.5;
+            if (worldIn.getBlock(x - 1, y, z) != this && worldIn.getBlock(x + 1, y, z) != this) {
+                d = x + 0.5 + 0.25 * n;
+                d4 = random.nextFloat() * 2.0F * n;
+            } else {
+                d3 = z + 0.5 + 0.25 * n;
+                d6 = random.nextFloat() * 2.0F * n;
             }
-         }
 
-         if (this.height <= 21 && this.height >= 3) {
-            return this.height;
-         }
+            worldIn.spawnParticle("portal", d, d2, d3, d4, d5, d6);
+        }
+    }
 
-         this.oppositeCorner = null;
-         this.width = 0;
-         this.height = 0;
-         return 0;
-      }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        return Item.getItemById(0);
+    }
 
-      public boolean canCreatePortal(Block block) {
-         return block.blockMaterial == Material.air || block == Blocks.fire || block == Blocks.portal;
-      }
+    public static int computeInt(int n) {
+        return n & 3;
+    }
 
-      public boolean isValid() {
-         return this.oppositeCorner != null && this.width >= 2 && this.width <= 21 && this.height >= 3 && this.height <= 21;
-      }
+    public static class Size {
+        public int intValue = 0;
+        public World world;
+        public int intValue2;
+        public int intValue3;
+        public int intValue4;
+        public ChunkCoordinates chunkCoordinates;
+        public int intValue5;
+        public int intValue6;
 
-      public void createPortal() {
-         for (int i = 0; i < this.width; i++) {
-            BlockPos offset = this.oppositeCorner.offset(this.direction1, i);
+        public Size(World world, int n, int n2, int n3, int n4) {
+            this.world = world;
+            this.intValue2 = n4;
+            this.intValue3 = BlockPortal.intMatrix[n4][0];
+            this.intValue4 = BlockPortal.intMatrix[n4][1];
+            int n5 = n2;
 
-            for (int j = 0; j < this.height; j++) {
-               this.world.setBlockState(offset.up(j), Blocks.portal.getDefaultState().withProperty(BlockPortal.AXIS, this.axis), 2);
+            while (n2 > n5 - 21 && n2 > 0 && this.checkBlock(world.getBlock(n, n2 - 1, n3))) {
+                n2--;
             }
-         }
-      }
-   }
+
+            n5 = this.computeInt(n, n2, n3, this.intValue3) - 1;
+            if (n5 >= 0) {
+                this.chunkCoordinates = new ChunkCoordinates(n + n5 * Direction.offsetX[this.intValue3], n2, n3 + n5 * Direction.offsetZ[this.intValue3]);
+                this.intValue5 = this.computeInt(this.chunkCoordinates.posX, this.chunkCoordinates.posY, this.chunkCoordinates.posZ, this.intValue4);
+                if (this.intValue5 < 2 || this.intValue5 > 21) {
+                    this.chunkCoordinates = null;
+                    this.intValue5 = 0;
+                }
+            }
+
+            if (this.chunkCoordinates != null) {
+                this.intValue6 = this.getIntValue();
+            }
+        }
+
+        public int computeInt(int n, int n2, int n3, int n4) {
+            int n5 = Direction.offsetX[n4];
+            int n6 = Direction.offsetZ[n4];
+
+            int n7;
+            for (n7 = 0; n7 < 22; n7++) {
+                Block block = this.world.getBlock(n + n5 * n7, n2, n3 + n6 * n7);
+                if (!this.checkBlock(block)) {
+                    break;
+                }
+
+                Block block2 = this.world.getBlock(n + n5 * n7, n2 - 1, n3 + n6 * n7);
+                if (block2 != Blocks.obsidian) {
+                    break;
+                }
+            }
+
+            Block block = this.world.getBlock(n + n5 * n7, n2, n3 + n6 * n7);
+            return block == Blocks.obsidian ? n7 : 0;
+        }
+
+        public int getIntValue() {
+            label56:
+            for (this.intValue6 = 0; this.intValue6 < 21; this.intValue6++) {
+                int n = this.chunkCoordinates.posY + this.intValue6;
+
+                for (int i = 0; i < this.intValue5; i++) {
+                    int n2 = this.chunkCoordinates.posX + i * Direction.offsetX[BlockPortal.intMatrix[this.intValue2][1]];
+                    int n3 = this.chunkCoordinates.posZ + i * Direction.offsetZ[BlockPortal.intMatrix[this.intValue2][1]];
+                    Block block = this.world.getBlock(n2, n, n3);
+                    if (!this.checkBlock(block)) {
+                        break label56;
+                    }
+
+                    if (block == Blocks.portal) {
+                        this.intValue++;
+                    }
+
+                    if (i == 0) {
+                        block = this.world
+                            .getBlock(
+                                n2 + Direction.offsetX[BlockPortal.intMatrix[this.intValue2][0]],
+                                n,
+                                n3 + Direction.offsetZ[BlockPortal.intMatrix[this.intValue2][0]]
+                            );
+                        if (block != Blocks.obsidian) {
+                            break label56;
+                        }
+                    } else if (i == this.intValue5 - 1) {
+                        block = this.world
+                            .getBlock(
+                                n2 + Direction.offsetX[BlockPortal.intMatrix[this.intValue2][1]],
+                                n,
+                                n3 + Direction.offsetZ[BlockPortal.intMatrix[this.intValue2][1]]
+                            );
+                        if (block != Blocks.obsidian) {
+                            break label56;
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < this.intValue5; i++) {
+                int n = this.chunkCoordinates.posX + i * Direction.offsetX[BlockPortal.intMatrix[this.intValue2][1]];
+                int n2 = this.chunkCoordinates.posY + this.intValue6;
+                int n3 = this.chunkCoordinates.posZ + i * Direction.offsetZ[BlockPortal.intMatrix[this.intValue2][1]];
+                if (this.world.getBlock(n, n2, n3) != Blocks.obsidian) {
+                    this.intValue6 = 0;
+                    break;
+                }
+            }
+
+            if (this.intValue6 <= 21 && this.intValue6 >= 3) {
+                return this.intValue6;
+            }
+
+            this.chunkCoordinates = null;
+            this.intValue5 = 0;
+            this.intValue6 = 0;
+            return 0;
+        }
+
+        public boolean checkBlock(Block block) {
+            return block.blockMaterial == Material.air || block == Blocks.fire || block == Blocks.portal;
+        }
+
+        public boolean check() {
+            return this.chunkCoordinates != null && this.intValue5 >= 2 && this.intValue5 <= 21 && this.intValue6 >= 3 && this.intValue6 <= 21;
+        }
+
+        public void setBlock() {
+            for (int i = 0; i < this.intValue5; i++) {
+                int n = this.chunkCoordinates.posX + Direction.offsetX[this.intValue4] * i;
+                int n2 = this.chunkCoordinates.posZ + Direction.offsetZ[this.intValue4] * i;
+
+                for (int j = 0; j < this.intValue6; j++) {
+                    int n3 = this.chunkCoordinates.posY + j;
+                    this.world.setBlock(n, n3, n2, Blocks.portal, this.intValue2, 2);
+                }
+            }
+        }
+    }
 }

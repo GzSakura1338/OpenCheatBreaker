@@ -5,117 +5,101 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture;
 import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 import java.util.Map;
-import java.util.UUID;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.ModelHumanoidHead;
+import net.minecraft.client.entity.AbstractClientPlayer;
 import net.minecraft.client.model.ModelSkeletonHead;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.resources.DefaultPlayerSkin;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySkull;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
-public class TileEntitySkullRenderer extends TileEntitySpecialRenderer<TileEntitySkull> {
-   public static ResourceLocation SKELETON_TEXTURES = new ResourceLocation("textures/entity/skeleton/skeleton.png");
-   public static ResourceLocation WITHER_SKELETON_TEXTURES = new ResourceLocation("textures/entity/skeleton/wither_skeleton.png");
-   public static ResourceLocation ZOMBIE_TEXTURES = new ResourceLocation("textures/entity/zombie/zombie.png");
-   public static ResourceLocation CREEPER_TEXTURES = new ResourceLocation("textures/entity/creeper/creeper.png");
-   public static TileEntitySkullRenderer instance;
-   public ModelSkeletonHead skeletonHead = new ModelSkeletonHead(0, 0, 64, 32);
-   public ModelSkeletonHead humanoidHead = new ModelHumanoidHead();
+public class TileEntitySkullRenderer extends TileEntitySpecialRenderer {
+    public static ResourceLocation SKELETON_TEXTURE = new ResourceLocation("textures/entity/skeleton/skeleton.png");
+    public static ResourceLocation WITHER_SKELETON_TEXTURE = new ResourceLocation("textures/entity/skeleton/wither_skeleton.png");
+    public static ResourceLocation ZOMBIE_TEXTURE = new ResourceLocation("textures/entity/zombie/zombie.png");
+    public static ResourceLocation CREEPER_TEXTURE = new ResourceLocation("textures/entity/creeper/creeper.png");
+    public static TileEntitySkullRenderer instance;
+    public ModelSkeletonHead model = new ModelSkeletonHead(0, 0, 64, 32);
+    public ModelSkeletonHead modelSkeletonHead = new ModelSkeletonHead(0, 0, 64, 64);
 
-   public void renderTileEntityAt(TileEntitySkull te, double x, double y, double z, float partialTicks, int destroyStage) {
-      if (!CheatBreaker.getInstance().getKeybindSettings().hidePlacedSkulls.getBooleanValue()) {
-         EnumFacing front = EnumFacing.getFront(te.getBlockMetadata() & 7);
-         this.renderSkull((float)x, (float)y, (float)z, front, te.getSkullRotation() * 360 / 16.0F, te.getSkullType(), te.getPlayerProfile(), destroyStage);
-      }
-   }
+    public void renderTileEntityAt(TileEntitySkull tileEntitySkull, double d, double d2, double d3, float f) {
+        if (!CheatBreaker.getInstance().getKeybindSettings().hidePlacedSkulls.getBooleanValue()) {
+            this.render(
+                (float)d, (float)d2, (float)d3, tileEntitySkull.getBlockMetadata() & 7, tileEntitySkull.getSkullRotation() * 360 / 16.0F, tileEntitySkull.getSkullType(), tileEntitySkull.getOwner()
+            );
+        }
+    }
 
-   @Override
-   public void setRendererDispatcher(TileEntityRendererDispatcher rendererDispatcherIn) {
-      super.setRendererDispatcher(rendererDispatcherIn);
-      instance = this;
-   }
+    @Override
+    public void setDispatcher(TileEntityRendererDispatcher tileEntityRendererDispatcher) {
+        super.setDispatcher(tileEntityRendererDispatcher);
+        instance = this;
+    }
 
-   public void renderSkull(float f, float f2, float f3, EnumFacing enumFacing, float f4, int n, GameProfile gameProfile, int n2) {
-      ModelSkeletonHead skeletonHead = this.skeletonHead;
-      if (n2 >= 0) {
-         this.bindTexture(DESTROY_STAGES[n2]);
-         GlStateManager.matrixMode(5890);
-         GlStateManager.pushMatrix();
-         GlStateManager.scale(4.0F, 2.0F, 1.0F);
-         GlStateManager.translate(0.0625F, 0.0625F, 0.0625F);
-         GlStateManager.matrixMode(5888);
-      } else {
-         switch (n) {
+    public void render(float f, float f2, float f3, int n, float f4, int n2, GameProfile gameProfile) {
+        ModelSkeletonHead model = this.model;
+        switch (n2) {
             case 0:
             default:
-               this.bindTexture(SKELETON_TEXTURES);
-               break;
+                this.bindTexture(SKELETON_TEXTURE);
+                break;
             case 1:
-               this.bindTexture(WITHER_SKELETON_TEXTURES);
-               break;
+                this.bindTexture(WITHER_SKELETON_TEXTURE);
+                break;
             case 2:
-               this.bindTexture(ZOMBIE_TEXTURES);
-               skeletonHead = this.humanoidHead;
-               break;
+                this.bindTexture(ZOMBIE_TEXTURE);
+                model = this.modelSkeletonHead;
+                break;
             case 3:
-               skeletonHead = this.humanoidHead;
-               ResourceLocation defaultSkinLegacy = DefaultPlayerSkin.getDefaultSkinLegacy();
-               if (gameProfile != null) {
-                  Minecraft minecraft = Minecraft.getMinecraft();
-                  Map loadSkinFromCache = minecraft.getSkinManager().loadSkinFromCache(gameProfile);
-                  if (loadSkinFromCache != null && loadSkinFromCache.containsKey(Type.SKIN)) {
-                     defaultSkinLegacy = minecraft.getSkinManager().loadSkin((MinecraftProfileTexture)loadSkinFromCache.get(Type.SKIN), Type.SKIN);
-                  } else {
-                     UUID uUID = EntityPlayer.getUUID(gameProfile);
-                     defaultSkinLegacy = DefaultPlayerSkin.getDefaultSkin(uUID);
-                  }
-               }
+                ResourceLocation locationStevePng = AbstractClientPlayer.locationStevePng;
+                if (gameProfile != null) {
+                    Minecraft minecraft = Minecraft.getMinecraft();
+                    Map loadSkinFromCache = minecraft.getSkinManager().loadSkinFromCache(gameProfile);
+                    if (loadSkinFromCache != null && loadSkinFromCache.containsKey(Type.SKIN)) {
+                        locationStevePng = minecraft.getSkinManager().loadSkin((MinecraftProfileTexture)loadSkinFromCache.get(Type.SKIN), Type.SKIN);
+                    }
+                }
 
-               this.bindTexture(defaultSkinLegacy);
-               break;
+                this.bindTexture(locationStevePng);
+                break;
             case 4:
-               this.bindTexture(CREEPER_TEXTURES);
-         }
-      }
+                this.bindTexture(CREEPER_TEXTURE);
+        }
 
-      GlStateManager.pushMatrix();
-      GlStateManager.disableCull();
-      if (enumFacing != EnumFacing.UP) {
-         switch (enumFacing) {
-            case NORTH:
-               GlStateManager.translate(f + 0.5F, f2 + 0.25F, f3 + 0.74F);
-               break;
-            case SOUTH:
-               GlStateManager.translate(f + 0.5F, f2 + 0.25F, f3 + 0.26F);
-               f4 = 180.0F;
-               break;
-            case WEST:
-               GlStateManager.translate(f + 0.74F, f2 + 0.25F, f3 + 0.5F);
-               f4 = 270.0F;
-               break;
-            case EAST:
-            default:
-               GlStateManager.translate(f + 0.26F, f2 + 0.25F, f3 + 0.5F);
-               f4 = 90.0F;
-         }
-      } else {
-         GlStateManager.translate(f + 0.5F, f2, f3 + 0.5F);
-      }
+        GL11.glPushMatrix();
+        GL11.glDisable(2884);
+        if (n != 1) {
+            switch (n) {
+                case 2:
+                    GL11.glTranslatef(f + 0.5F, f2 + 0.25F, f3 + 0.74F);
+                    break;
+                case 3:
+                    GL11.glTranslatef(f + 0.5F, f2 + 0.25F, f3 + 0.26F);
+                    f4 = 180.0F;
+                    break;
+                case 4:
+                    GL11.glTranslatef(f + 0.74F, f2 + 0.25F, f3 + 0.5F);
+                    f4 = 270.0F;
+                    break;
+                case 5:
+                default:
+                    GL11.glTranslatef(f + 0.26F, f2 + 0.25F, f3 + 0.5F);
+                    f4 = 90.0F;
+            }
+        } else {
+            GL11.glTranslatef(f + 0.5F, f2, f3 + 0.5F);
+        }
 
-      float f5 = 0.0625F;
-      GlStateManager.enableRescaleNormal();
-      GlStateManager.scale(-1.0F, -1.0F, 1.0F);
-      GlStateManager.enableAlpha();
-      skeletonHead.render((Entity)null, 0.0F, 0.0F, 0.0F, f4, 0.0F, f5);
-      GlStateManager.popMatrix();
-      if (n2 >= 0) {
-         GlStateManager.matrixMode(5890);
-         GlStateManager.popMatrix();
-         GlStateManager.matrixMode(5888);
-      }
-   }
+        float f5 = 0.0625F;
+        GL11.glEnable(32826);
+        GL11.glScalef(-1.0F, -1.0F, 1.0F);
+        GL11.glEnable(3008);
+        model.render(null, 0.0F, 0.0F, 0.0F, f4, 0.0F, f5);
+        GL11.glPopMatrix();
+    }
+
+    @Override
+    public void renderTileEntityAt(TileEntity tileEntity, double d, double d2, double d3, float f) {
+        this.renderTileEntityAt((TileEntitySkull)tileEntity, d, d2, d3, f);
+    }
 }

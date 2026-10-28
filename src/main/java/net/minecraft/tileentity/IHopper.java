@@ -4,11 +4,11 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.world.World;
 
 public interface IHopper extends IInventory {
-   World getWorld();
+    World getWorld();
 
-   double getXPos();
+    double getXPos();
 
-   double getYPos();
+    double getYPos();
 
-   double getZPos();
+    double getZPos();
 }

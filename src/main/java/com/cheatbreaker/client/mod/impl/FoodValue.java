@@ -1,35 +1,35 @@
 package com.cheatbreaker.client.mod.impl;
 
 public class FoodValue {
-   public int intValue;
-   public float floatValue;
+    public int healAmount;
+    public float saturationModifier;
 
-   public float getFloatValue() {
-      return this.intValue * this.floatValue * 2.0F;
-   }
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
 
-   @Override
-   public int hashCode() {
-      int intValue = this.intValue;
-      return 31 * intValue + (this.floatValue != 0.0F ? Float.floatToIntBits(this.floatValue) : 0);
-   }
+        if (!(obj instanceof FoodValue)) {
+            return false;
+        }
 
-   @Override
-   public boolean equals(Object obj) {
-      if (this == obj) {
-         return true;
-      }
+        FoodValue foodValue = (FoodValue)obj;
+        return this.healAmount == foodValue.healAmount && Float.compare(foodValue.saturationModifier, this.saturationModifier) == 0;
+    }
 
-      if (!(obj instanceof FoodValue)) {
-         return false;
-      }
+    @Override
+    public int hashCode() {
+        int healAmount = this.healAmount;
+        return 31 * healAmount + (this.saturationModifier != 0.0F ? Float.floatToIntBits(this.saturationModifier) : 0);
+    }
 
-      FoodValue foodValue = (FoodValue)obj;
-      return this.intValue == foodValue.intValue && Float.compare(foodValue.floatValue, this.floatValue) == 0;
-   }
+    public float getFloatValue() {
+        return this.healAmount * this.saturationModifier * 2.0F;
+    }
 
-   public FoodValue(int n, float f) {
-      this.intValue = n;
-      this.floatValue = f;
-   }
+    public FoodValue(int n, float f) {
+        this.healAmount = n;
+        this.saturationModifier = f;
+    }
 }

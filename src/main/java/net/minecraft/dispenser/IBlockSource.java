@@ -1,21 +1,24 @@
 package net.minecraft.dispenser;
 
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
 
 public interface IBlockSource extends ILocatableSource {
-   @Override
-   double getX();
+    @Override
+    double getX();
 
-   @Override
-   double getY();
+    @Override
+    double getY();
 
-   @Override
-   double getZ();
+    @Override
+    double getZ();
 
-   BlockPos getBlockPos();
+    int getXInt();
 
-   int getBlockMetadata();
+    int getYInt();
 
-   <T extends TileEntity> T getBlockTileEntity();
+    int getZInt();
+
+    int getBlockMetadata();
+
+    TileEntity getBlockTileEntity();
 }

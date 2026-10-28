@@ -1,14 +1,14 @@
 package net.minecraft.command;
 
-public class CommandException extends Exception {
-   public Object[] errorObjects;
+public class CommandException extends RuntimeException {
+    public Object[] errorObjects;
 
-   public CommandException(String message, Object... objects) {
-      super(message);
-      this.errorObjects = objects;
-   }
+    public CommandException(String str, Object... objs) {
+        super(str);
+        this.errorObjects = objs;
+    }
 
-   public Object[] getErrorObjects() {
-      return this.errorObjects;
-   }
+    public Object[] getErrorOjbects() {
+        return this.errorObjects;
+    }
 }

@@ -12,53 +12,53 @@ import net.minecraft.client.resources.data.IMetadataSerializer;
 import net.minecraft.util.ResourceLocation;
 
 public class SkinAndBonesResourcePack implements IResourcePack {
-   public static Set<String> stringSet = ImmutableSet.of("s&b");
-   public File file;
-   public InputStream inputStream;
+    public File root;
+    public InputStream currentStream;
+    public static Set<String> domains = ImmutableSet.of("s&b");
 
-   @Override
-   public Set<String> getResourceDomains() {
-      return stringSet;
-   }
+    @Override
+    public IMetadataSection getPackMetadata(IMetadataSerializer metadataSerializer, String str) {
+        return null;
+    }
 
-   @Override
-   public String getPackName() {
-      return "Skin&Bones animation pack";
-   }
+    @Override
+    public Set<String> getResourceDomains() {
+        return domains;
+    }
 
-   @Override
-   public IMetadataSection getPackMetadata(IMetadataSerializer metadataSerializer, String str) {
-      return null;
-   }
+    @Override
+    public boolean resourceExists(ResourceLocation resourceLocation) {
+        if (new File(this.root, resourceLocation.getResourcePath()).exists()) {
+            return true;
+        }
 
-   @Override
-   public boolean resourceExists(ResourceLocation resourceLocation) {
-      if (new File(this.file, resourceLocation.getResourcePath()).exists()) {
-         return true;
-      }
+        this.currentStream = SkinAndBonesResourcePack.class.getResourceAsStream("/assets/skin_n_bones/models/" + resourceLocation.getResourcePath());
+        return this.currentStream != null;
+    }
 
-      this.inputStream = SkinAndBonesResourcePack.class.getResourceAsStream("/assets/skin_n_bones/models/" + resourceLocation.getResourcePath());
-      return this.inputStream != null;
-   }
+    @Override
+    public BufferedImage getPackImage() {
+        return null;
+    }
 
-   @Override
-   public InputStream getInputStream(ResourceLocation resourceLocation) throws java.io.FileNotFoundException {
-      if (this.inputStream != null) {
-         InputStream inputStream = this.inputStream;
-         this.inputStream = null;
-         return inputStream;
-      } else {
-         return new FileInputStream(new File(this.file, resourceLocation.getResourcePath()));
-      }
-   }
+    public SkinAndBonesResourcePack(File file) {
+        this.root = file;
+        this.root.mkdirs();
+    }
 
-   public SkinAndBonesResourcePack(File file) {
-      this.file = file;
-      this.file.mkdirs();
-   }
+    @Override
+    public InputStream getInputStream(ResourceLocation resourceLocation) throws java.io.FileNotFoundException {
+        if (this.currentStream != null) {
+            InputStream currentStream = this.currentStream;
+            this.currentStream = null;
+            return currentStream;
+        } else {
+            return new FileInputStream(new File(this.root, resourceLocation.getResourcePath()));
+        }
+    }
 
-   @Override
-   public BufferedImage getPackImage() {
-      return null;
-   }
+    @Override
+    public String getPackName() {
+        return "Skin&Bones animation pack";
+    }
 }

@@ -4,31 +4,31 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.WorldSavedData;
 
 public class MapGenStructureData extends WorldSavedData {
-   public NBTTagCompound tagCompound = new NBTTagCompound();
+    public NBTTagCompound features = new NBTTagCompound();
 
-   public MapGenStructureData(String name) {
-      super(name);
-   }
+    public MapGenStructureData(String str) {
+        super(str);
+    }
 
-   @Override
-   public void readFromNBT(NBTTagCompound nbt) {
-      this.tagCompound = nbt.getCompoundTag("Features");
-   }
+    @Override
+    public void readFromNBT(NBTTagCompound nbttagCompound) {
+        this.features = nbttagCompound.getCompoundTag("Features");
+    }
 
-   @Override
-   public void writeToNBT(NBTTagCompound nbt) {
-      nbt.setTag("Features", this.tagCompound);
-   }
+    @Override
+    public void writeToNBT(NBTTagCompound nbttagCompound) {
+        nbttagCompound.setTag("Features", this.features);
+    }
 
-   public void writeInstance(NBTTagCompound tagCompoundIn, int chunkX, int chunkZ) {
-      this.tagCompound.setTag(formatChunkCoords(chunkX, chunkZ), tagCompoundIn);
-   }
+    public void putFeature(NBTTagCompound nbttagCompound, int n, int n2) {
+        this.features.setTag(format(n, n2), nbttagCompound);
+    }
 
-   public static String formatChunkCoords(int chunkX, int chunkZ) {
-      return "[" + chunkX + "," + chunkZ + "]";
-   }
+    public static String format(int n, int n2) {
+        return "[" + n + "," + n2 + "]";
+    }
 
-   public NBTTagCompound getTagCompound() {
-      return this.tagCompound;
-   }
+    public NBTTagCompound getFeatures() {
+        return this.features;
+    }
 }

@@ -1,17 +1,15 @@
 package net.minecraft.entity.ai;
 
-import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.monster.EntityIronGolem;
 import net.minecraft.entity.passive.EntityVillager;
 
-public class EntityAILookAtVillager
-extends EntityAIBase {
+public class EntityAILookAtVillager extends EntityAIBase {
     public EntityIronGolem theGolem;
     public EntityVillager theVillager;
     public int lookTime;
 
-    public EntityAILookAtVillager(EntityIronGolem theGolemIn) {
-        this.theGolem = theGolemIn;
+    public EntityAILookAtVillager(EntityIronGolem entityIronGolem) {
+        this.theGolem = entityIronGolem;
         this.setMutexBits(3);
     }
 
@@ -20,10 +18,14 @@ extends EntityAIBase {
         if (!this.theGolem.worldObj.isDaytime()) {
             return false;
         }
+
         if (this.theGolem.getRNG().nextInt(8000) != 0) {
             return false;
         }
-        this.theVillager = (EntityVillager)((Object)this.theGolem.worldObj.findNearestEntityWithinAABB(EntityVillager.class, this.theGolem.getEntityBoundingBox().expand(6.0, 2.0, 6.0), this.theGolem));
+
+        this.theVillager = (EntityVillager)this.theGolem
+            .worldObj
+            .findNearestEntityWithinAABB(EntityVillager.class, this.theGolem.boundingBox.expand(6.0, 2.0, 6.0), this.theGolem);
         return this.theVillager != null;
     }
 
@@ -46,7 +48,7 @@ extends EntityAIBase {
 
     @Override
     public void updateTask() {
-        this.theGolem.getLookHelper().setLookPositionWithEntity(this.theVillager, 30.0f, 30.0f);
-        --this.lookTime;
+        this.theGolem.getLookHelper().setLookPositionWithEntity(this.theVillager, 30.0F, 30.0F);
+        this.lookTime--;
     }
 }

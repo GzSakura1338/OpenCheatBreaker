@@ -2,166 +2,158 @@ package net.minecraft.world.gen.feature;
 
 import java.util.Random;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockHugeMushroom;
-import net.minecraft.block.BlockHugeMushroom.EnumType;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.BlockPos.MutableBlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenBigMushroom extends WorldGenerator {
-   public Block mushroomType;
+    public int mushroomType = -1;
 
-   public WorldGenBigMushroom(Block block) {
-      super(true);
-      this.mushroomType = block;
-   }
+    public WorldGenBigMushroom(int n) {
+        super(true);
+        this.mushroomType = n;
+    }
 
-   public WorldGenBigMushroom() {
-      super(false);
-   }
+    public WorldGenBigMushroom() {
+        super(false);
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      if (this.mushroomType == null) {
-         this.mushroomType = rand.nextBoolean() ? Blocks.brown_mushroom_block : Blocks.red_mushroom_block;
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        int nextInt = random.nextInt(2);
+        if (this.mushroomType >= 0) {
+            nextInt = this.mushroomType;
+        }
 
-      int n = rand.nextInt(3) + 4;
-      boolean flag = true;
-      if (position.getY() >= 1 && position.getY() + n + 1 < 256) {
-         for (int i = position.getY(); i <= position.getY() + 1 + n; i++) {
-            byte b = 3;
-            if (i <= position.getY() + 3) {
-               b = 0;
+        int n4 = random.nextInt(3) + 4;
+        boolean flag = true;
+        if (n2 >= 1 && n2 + n4 + 1 < 256) {
+            for (int i = n2; i <= n2 + 1 + n4; i++) {
+                byte b = 3;
+                if (i <= n2 + 3) {
+                    b = 0;
+                }
+
+                for (int j = n - b; j <= n + b && flag; j++) {
+                    for (int k = n3 - b; k <= n3 + b && flag; k++) {
+                        if (i >= 0 && i < 256) {
+                            Block block = world.getBlock(j, i, k);
+                            if (block.getMaterial() != Material.air && block.getMaterial() != Material.leaves) {
+                                flag = false;
+                            }
+                        } else {
+                            flag = false;
+                        }
+                    }
+                }
             }
 
-            MutableBlockPos mutableBlockPos = new MutableBlockPos();
-
-            for (int j = position.getX() - b; j <= position.getX() + b && flag; j++) {
-               for (int k = position.getZ() - b; k <= position.getZ() + b && flag; k++) {
-                  if (i >= 0 && i < 256) {
-                     Block block = worldIn.getBlockState(mutableBlockPos.set(j, i, k)).getBlock();
-                     if (block.getMaterial() != Material.air && block.getMaterial() != Material.leaves) {
-                        flag = false;
-                     }
-                  } else {
-                     flag = false;
-                  }
-               }
+            if (!flag) {
+                return false;
             }
-         }
 
-         if (!flag) {
+            Block block = world.getBlock(n, n2 - 1, n3);
+            if (block != Blocks.dirt && block != Blocks.grass && block != Blocks.mycelium) {
+                return false;
+            }
+
+            int n5 = n2 + n4;
+            if (nextInt == 1) {
+                n5 = n2 + n4 - 3;
+            }
+
+            for (int i = n5; i <= n2 + n4; i++) {
+                int n6 = 1;
+                if (i < n2 + n4) {
+                    n6++;
+                }
+
+                if (nextInt == 0) {
+                    n6 = 3;
+                }
+
+                for (int j = n - n6; j <= n + n6; j++) {
+                    for (int k = n3 - n6; k <= n3 + n6; k++) {
+                        int n7 = 5;
+                        if (j == n - n6) {
+                            n7--;
+                        }
+
+                        if (j == n + n6) {
+                            n7++;
+                        }
+
+                        if (k == n3 - n6) {
+                            n7 -= 3;
+                        }
+
+                        if (k == n3 + n6) {
+                            n7 += 3;
+                        }
+
+                        if (nextInt == 0 || i < n2 + n4) {
+                            if ((j == n - n6 || j == n + n6) && (k == n3 - n6 || k == n3 + n6)) {
+                                continue;
+                            }
+
+                            if (j == n - (n6 - 1) && k == n3 - n6) {
+                                n7 = 1;
+                            }
+
+                            if (j == n - n6 && k == n3 - (n6 - 1)) {
+                                n7 = 1;
+                            }
+
+                            if (j == n + (n6 - 1) && k == n3 - n6) {
+                                n7 = 3;
+                            }
+
+                            if (j == n + n6 && k == n3 - (n6 - 1)) {
+                                n7 = 3;
+                            }
+
+                            if (j == n - (n6 - 1) && k == n3 + n6) {
+                                n7 = 7;
+                            }
+
+                            if (j == n - n6 && k == n3 + (n6 - 1)) {
+                                n7 = 7;
+                            }
+
+                            if (j == n + (n6 - 1) && k == n3 + n6) {
+                                n7 = 9;
+                            }
+
+                            if (j == n + n6 && k == n3 + (n6 - 1)) {
+                                n7 = 9;
+                            }
+                        }
+
+                        if (n7 == 5 && i < n2 + n4) {
+                            n7 = 0;
+                        }
+
+                        if ((n7 != 0 || n2 >= n2 + n4 - 1) && !world.getBlock(j, i, k).isFullBlock()) {
+                            this.setBlockAndNotifyAdequately(
+                                world, j, i, k, Block.getBlockById(Block.getIdFromBlock(Blocks.brown_mushroom_block) + nextInt), n7
+                            );
+                        }
+                    }
+                }
+            }
+
+            for (int i = 0; i < n4; i++) {
+                Block block2 = world.getBlock(n, n2 + i, n3);
+                if (!block2.isFullBlock()) {
+                    this.setBlockAndNotifyAdequately(
+                        world, n, n2 + i, n3, Block.getBlockById(Block.getIdFromBlock(Blocks.brown_mushroom_block) + nextInt), 10
+                    );
+                }
+            }
+
+            return true;
+        } else {
             return false;
-         }
-
-         Block block = worldIn.getBlockState(position.down()).getBlock();
-         if (block != Blocks.dirt && block != Blocks.grass && block != Blocks.mycelium) {
-            return false;
-         }
-
-         int n2 = position.getY() + n;
-         if (this.mushroomType == Blocks.red_mushroom_block) {
-            n2 = position.getY() + n - 3;
-         }
-
-         for (int i = n2; i <= position.getY() + n; i++) {
-            int n3 = 1;
-            if (i < position.getY() + n) {
-               n3++;
-            }
-
-            if (this.mushroomType == Blocks.brown_mushroom_block) {
-               n3 = 3;
-            }
-
-            int n4 = position.getX() - n3;
-            int n5 = position.getX() + n3;
-            int n6 = position.getZ() - n3;
-            int n7 = position.getZ() + n3;
-
-            for (int j = n4; j <= n5; j++) {
-               for (int k = n6; k <= n7; k++) {
-                  int n8 = 5;
-                  if (j == n4) {
-                     n8--;
-                  } else if (j == n5) {
-                     n8++;
-                  }
-
-                  if (k == n6) {
-                     n8 -= 3;
-                  } else if (k == n7) {
-                     n8 += 3;
-                  }
-
-                  EnumType byMetadata = EnumType.byMetadata(n8);
-                  if (this.mushroomType == Blocks.brown_mushroom_block || i < position.getY() + n) {
-                     if ((j == n4 || j == n5) && (k == n6 || k == n7)) {
-                        continue;
-                     }
-
-                     if (j == position.getX() - (n3 - 1) && k == n6) {
-                        byMetadata = EnumType.NORTH_WEST;
-                     }
-
-                     if (j == n4 && k == position.getZ() - (n3 - 1)) {
-                        byMetadata = EnumType.NORTH_WEST;
-                     }
-
-                     if (j == position.getX() + (n3 - 1) && k == n6) {
-                        byMetadata = EnumType.NORTH_EAST;
-                     }
-
-                     if (j == n5 && k == position.getZ() - (n3 - 1)) {
-                        byMetadata = EnumType.NORTH_EAST;
-                     }
-
-                     if (j == position.getX() - (n3 - 1) && k == n7) {
-                        byMetadata = EnumType.SOUTH_WEST;
-                     }
-
-                     if (j == n4 && k == position.getZ() + (n3 - 1)) {
-                        byMetadata = EnumType.SOUTH_WEST;
-                     }
-
-                     if (j == position.getX() + (n3 - 1) && k == n7) {
-                        byMetadata = EnumType.SOUTH_EAST;
-                     }
-
-                     if (j == n5 && k == position.getZ() + (n3 - 1)) {
-                        byMetadata = EnumType.SOUTH_EAST;
-                     }
-                  }
-
-                  if (byMetadata == EnumType.CENTER && i < position.getY() + n) {
-                     byMetadata = EnumType.ALL_INSIDE;
-                  }
-
-                  if (position.getY() >= position.getY() + n - 1 || byMetadata != EnumType.ALL_INSIDE) {
-                     BlockPos blockPos = new BlockPos(j, i, k);
-                     if (!worldIn.getBlockState(blockPos).getBlock().isFullBlock()) {
-                        this.setBlockAndNotifyAdequately(worldIn, blockPos, this.mushroomType.getDefaultState().withProperty(BlockHugeMushroom.VARIANT, byMetadata));
-                     }
-                  }
-               }
-            }
-         }
-
-         for (int i = 0; i < n; i++) {
-            Block block2 = worldIn.getBlockState(position.up(i)).getBlock();
-            if (!block2.isFullBlock()) {
-               this.setBlockAndNotifyAdequately(
-                  worldIn, position.up(i), this.mushroomType.getDefaultState().withProperty(BlockHugeMushroom.VARIANT, EnumType.STEM)
-               );
-            }
-         }
-
-         return true;
-      } else {
-         return false;
-      }
-   }
+        }
+    }
 }

@@ -2,115 +2,165 @@ package net.minecraft.item;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockSlab;
-import net.minecraft.block.BlockSlab.EnumBlockHalf;
-import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class ItemSlab extends ItemBlock {
-   public BlockSlab singleSlab;
-   public BlockSlab doubleSlab;
+    public BlockSlab singleSlab;
+    public BlockSlab doubleSlab;
+    public boolean flag;
 
-   public ItemSlab(Block block, BlockSlab singleSlab, BlockSlab doubleSlab) {
-      super(block);
-      this.singleSlab = singleSlab;
-      this.doubleSlab = doubleSlab;
-      this.setMaxDamage(0);
-      this.setHasSubtypes(true);
-   }
+    public ItemSlab(Block block, BlockSlab blockSlab, BlockSlab blockSlab2, boolean flag) {
+        super(block);
+        this.singleSlab = blockSlab;
+        this.doubleSlab = blockSlab2;
+        this.flag = flag;
+        this.setMaxDurability(0);
+        this.setHasSubtypes(true);
+    }
 
-   @Override
-   public int getMetadata(int damage) {
-      return damage;
-   }
+    @Override
+    public IIcon getIconFromDamage(int n) {
+        return Block.getBlockFromItem(this).getIcon(2, n);
+    }
 
-   @Override
-   public String getUnlocalizedName(ItemStack stack) {
-      return this.singleSlab.getUnlocalizedName(stack.getMetadata());
-   }
+    @Override
+    public int getMetadata(int n) {
+        return n;
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (stack.stackSize == 0) {
-         return false;
-      }
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        return this.singleSlab.getFullSlabName(stack.getMetadata());
+    }
 
-      if (!playerIn.canPlayerEdit(pos.offset(side), side, stack)) {
-         return false;
-      }
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (this.flag) {
+            return super.onItemUse(itemStack, entityPlayer, world, n, n2, n3, n4, f, f2, f3);
+        }
 
-      Object variant = this.singleSlab.getVariant(stack);
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() == this.singleSlab) {
-         IProperty variantProperty = this.singleSlab.getVariantProperty();
-         Comparable value = blockState.getValue(variantProperty);
-         EnumBlockHalf value2 = blockState.getValue(BlockSlab.HALF);
-         if ((side == EnumFacing.UP && value2 == EnumBlockHalf.BOTTOM || side == EnumFacing.DOWN && value2 == EnumBlockHalf.TOP)
-            && value == variant) {
-            IBlockState withProperty = this.doubleSlab.getDefaultState().withProperty(variantProperty, value);
-            if (worldIn.checkNoEntityCollision(this.doubleSlab.getCollisionBoundingBox(worldIn, pos, withProperty)) && worldIn.setBlockState(pos, withProperty, 3)) {
-               worldIn.playSoundEffect(
-                  pos.getX() + 0.5F,
-                  pos.getY() + 0.5F,
-                  pos.getZ() + 0.5F,
-                  this.doubleSlab.stepSound.getPlaceSound(),
-                  (this.doubleSlab.stepSound.getVolume() + 1.0F) / 2.0F,
-                  this.doubleSlab.stepSound.getFrequency() * 0.8F
-               );
-               stack.stackSize--;
+        if (itemStack.stackSize == 0) {
+            return false;
+        }
+
+        if (!entityPlayer.canPlayerEdit(n, n2, n3, n4, itemStack)) {
+            return false;
+        }
+
+        Block block = world.getBlock(n, n2, n3);
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        int n5 = blockMetadata & 7;
+        boolean flag = (blockMetadata & 8) != 0;
+        if ((n4 == 1 && !flag || n4 == 0 && flag) && block == this.singleSlab && n5 == itemStack.getMetadata()) {
+            if (world.checkNoEntityCollision(this.doubleSlab.getCollisionBoundingBoxFromPool(world, n, n2, n3))
+                && world.setBlock(n, n2, n3, this.doubleSlab, n5, 3)) {
+                world.playSoundEffect(
+                    n + 0.5F,
+                    n2 + 0.5F,
+                    n3 + 0.5F,
+                    this.doubleSlab.stepSound.getPlaceSound(),
+                    (this.doubleSlab.stepSound.getVolume() + 1.0F) / 2.0F,
+                    this.doubleSlab.stepSound.getFrequency() * 0.8F
+                );
+                itemStack.stackSize--;
             }
 
             return true;
-         }
-      }
+        } else {
+            return this.checkItemStack(itemStack, entityPlayer, world, n, n2, n3, n4) || super.onItemUse(itemStack, entityPlayer, world, n, n2, n3, n4, f, f2, f3);
+        }
+    }
 
-      return this.tryPlace(stack, worldIn, pos.offset(side), variant) ? true : super.onItemUse(stack, playerIn, worldIn, pos, side, hitX, hitY, hitZ);
-   }
-
-   @Override
-   public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side, EntityPlayer player, ItemStack stack) {
-      BlockPos pos2 = pos;
-      IProperty variantProperty = this.singleSlab.getVariantProperty();
-      Object variant = this.singleSlab.getVariant(stack);
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() == this.singleSlab) {
-         boolean flag = blockState.getValue(BlockSlab.HALF) == EnumBlockHalf.TOP;
-         if ((side == EnumFacing.UP && !flag || side == EnumFacing.DOWN && flag) && variant == blockState.getValue(variantProperty)) {
+    @Override
+    public boolean checkWorld(World world, int n, int n2, int n3, int n4, EntityPlayer entityPlayer, ItemStack itemStack) {
+        int n5 = n;
+        int n6 = n2;
+        int n7 = n3;
+        Block block = world.getBlock(n, n2, n3);
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        int n8 = blockMetadata & 7;
+        boolean flag = (blockMetadata & 8) != 0;
+        if ((n4 == 1 && !flag || n4 == 0 && flag) && block == this.singleSlab && n8 == itemStack.getMetadata()) {
             return true;
-         }
-      }
+        }
 
-      pos = pos.offset(side);
-      IBlockState blockState2 = worldIn.getBlockState(pos);
-      return blockState2.getBlock() == this.singleSlab && variant == blockState2.getValue(variantProperty) ? true : super.canPlaceBlockOnSide(worldIn, pos2, side, player, stack);
-   }
+        if (n4 == 0) {
+            n2--;
+        }
 
-   public boolean tryPlace(ItemStack stack, World worldIn, BlockPos pos, Object variantInStack) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() == this.singleSlab) {
-         IProperty var6p = this.singleSlab.getVariantProperty();
-         Comparable value = blockState.getValue(var6p);
-         if (value == variantInStack) {
-            IBlockState withProperty = this.doubleSlab.getDefaultState().withProperty(var6p, value);
-            if (worldIn.checkNoEntityCollision(this.doubleSlab.getCollisionBoundingBox(worldIn, pos, withProperty)) && worldIn.setBlockState(pos, withProperty, 3)) {
-               worldIn.playSoundEffect(
-                  pos.getX() + 0.5F,
-                  pos.getY() + 0.5F,
-                  pos.getZ() + 0.5F,
-                  this.doubleSlab.stepSound.getPlaceSound(),
-                  (this.doubleSlab.stepSound.getVolume() + 1.0F) / 2.0F,
-                  this.doubleSlab.stepSound.getFrequency() * 0.8F
-               );
-               stack.stackSize--;
+        if (n4 == 1) {
+            n2++;
+        }
+
+        if (n4 == 2) {
+            n3--;
+        }
+
+        if (n4 == 3) {
+            n3++;
+        }
+
+        if (n4 == 4) {
+            n--;
+        }
+
+        if (n4 == 5) {
+            n++;
+        }
+
+        Block block2 = world.getBlock(n, n2, n3);
+        int blockMetadata2 = world.getBlockMetadata(n, n2, n3);
+        n8 = blockMetadata2 & 7;
+        return block2 == this.singleSlab && n8 == itemStack.getMetadata() || super.checkWorld(world, n5, n6, n7, n4, entityPlayer, itemStack);
+    }
+
+    public boolean checkItemStack(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4) {
+        if (n4 == 0) {
+            n2--;
+        }
+
+        if (n4 == 1) {
+            n2++;
+        }
+
+        if (n4 == 2) {
+            n3--;
+        }
+
+        if (n4 == 3) {
+            n3++;
+        }
+
+        if (n4 == 4) {
+            n--;
+        }
+
+        if (n4 == 5) {
+            n++;
+        }
+
+        Block block = world.getBlock(n, n2, n3);
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        int n5 = blockMetadata & 7;
+        if (block == this.singleSlab && n5 == itemStack.getMetadata()) {
+            if (world.checkNoEntityCollision(this.doubleSlab.getCollisionBoundingBoxFromPool(world, n, n2, n3))
+                && world.setBlock(n, n2, n3, this.doubleSlab, n5, 3)) {
+                world.playSoundEffect(
+                    n + 0.5F,
+                    n2 + 0.5F,
+                    n3 + 0.5F,
+                    this.doubleSlab.stepSound.getPlaceSound(),
+                    (this.doubleSlab.stepSound.getVolume() + 1.0F) / 2.0F,
+                    this.doubleSlab.stepSound.getFrequency() * 0.8F
+                );
+                itemStack.stackSize--;
             }
 
             return true;
-         }
-      }
-
-      return false;
-   }
+        } else {
+            return false;
+        }
+    }
 }

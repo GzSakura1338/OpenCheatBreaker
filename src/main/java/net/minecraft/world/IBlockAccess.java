@@ -1,25 +1,25 @@
 package net.minecraft.world;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.Block;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.biome.BiomeGenBase;
 
 public interface IBlockAccess {
-   TileEntity getTileEntity(BlockPos blockPos);
+    Block getBlock(int n, int n2, int n3);
 
-   int getCombinedLight(BlockPos blockPos, int n);
+    TileEntity getTileEntity(int n, int n2, int n3);
 
-   IBlockState getBlockState(BlockPos blockPos);
+    int getLightBrightnessForSkyBlocks(int n, int n2, int n3, int n4);
 
-   boolean isAirBlock(BlockPos blockPos);
+    int getBlockMetadata(int n, int n2, int n3);
 
-   BiomeGenBase getBiomeGenForCoords(BlockPos blockPos);
+    boolean isAirBlock(int n, int n2, int n3);
 
-   boolean extendedLevelsInChunkCache();
+    BiomeGenBase getBiomeGenForCoords(int n, int n2);
 
-   int getStrongPower(BlockPos blockPos, EnumFacing enumFacing);
+    int getHeight();
 
-   WorldType getWorldType();
+    boolean extendedLevelsInChunkCache();
+
+    int isBlockProvidingPowerTo(int n, int n2, int n3, int n4);
 }

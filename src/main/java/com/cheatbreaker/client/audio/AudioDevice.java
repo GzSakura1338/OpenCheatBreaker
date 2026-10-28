@@ -1,19 +1,19 @@
 package com.cheatbreaker.client.audio;
 
 public class AudioDevice {
-   public String text;
-   public String text2;
+    public String description;
+    public String name;
 
-   public String getText() {
-      return this.text;
-   }
+    public String getName() {
+        return this.name;
+    }
 
-   public AudioDevice(String str, String str2) {
-      this.text = str;
-      this.text2 = str2;
-   }
+    public AudioDevice(String str, String str2) {
+        this.description = str;
+        this.name = str2;
+    }
 
-   public String getText2() {
-      return this.text2;
-   }
+    public String getDescription() {
+        return this.description;
+    }
 }

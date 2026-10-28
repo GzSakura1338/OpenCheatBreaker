@@ -1,27 +1,26 @@
 package net.minecraft.entity.ai;
 
 import net.minecraft.entity.EntityCreature;
-import net.minecraft.pathfinding.PathNavigateGround;
 
 public class EntityAIRestrictSun extends EntityAIBase {
-   public EntityCreature theEntity;
+    public EntityCreature theEntity;
 
-   public EntityAIRestrictSun(EntityCreature creature) {
-      this.theEntity = creature;
-   }
+    public EntityAIRestrictSun(EntityCreature entityCreature) {
+        this.theEntity = entityCreature;
+    }
 
-   @Override
-   public boolean shouldExecute() {
-      return this.theEntity.worldObj.isDaytime();
-   }
+    @Override
+    public boolean shouldExecute() {
+        return this.theEntity.worldObj.isDaytime();
+    }
 
-   @Override
-   public void startExecuting() {
-      ((PathNavigateGround)this.theEntity.getNavigator()).setAvoidSun(true);
-   }
+    @Override
+    public void startExecuting() {
+        this.theEntity.getNavigator().setAvoidSun(true);
+    }
 
-   @Override
-   public void resetTask() {
-      ((PathNavigateGround)this.theEntity.getNavigator()).setAvoidSun(false);
-   }
+    @Override
+    public void resetTask() {
+        this.theEntity.getNavigator().setAvoidSun(false);
+    }
 }

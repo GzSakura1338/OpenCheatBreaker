@@ -5,75 +5,75 @@ import com.cheatbreaker.client.mod.setting.Setting;
 import com.cheatbreaker.client.mod.setting.SettingsLevel;
 
 public abstract class AbstractCombatValueHudMod extends AbstractValueHudMod {
-   public Setting waitingNoBackground;
-   public Setting waitingBackground;
-   public long longValue;
-   public Setting hideWhenNotAttacking;
+    public Setting hideWhenNotAttacking;
+    public long lastAttackMillis;
+    public Setting waitingNoBackground;
+    public Setting waitingBackground;
 
-   @Override
-   public void createGeneralOptions() {
-      super.createGeneralOptions();
-      this.hideWhenNotAttacking = new Setting(this, "Hide When Not Attacking")
-         .withParents(this.generalOptions)
-         .changeValue(false)
-         .setCustomizationLevel(SettingsLevel.MEDIUM);
-   }
+    public String constantText() {
+        return "";
+    }
 
-   public boolean check22() {
-      return this.longValue == 0L;
-   }
+    public String getText() {
+        if (this.isIdle()) {
+            Setting setting = this.showBackground.getBooleanValue() ? this.waitingBackground : this.waitingNoBackground;
+            if (!setting.getStringValue().isEmpty()) {
+                return setting.getStringValue().replaceAll("%LABEL%", this.getLabelText()).replaceAll("%VALUE%", this.getDynamicText());
+            }
+        }
 
-   @Override
-   public String formatText(String str) {
-      return this.getText() != null && this.getDynamicText() != null ? this.getText() : super.formatText(str);
-   }
+        return null;
+    }
 
-   public String getText() {
-      if (this.check22()) {
-         Setting setting = this.showBackground.getBooleanValue() ? this.waitingBackground : this.waitingNoBackground;
-         if (!setting.getStringValue().isEmpty()) {
-            return setting.getStringValue().replaceAll("%LABEL%", this.getLabelText()).replaceAll("%VALUE%", this.getDynamicText());
-         }
-      }
+    @Override
+    public String getDynamicText() {
+        return this.lastAttackMillis == 0L && this.hideWhenNotAttacking.getBooleanValue() ? null : super.getDynamicText();
+    }
 
-      return null;
-   }
+    public boolean isIdle() {
+        return this.lastAttackMillis == 0L;
+    }
 
-   public void reset() {
-   }
+    @Override
+    public String formatText(String str) {
+        return this.getText() != null && this.getDynamicText() != null ? this.getText() : super.formatText(str);
+    }
 
-   @Override
-   public void createFormatOptions() {
-      this.waitingBackground = new Setting(this, "Waiting (Background)")
-         .changeValue(this.constantText())
-         .setCustomizationLevel(SettingsLevel.ADVANCED)
-         .withParents(this.formatOptions, this.showBackground);
-      this.waitingNoBackground = new Setting(this, "Waiting (No Background)")
-         .changeValue(this.wrapsTextWithoutBackground() && !this.constantText().isEmpty() ? "[" + this.constantText() + "]" : this.constantText())
-         .setCustomizationLevel(SettingsLevel.ADVANCED)
-         .withParents(this.formatOptions)
-         .withInvertedParents(this.showBackground);
-   }
+    public void onClientTickEvent(ClientTickEvent clientTickEvent) {
+        if (System.currentTimeMillis() - this.lastAttackMillis > 2000L) {
+            this.lastAttackMillis = 0L;
+            this.reset();
+        }
+    }
 
-   @Override
-   public String getDynamicText() {
-      return this.longValue == 0L && this.hideWhenNotAttacking.getBooleanValue() ? null : super.getDynamicText();
-   }
+    @Override
+    public void createFormatOptions() {
+        this.waitingBackground = new Setting(this, "Waiting (Background)")
+            .changeValue(this.constantText())
+            .setCustomizationLevel(SettingsLevel.ADVANCED)
+            .withParents(this.formatOptions, this.showBackground);
+        this.waitingNoBackground = new Setting(this, "Waiting (No Background)")
+            .changeValue(this.wrapsTextWithoutBackground() && !this.constantText().isEmpty() ? "[" + this.constantText() + "]" : this.constantText())
+            .setCustomizationLevel(SettingsLevel.ADVANCED)
+            .withParents(this.formatOptions)
+            .withInvertedParents(this.showBackground);
+    }
 
-   public String constantText() {
-      return "";
-   }
+    public void reset() {
+    }
 
-   public void onClientTickEvent(ClientTickEvent clientTickEvent) {
-      if (System.currentTimeMillis() - this.longValue > 2000L) {
-         this.longValue = 0L;
-         this.reset();
-      }
-   }
+    @Override
+    public void createGeneralOptions() {
+        super.createGeneralOptions();
+        this.hideWhenNotAttacking = new Setting(this, "Hide When Not Attacking")
+            .withParents(this.generalOptions)
+            .changeValue(false)
+            .setCustomizationLevel(SettingsLevel.MEDIUM);
+    }
 
-   public AbstractCombatValueHudMod(String str) {
-      super(str);
-      this.setCategories(ModCategory.HUD, ModCategory.COMBAT);
-      this.addEventHandler(ClientTickEvent.class, this::onClientTickEvent);
-   }
+    public AbstractCombatValueHudMod(String str) throws java.io.IOException {
+        super(str);
+        this.setCategories(ModCategory.HUD, ModCategory.COMBAT);
+        this.addEventHandler(ClientTickEvent.class, this::onClientTickEvent);
+    }
 }

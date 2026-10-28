@@ -10,31 +10,29 @@ import com.cheatbreaker.client.mod.setting.SettingGroup;
 import com.cheatbreaker.client.mod.setting.SettingsLevel;
 import com.cheatbreaker.client.render.RenderUtils;
 import com.cheatbreaker.client.ui.AnchorPoint;
-import com.cheatbreaker.client.ui.screen.ModsScreen;
 import java.awt.Color;
 import java.util.regex.Pattern;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.boss.BossStatus;
 import net.minecraft.util.ResourceLocation;
+import net.optifine.GlStateManager;
 
-public class BossBarMod
-extends AbstractHudMod {
-    public final String text = "Wither";
+public class BossBarMod extends AbstractHudMod {
+    public final String previewText = "Wither";
     public Pattern pattern = Pattern.compile("(?i)\u00a7[0-9A-F]");
-    public Pattern pattern2 = Pattern.compile("(?i)\u00a7[1-69A-E]");
+    public Pattern basicColorPattern = Pattern.compile("(?i)\u00a7[1-69A-E]");
     public Setting generalOptions;
     public Setting renderText;
     public Setting renderHealth;
-    public ResourceLocation clientIconsBossbar;
     public Setting textShadow;
     public Setting bossBarTexture;
     public Setting setting;
     public Setting bossBarWidth;
     public Setting bossBarHeight;
     public Setting colorOptions;
+    public ResourceLocation clientIconsBossbar;
     public Setting stripColorFormatting;
     public Setting textColor;
     public Setting bossBarColor;
@@ -43,7 +41,7 @@ extends AbstractHudMod {
     public Setting outlineBossBarColor;
 
     public void onScaledResolutionEvent3(ScaledResolutionEvent3 scaledResolutionEvent3) {
-        if (!this.shouldRender() || this.hidden && !(this.mc.currentScreen instanceof ModsScreen)) {
+        if (!this.shouldRender()) {
             return;
         }
         GlStateManager.pushMatrix();
@@ -55,62 +53,19 @@ extends AbstractHudMod {
         GlStateManager.popMatrix();
     }
 
-    @Override
-    public void renderPreview(int n, int n2, int n3, int n4) {
-        Minecraft.getMinecraft().fontRendererObj.drawStringWithShadow(this.text, (int)((float)(n + 1 + n3 / 2) - (float)Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.text) / 2.0f), n2 + n4 / 2 - 36, -1);
+    public void onScaledResolutionEvent7(ScaledResolutionEvent7 scaledResolutionEvent7) {
+        if (!this.isRenderHud()) {
+            return;
+        }
+        GlStateManager.pushMatrix();
+        this.applyHudTransformForSize(scaledResolutionEvent7.getScaledResolution());
+        if (BossStatus.bossName == null || BossStatus.statusBarTime <= 0) {
+            this.render(this.previewText, 1.0f, 0, (Boolean)this.renderText.getValue() != false ? 10 : 0);
+        }
+        GlStateManager.popMatrix();
     }
 
-    public void onScaledResolutionEvent8(ScaledResolutionEvent8 scaledResolutionEvent8) {
-        if (!this.isRenderHud() && BossStatus.bossName != null && BossStatus.statusBarTime > 0) {
-            --BossStatus.statusBarTime;
-            this.render(BossStatus.bossName, BossStatus.healthScale, scaledResolutionEvent8.getScaledResolution().getScaledWidth() / 2 - 91, 12);
-        }
-    }
-
-    public void render(String string, float f, int n, int n2) {
-        float f2;
-        GlStateManager.enableBlend();
-        int n3 = this.bossBarColor.getColorValue();
-        if (this.bossBarTexture.getValue().equals("Texture Pack")) {
-            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-            this.mc.getTextureManager().bindTexture(Gui.icons);
-        } else {
-            GlStateManager.color((float)(n3 >> 16 & 0xFF) / 255.0f, (float)(n3 >> 8 & 0xFF) / 255.0f, (float)(n3 & 0xFF) / 255.0f, (float)(n3 >> 24 & 0xFF) / 255.0f);
-            this.mc.getTextureManager().bindTexture(this.clientIconsBossbar);
-        }
-        FontRenderer fontRenderer = this.mc.fontRendererObj;
-        float f3 = this.bossBarTexture.getValue().equals("Custom") ? this.bossBarWidth.getFloatValue() : 182.0f;
-        float f4 = (Boolean)this.renderText.getValue() == false || (float)fontRenderer.getStringWidth(string) < f3 ? (float)n : (float)n + ((float)fontRenderer.getStringWidth(string) - f3) * this.setting.getFloatValue() / 100.0f;
-        float f5 = f * f3;
-        if (((Boolean)this.renderHealth.getValue()).booleanValue()) {
-            if (this.bossBarTexture.getValue().equals("Custom")) {
-                int n4 = new Color((this.topBossBarColor.getColorValue() >> 16 & 0xFF) / 4, (this.topBossBarColor.getColorValue() >> 8 & 0xFF) / 4, (this.topBossBarColor.getColorValue() & 0xFF) / 4, this.topBossBarColor.getColorValue() >> 24 & 0xFF).getRGB();
-                int n5 = new Color((this.bottomBossBarColor.getColorValue() >> 16 & 0xFF) / 4, (this.bottomBossBarColor.getColorValue() >> 8 & 0xFF) / 4, (this.bottomBossBarColor.getColorValue() & 0xFF) / 4, this.bottomBossBarColor.getColorValue() >> 24 & 0xFF).getRGB();
-                RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f3, (float)n2 + this.bossBarHeight.getFloatValue(), this.outlineBossBarColor.getColorValue(), n4, n5);
-                if (f5 > 0.0f) {
-                    RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f5, (float)n2 + this.bossBarHeight.getFloatValue(), 0, this.topBossBarColor.getColorValue(), this.bottomBossBarColor.getColorValue());
-                }
-                RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f3, (float)n2 + this.bossBarHeight.getFloatValue(), this.outlineBossBarColor.getColorValue(), 0, 0);
-            } else {
-                this.mc.ingameGUI.drawTexturedModalRect(f4, (float)n2, 0, 74, (int)f3, 5);
-                this.mc.ingameGUI.drawTexturedModalRect(f4, (float)n2, 0, 74, (int)f3, 5);
-                if (f5 > 0.0f) {
-                    this.mc.ingameGUI.drawTexturedModalRect(f4, (float)n2, 0, 79, (int)f5, 5);
-                }
-            }
-        }
-        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
-        if (((Boolean)this.renderText.getValue()).booleanValue()) {
-            fontRenderer.drawString(this.formatText(string), (float)n + this.hudWidth / 2.0f - (float)(fontRenderer.getStringWidth(string) / 2), n2 - 10, this.textColor.getColorValue(), (Boolean)this.textShadow.getValue());
-        }
-        float f6 = ((Boolean)this.renderHealth.getValue()).booleanValue() ? (this.bossBarTexture.getValue().equals("Custom") ? this.bossBarHeight.getFloatValue() : 5.0f) : 0.0f;
-        float f7 = (Boolean)this.renderText.getValue() != false ? 9.0f : 0.0f;
-        float f8 = f2 = (Boolean)this.renderText.getValue() != false && (Boolean)this.renderHealth.getValue() != false ? 1.0f : 0.0f;
-        this.setHudSize(((Boolean)this.renderHealth.getValue()).booleanValue() ? (((Boolean)this.renderText.getValue()).booleanValue() ? Math.max((float)fontRenderer.getStringWidth(string), f3) : f3) : (float)fontRenderer.getStringWidth(string), f6 + f7 + f2);
-        GlStateManager.disableBlend();
-    }
-
-    public BossBarMod() {
+    public BossBarMod() throws java.io.IOException {
         super("Boss Bar");
         this.setAnchorPointAndDefault(AnchorPoint.MIDDLE_TOP);
         this.generalOptions = new SettingGroup(this, "General Options").changeValue(true);
@@ -140,25 +95,68 @@ extends AbstractHudMod {
         this.setEnabledByDefault(true);
     }
 
-    public void onScaledResolutionEvent7(ScaledResolutionEvent7 scaledResolutionEvent7) {
-        if (!this.isRenderHud()) {
-            return;
-        }
-        GlStateManager.pushMatrix();
-        this.applyHudTransformForSize(scaledResolutionEvent7.getScaledResolution());
-        if (BossStatus.bossName == null || BossStatus.statusBarTime <= 0) {
-            this.render(this.text, 1.0f, 0, (Boolean)this.renderText.getValue() != false ? 10 : 0);
-        }
-        GlStateManager.popMatrix();
+    @Override
+    public void renderPreview(int n, int n2, int n3, int n4) {
+        Minecraft.getMinecraft().fontRendererObj.drawShadowedString(this.previewText, (int)((float)(n + 1 + n3 / 2) - (float)Minecraft.getMinecraft().fontRendererObj.getStringWidth(this.previewText) / 2.0f), n2 + n4 / 2 - 36, -1);
     }
 
-    public String formatText(String string) {
+    public void onScaledResolutionEvent8(ScaledResolutionEvent8 scaledResolutionEvent8) {
+        if (!this.isRenderHud() && BossStatus.bossName != null && BossStatus.statusBarTime > 0) {
+            --BossStatus.statusBarTime;
+            this.render(BossStatus.bossName, BossStatus.healthScale, scaledResolutionEvent8.getScaledResolution().getScaledWidth() / 2 - 91, 12);
+        }
+    }
+
+    public String stripFormatting(String string) {
         if (string == null) {
             return null;
         }
         if (this.stripColorFormatting.getValue().equals("OFF")) {
             return string;
         }
-        return (this.stripColorFormatting.getValue().equals("ALL") ? this.pattern : this.pattern2).matcher(string).replaceAll("\u00a7r");
+        return (this.stripColorFormatting.getValue().equals("ALL") ? this.pattern : this.basicColorPattern).matcher(string).replaceAll("\u00a7r");
+    }
+
+    public void render(String string, float f, int n, int n2) {
+        float f2;
+        GlStateManager.enableBlend();
+        int n3 = this.bossBarColor.getColorValue();
+        if (this.bossBarTexture.getValue().equals("Texture Pack")) {
+            GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+            this.mc.getTextureManager().bindTexture(Gui.icons);
+        } else {
+            GlStateManager.color((float)(n3 >> 16 & 0xFF) / 255.0f, (float)(n3 >> 8 & 0xFF) / 255.0f, (float)(n3 & 0xFF) / 255.0f, (float)(n3 >> 24 & 0xFF) / 255.0f);
+            this.mc.getTextureManager().bindTexture(this.clientIconsBossbar);
+        }
+        FontRenderer fontRenderer = this.mc.fontRendererObj;
+        float f3 = this.bossBarTexture.getValue().equals("Custom") ? this.bossBarWidth.getFloatValue() : 182.0f;
+        float f4 = (Boolean)this.renderText.getValue() == false || (float)fontRenderer.getStringWidth(string) < f3 ? (float)n : (float)n + ((float)fontRenderer.getStringWidth(string) - f3) * this.setting.getFloatValue() / 100.0f;
+        float f5 = f * f3;
+        if (((Boolean)this.renderHealth.getValue()).booleanValue()) {
+            if (this.bossBarTexture.getValue().equals("Custom")) {
+                int n4 = new Color((this.topBossBarColor.getColorValue() >> 16 & 0xFF) / 4, (this.topBossBarColor.getColorValue() >> 8 & 0xFF) / 4, (this.topBossBarColor.getColorValue() & 0xFF) / 4, this.topBossBarColor.getColorValue() >> 24 & 0xFF).getRGB();
+                int n5 = new Color((this.bottomBossBarColor.getColorValue() >> 16 & 0xFF) / 4, (this.bottomBossBarColor.getColorValue() >> 8 & 0xFF) / 4, (this.bottomBossBarColor.getColorValue() & 0xFF) / 4, this.bottomBossBarColor.getColorValue() >> 24 & 0xFF).getRGB();
+                RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f3, (float)n2 + this.bossBarHeight.getFloatValue(), this.outlineBossBarColor.getColorValue(), n4, n5);
+                if (f5 > 0.0f) {
+                    RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f5, (float)n2 + this.bossBarHeight.getFloatValue(), 0, this.topBossBarColor.getColorValue(), this.bottomBossBarColor.getColorValue());
+                }
+                RenderUtils.drawBorderedGradientRect(f4, n2, f4 + f3, (float)n2 + this.bossBarHeight.getFloatValue(), this.outlineBossBarColor.getColorValue(), 0, 0);
+            } else {
+                Gui.drawTexturedRect(f4, n2, 0.0f, 74.0f, (int)f3, 5);
+                Gui.drawTexturedRect(f4, n2, 0.0f, 74.0f, (int)f3, 5);
+                if (f5 > 0.0f) {
+                    Gui.drawTexturedRect(f4, n2, 0.0f, 79.0f, (int)f5, 5);
+                }
+            }
+        }
+        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+        if (((Boolean)this.renderText.getValue()).booleanValue()) {
+            fontRenderer.drawString(this.stripFormatting(string), (float)n + this.hudWidth / 2.0f - (float)(fontRenderer.getStringWidth(string) / 2), n2 - 10, this.textColor.getColorValue(), (Boolean)this.textShadow.getValue());
+        }
+        float f6 = ((Boolean)this.renderHealth.getValue()).booleanValue() ? (this.bossBarTexture.getValue().equals("Custom") ? this.bossBarHeight.getFloatValue() : 5.0f) : 0.0f;
+        float f7 = (Boolean)this.renderText.getValue() != false ? 9.0f : 0.0f;
+        float f8 = f2 = (Boolean)this.renderText.getValue() != false && (Boolean)this.renderHealth.getValue() != false ? 1.0f : 0.0f;
+        this.setHudSize(((Boolean)this.renderHealth.getValue()).booleanValue() ? (((Boolean)this.renderText.getValue()).booleanValue() ? Math.max((float)fontRenderer.getStringWidth(string), f3) : f3) : (float)fontRenderer.getStringWidth(string), f6 + f7 + f2);
+        GlStateManager.disableBlend();
     }
 }

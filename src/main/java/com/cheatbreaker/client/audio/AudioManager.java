@@ -11,56 +11,56 @@ import javax.sound.sampled.TargetDataLine;
 import net.minecraft.client.Minecraft;
 
 public class AudioManager {
-   public List<AudioDevice> audioDeviceList = new ArrayList<>();
+    public List<AudioDevice> audioDeviceList = new ArrayList<>();
 
-   public String formatText(String str) {
-      Iterator iterator = this.audioDeviceList.iterator();
-      if (!iterator.hasNext()) {
-         return str;
-      }
+    public String[] getStringArray() {
+        return this.audioDeviceList.stream().map(audioDevice -> audioDevice.getName().replace("Primary Sound Capture Driver", "Default")).toArray(String[]::new);
+    }
 
-      AudioDevice audioDevice;
-      for (audioDevice = (AudioDevice)iterator.next(); !audioDevice.getText2().equals(str); audioDevice = (AudioDevice)iterator.next()) {
-         if (!iterator.hasNext()) {
+    public void playSound(String str) {
+        this.playSound(str, 1.0F);
+    }
+
+    public void playSound(String str, float f) {
+        if (!(Boolean)CheatBreaker.getInstance().getKeybindSettings().muteCheatbreakerSounds.getValue()) {
+            Minecraft.getMinecraft().getSoundHandler().sndManager.playClientSound(str, f);
+        }
+    }
+
+    public String getDeviceName(String str) {
+        Iterator iterator = this.audioDeviceList.iterator();
+        if (!iterator.hasNext()) {
             return str;
-         }
-      }
+        }
 
-      return audioDevice.getText();
-   }
-
-   public List<AudioDevice> getAudioDeviceList() {
-      return this.audioDeviceList;
-   }
-
-   public void handleString(String str, float f) {
-      if (!(Boolean)CheatBreaker.getInstance().getKeybindSettings().muteCheatbreakerSounds.getValue()) {
-         Minecraft.getMinecraft().getSoundHandler().sndManager.handleString(str, f);
-      }
-   }
-
-   public String[] getStringArray() {
-      return this.audioDeviceList.stream().map(audioDevice -> audioDevice.getText2().replace("Primary Sound Capture Driver", "Default")).toArray(String[]::new);
-   }
-
-   public AudioDevice findAudioDevice(String str) {
-      return this.audioDeviceList.stream().filter(audioDevice -> audioDevice.getText2().equalsIgnoreCase(str)).findFirst().orElse(null);
-   }
-
-   public void run() {
-      Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
-
-      for (Mixer.Info info : mixerInfo) {
-         if (info != null) {
-            Line.Info[] targetLineInfo = AudioSystem.getMixer(info).getTargetLineInfo();
-            if (targetLineInfo.length >= 1 && targetLineInfo[0].getLineClass().equals(TargetDataLine.class)) {
-               this.audioDeviceList.add(new AudioDevice(info.getDescription(), info.getName()));
+        AudioDevice audioDevice;
+        for (audioDevice = (AudioDevice)iterator.next(); !audioDevice.getName().equals(str); audioDevice = (AudioDevice)iterator.next()) {
+            if (!iterator.hasNext()) {
+                return str;
             }
-         }
-      }
-   }
+        }
 
-   public void handleString(String str) {
-      this.handleString(str, 1.0F);
-   }
+        return audioDevice.getDescription();
+    }
+
+    public void refreshInputDevices() {
+        Mixer.Info[] mixerInfo = AudioSystem.getMixerInfo();
+
+        for (Mixer.Info info : mixerInfo) {
+            if (info != null) {
+                Line.Info[] targetLineInfo = AudioSystem.getMixer(info).getTargetLineInfo();
+                if (targetLineInfo.length >= 1 && targetLineInfo[0].getLineClass().equals(TargetDataLine.class)) {
+                    this.audioDeviceList.add(new AudioDevice(info.getDescription(), info.getName()));
+                }
+            }
+        }
+    }
+
+    public List<AudioDevice> getAudioDeviceList() {
+        return this.audioDeviceList;
+    }
+
+    public AudioDevice findAudioDevice(String str) {
+        return this.audioDeviceList.stream().filter(audioDevice -> audioDevice.getName().equalsIgnoreCase(str)).findFirst().orElse(null);
+    }
 }

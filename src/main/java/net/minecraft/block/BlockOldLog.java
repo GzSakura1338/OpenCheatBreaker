@@ -1,110 +1,31 @@
 package net.minecraft.block;
 
-import com.google.common.base.Predicate;
 import java.util.List;
-import net.minecraft.block.material.MapColor;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.IIcon;
 
 public class BlockOldLog extends BlockLog {
-   public static PropertyEnum<BlockPlanks.EnumType> VARIANT = PropertyEnum.create(
-      "variant", BlockPlanks.EnumType.class, new Predicate<BlockPlanks.EnumType>() {
-         public boolean apply(BlockPlanks.EnumType enumType) {
-            return enumType.getMetadata() < 4;
-         }
-      }
-   );
+    public static String[] stringArray = new String[]{"oak", "spruce", "birch", "jungle"};
 
-   public BlockOldLog() {
-      this.setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, BlockPlanks.EnumType.OAK).withProperty(LOG_AXIS, BlockLog.EnumAxis.Y));
-   }
+    @Override
+    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+        list.add(new ItemStack(itemIn, 1, 0));
+        list.add(new ItemStack(itemIn, 1, 1));
+        list.add(new ItemStack(itemIn, 1, 2));
+        list.add(new ItemStack(itemIn, 1, 3));
+    }
 
-   @Override
-   public MapColor getMapColor(IBlockState state) {
-      BlockPlanks.EnumType value = state.getValue(VARIANT);
-      switch (state.getValue(LOG_AXIS)) {
-         case X:
-         case Z:
-         case NONE:
-         default:
-            switch (value) {
-               case OAK:
-               default:
-                  return BlockPlanks.EnumType.SPRUCE.getMapColor();
-               case SPRUCE:
-                  return BlockPlanks.EnumType.DARK_OAK.getMapColor();
-               case BIRCH:
-                  return MapColor.quartzColor;
-               case JUNGLE:
-                  return BlockPlanks.EnumType.SPRUCE.getMapColor();
-            }
-         case Y:
-            return value.getMapColor();
-      }
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.iIconArray = new IIcon[stringArray.length];
+        this.iIconArray2 = new IIcon[stringArray.length];
 
-   @Override
-   public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.OAK.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.SPRUCE.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.BIRCH.getMetadata()));
-      list.add(new ItemStack(itemIn, 1, BlockPlanks.EnumType.JUNGLE.getMetadata()));
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      IBlockState withProperty = this.getDefaultState().withProperty(VARIANT, BlockPlanks.EnumType.byMetadata((meta & 3) % 4));
-      switch (meta & 12) {
-         case 0:
-            withProperty = withProperty.withProperty(LOG_AXIS, BlockLog.EnumAxis.Y);
-            break;
-         case 4:
-            withProperty = withProperty.withProperty(LOG_AXIS, BlockLog.EnumAxis.X);
-            break;
-         case 8:
-            withProperty = withProperty.withProperty(LOG_AXIS, BlockLog.EnumAxis.Z);
-            break;
-         default:
-            withProperty = withProperty.withProperty(LOG_AXIS, BlockLog.EnumAxis.NONE);
-      }
-
-      return withProperty;
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(VARIANT).getMetadata();
-      switch (state.getValue(LOG_AXIS)) {
-         case X:
-            n |= 4;
-            break;
-         case Z:
-            n |= 8;
-            break;
-         case NONE:
-            n |= 12;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, VARIANT, LOG_AXIS);
-   }
-
-   @Override
-   public ItemStack createStackedBlock(IBlockState state) {
-      return new ItemStack(Item.getItemFromBlock(this), 1, state.getValue(VARIANT).getMetadata());
-   }
-
-   @Override
-   public int damageDropped(IBlockState state) {
-      return state.getValue(VARIANT).getMetadata();
-   }
+        for (int i = 0; i < this.iIconArray.length; i++) {
+            this.iIconArray[i] = reg.registerIcon(this.getTextureName() + "_" + stringArray[i]);
+            this.iIconArray2[i] = reg.registerIcon(this.getTextureName() + "_" + stringArray[i] + "_top");
+        }
+    }
 }

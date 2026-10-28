@@ -1,125 +1,121 @@
 package net.minecraft.entity;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.Block;
 import net.minecraft.command.server.CommandBlockLogic;
 import net.minecraft.entity.item.EntityMinecart;
-import net.minecraft.entity.item.EntityMinecart.EnumMinecartType;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.BlockPos;
+import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.util.MathHelper;
 import net.minecraft.util.IChatComponent.Serializer;
-import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 
 public class EntityMinecartCommandBlock extends EntityMinecart {
-   public CommandBlockLogic commandBlockLogic = new CommandBlockLogic() {
-      @Override
-      public void updateCommand() {
-         EntityMinecartCommandBlock.this.getDataWatcher().updateObject(23, this.getCommand());
-         EntityMinecartCommandBlock.this.getDataWatcher().updateObject(24, Serializer.componentToJson(this.getLastOutput()));
-      }
+    public CommandBlockLogic executor = new CommandBlockLogic() {
+        @Override
+        public void run() {
+            EntityMinecartCommandBlock.this.getDataWatcher().updateObject(23, this.getCustomName());
+            EntityMinecartCommandBlock.this.getDataWatcher().updateObject(24, Serializer.componentToJson(this.getLastOutput()));
+        }
 
-      @Override
-      public int constantInt() {
-         return 1;
-      }
+        @Override
+        public int constantInt() {
+            return 1;
+        }
 
-      @Override
-      public void write(ByteBuf byteBuf) {
-         byteBuf.writeInt(EntityMinecartCommandBlock.this.getEntityId());
-      }
+        @Override
+        public void write(ByteBuf byteBuf) {
+            byteBuf.writeInt(EntityMinecartCommandBlock.this.getEntityId());
+        }
 
-      @Override
-      public BlockPos getPosition() {
-         return new BlockPos(EntityMinecartCommandBlock.this.posX, EntityMinecartCommandBlock.this.posY + 0.5, EntityMinecartCommandBlock.this.posZ);
-      }
+        @Override
+        public ChunkCoordinates getCommandSenderPosition() {
+            return new ChunkCoordinates(
+                MathHelper.floor_double(EntityMinecartCommandBlock.this.posX),
+                MathHelper.floor_double(EntityMinecartCommandBlock.this.posY + 0.5),
+                MathHelper.floor_double(EntityMinecartCommandBlock.this.posZ)
+            );
+        }
 
-      @Override
-      public Vec3 getPositionVector() {
-         return new Vec3(EntityMinecartCommandBlock.this.posX, EntityMinecartCommandBlock.this.posY, EntityMinecartCommandBlock.this.posZ);
-      }
+        @Override
+        public World getEntityWorld() {
+            return EntityMinecartCommandBlock.this.worldObj;
+        }
+    };
+    public int lastExecuted = 0;
 
-      @Override
-      public World getEntityWorld() {
-         return EntityMinecartCommandBlock.this.worldObj;
-      }
+    public EntityMinecartCommandBlock(World world) {
+        super(world);
+    }
 
-      @Override
-      public Entity getCommandSenderEntity() {
-         return EntityMinecartCommandBlock.this;
-      }
-   };
-   public int activatorRailCooldown = 0;
+    public EntityMinecartCommandBlock(World world, double d, double d2, double d3) {
+        super(world, d, d2, d3);
+    }
 
-   public EntityMinecartCommandBlock(World worldIn) {
-      super(worldIn);
-   }
+    @Override
+    public void entityInit() {
+        super.entityInit();
+        this.getDataWatcher().addObject(23, "");
+        this.getDataWatcher().addObject(24, "");
+    }
 
-   public EntityMinecartCommandBlock(World worldIn, double x, double y, double z) {
-      super(worldIn, x, y, z);
-   }
+    @Override
+    public void readEntityFromNBT(NBTTagCompound tagCompund) {
+        super.readEntityFromNBT(tagCompund);
+        this.executor.readDataFromNBT(tagCompund);
+        this.getDataWatcher().updateObject(23, this.getCommandExecutor().getCustomName());
+        this.getDataWatcher().updateObject(24, Serializer.componentToJson(this.getCommandExecutor().getLastOutput()));
+    }
 
-   @Override
-   public void entityInit() {
-      super.entityInit();
-      this.getDataWatcher().addObject(23, "");
-      this.getDataWatcher().addObject(24, "");
-   }
+    @Override
+    public void writeEntityToNBT(NBTTagCompound tagCompound) {
+        super.writeEntityToNBT(tagCompound);
+        this.executor.writeDataToNBT(tagCompound);
+    }
 
-   @Override
-   public void readEntityFromNBT(NBTTagCompound tagCompund) {
-      super.readEntityFromNBT(tagCompund);
-      this.commandBlockLogic.readDataFromNBT(tagCompund);
-      this.getDataWatcher().updateObject(23, this.getCommandBlockLogic().getCommand());
-      this.getDataWatcher().updateObject(24, Serializer.componentToJson(this.getCommandBlockLogic().getLastOutput()));
-   }
+    @Override
+    public int getMinecartType() {
+        return 6;
+    }
 
-   @Override
-   public void writeEntityToNBT(NBTTagCompound tagCompound) {
-      super.writeEntityToNBT(tagCompound);
-      this.commandBlockLogic.writeDataToNBT(tagCompound);
-   }
+    @Override
+    public Block getDefaultDisplayTile() {
+        return Blocks.command_block;
+    }
 
-   @Override
-   public EnumMinecartType getMinecartType() {
-      return EnumMinecartType.COMMAND_BLOCK;
-   }
+    public CommandBlockLogic getCommandExecutor() {
+        return this.executor;
+    }
 
-   @Override
-   public IBlockState getDefaultDisplayTile() {
-      return Blocks.command_block.getDefaultState();
-   }
+    @Override
+    public void onActivatorRailPass(int n, int n2, int n3, boolean flag) {
+        if (flag && this.ticksExisted - this.lastExecuted >= 4) {
+            this.getCommandExecutor().execute(this.worldObj);
+            this.lastExecuted = this.ticksExisted;
+        }
+    }
 
-   public CommandBlockLogic getCommandBlockLogic() {
-      return this.commandBlockLogic;
-   }
+    @Override
+    public boolean interactFirst(EntityPlayer player) throws java.io.IOException {
+        if (this.worldObj.isRemote) {
+            player.handleCommandBlockLogic(this.getCommandExecutor());
+        }
 
-   @Override
-   public void onActivatorRailPass(int x, int y, int z, boolean receivingPower) {
-      if (receivingPower && this.ticksExisted - this.activatorRailCooldown >= 4) {
-         this.getCommandBlockLogic().trigger(this.worldObj);
-         this.activatorRailCooldown = this.ticksExisted;
-      }
-   }
+        return super.interactFirst(player);
+    }
 
-   @Override
-   public boolean interactFirst(EntityPlayer playerIn) {
-      this.commandBlockLogic.tryOpenEditCommandBlock(playerIn);
-      return false;
-   }
-
-   @Override
-   public void onDataWatcherUpdate(int dataID) {
-      super.onDataWatcherUpdate(dataID);
-      if (dataID == 24) {
-         try {
-            this.commandBlockLogic.setLastOutput(Serializer.jsonToComponent(this.getDataWatcher().getWatchableObjectString(24)));
-         } catch (Throwable e) {
-         }
-      } else if (dataID == 23) {
-         this.commandBlockLogic.setCommand(this.getDataWatcher().getWatchableObjectString(23));
-      }
-   }
+    @Override
+    public void process(int n) {
+        super.process(n);
+        if (n == 24) {
+            try {
+                this.executor.setLastOutput(Serializer.jsonToComponent(this.getDataWatcher().getWatchableObjectString(24)));
+            } catch (Throwable e) {
+            }
+        } else if (n == 23) {
+            this.executor.setCommand(this.getDataWatcher().getWatchableObjectString(23));
+        }
+    }
 }

@@ -4,25 +4,21 @@ import java.util.Collection;
 import java.util.UUID;
 
 public interface IAttributeInstance {
-   IAttribute getAttribute();
+    IAttribute getAttribute();
 
-   double getBaseValue();
+    double getBaseValue();
 
-   void setBaseValue(double d);
+    void setBaseValue(double d);
 
-   Collection<AttributeModifier> getModifiersByOperation(int n);
+    Collection createHashSet();
 
-   Collection<AttributeModifier> getCollection();
+    AttributeModifier getModifier(UUID uuid);
 
-   boolean hasModifier(AttributeModifier attributeModifier);
+    void applyModifier(AttributeModifier attributeModifier);
 
-   AttributeModifier getModifier(UUID uuid);
+    void removeModifier(AttributeModifier attributeModifier);
 
-   void applyModifier(AttributeModifier attributeModifier);
+    void removeAllModifiers();
 
-   void removeModifier(AttributeModifier attributeModifier);
-
-   void removeAllModifiers();
-
-   double getAttributeValue();
+    double getAttributeValue();
 }

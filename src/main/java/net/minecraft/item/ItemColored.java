@@ -1,42 +1,48 @@
 package net.minecraft.item;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.IIcon;
 
 public class ItemColored extends ItemBlock {
-   public Block coloredBlock;
-   public String[] subtypeNames;
+    public Block coloredBlock;
+    public String[] names;
 
-   public ItemColored(Block block, boolean hasSubtypes) {
-      super(block);
-      this.coloredBlock = block;
-      if (hasSubtypes) {
-         this.setMaxDamage(0);
-         this.setHasSubtypes(true);
-      }
-   }
+    public ItemColored(Block block, boolean flag) {
+        super(block);
+        this.coloredBlock = block;
+        if (flag) {
+            this.setMaxDurability(0);
+            this.setHasSubtypes(true);
+        }
+    }
 
-   @Override
-   public int getColorFromItemStack(ItemStack stack, int renderPass) {
-      return this.coloredBlock.getRenderColor(this.coloredBlock.getStateFromMeta(stack.getMetadata()));
-   }
+    @Override
+    public int getColorFromItemStack(ItemStack itemStack, int n) {
+        return this.coloredBlock.getRenderColor(itemStack.getMetadata());
+    }
 
-   @Override
-   public int getMetadata(int damage) {
-      return damage;
-   }
+    @Override
+    public IIcon getIconFromDamage(int n) {
+        return this.coloredBlock.getIcon(0, n);
+    }
 
-   public ItemColored setSubtypeNames(String[] names) {
-      this.subtypeNames = names;
-      return this;
-   }
+    @Override
+    public int getMetadata(int n) {
+        return n;
+    }
 
-   @Override
-   public String getUnlocalizedName(ItemStack stack) {
-      if (this.subtypeNames == null) {
-         return super.getUnlocalizedName(stack);
-      }
+    public ItemColored setNamed(String[] strs) {
+        this.names = strs;
+        return this;
+    }
 
-      int metadata = stack.getMetadata();
-      return metadata >= 0 && metadata < this.subtypeNames.length ? super.getUnlocalizedName(stack) + "." + this.subtypeNames[metadata] : super.getUnlocalizedName(stack);
-   }
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        if (this.names == null) {
+            return super.getUnlocalizedName(stack);
+        }
+
+        int metadata = stack.getMetadata();
+        return metadata >= 0 && metadata < this.names.length ? super.getUnlocalizedName(stack) + "." + this.names[metadata] : super.getUnlocalizedName(stack);
+    }
 }

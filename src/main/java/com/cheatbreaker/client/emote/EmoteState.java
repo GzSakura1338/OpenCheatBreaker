@@ -3,15 +3,15 @@ package com.cheatbreaker.client.emote;
 import net.minecraft.entity.EntityLivingBase;
 
 public interface EmoteState {
-   void tick(EntityLivingBase entityLivingBase);
+    EmoteDefinition getEmote();
 
-   EmoteDefinition getEmote();
+    void setSource(EmoteSource emoteSource);
 
-   void setEmote(EmoteDefinition emoteDefinition, EntityLivingBase entityLivingBase);
+    EmoteSource getSource();
 
-   void setSource(EmoteSource emoteSource);
+    void setEmote(EmoteDefinition emoteDefinition, EntityLivingBase entityLivingBase);
 
-   EmoteSource getSource();
+    void tick(EntityLivingBase entityLivingBase);
 
-   boolean renderEmote(EntityLivingBase entityLivingBase, double d, double d2, double d3, float f);
+    boolean renderEmote(EntityLivingBase entityLivingBase, double d, double d2, double d3, float f);
 }

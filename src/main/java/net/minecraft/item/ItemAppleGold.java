@@ -8,41 +8,41 @@ import net.minecraft.potion.PotionEffect;
 import net.minecraft.world.World;
 
 public class ItemAppleGold extends ItemFood {
-   public ItemAppleGold(int amount, float saturation, boolean isWolfFood) {
-      super(amount, saturation, isWolfFood);
-      this.setHasSubtypes(true);
-   }
+    public ItemAppleGold(int n, float f, boolean flag) {
+        super(n, f, flag);
+        this.setHasSubtypes(true);
+    }
 
-   @Override
-   public boolean hasEffect(ItemStack stack) {
-      return stack.getMetadata() > 0;
-   }
+    @Override
+    public boolean hasEffect(ItemStack itemStack) {
+        return itemStack.getMetadata() > 0;
+    }
 
-   @Override
-   public EnumRarity getRarity(ItemStack stack) {
-      return stack.getMetadata() == 0 ? EnumRarity.RARE : EnumRarity.EPIC;
-   }
+    @Override
+    public EnumRarity getRarity(ItemStack itemStack) {
+        return itemStack.getMetadata() == 0 ? EnumRarity.rare : EnumRarity.epic;
+    }
 
-   @Override
-   public void onFoodEaten(ItemStack stack, World worldIn, EntityPlayer player) {
-      if (!worldIn.isRemote) {
-         player.addPotionEffect(new PotionEffect(Potion.absorption.id, 2400, 0));
-      }
+    @Override
+    public void onFoodEaten(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
+        if (!world.isRemote) {
+            entityPlayer.addPotionEffect(new PotionEffect(Potion.absorption.id, 2400, 0));
+        }
 
-      if (stack.getMetadata() > 0) {
-         if (!worldIn.isRemote) {
-            player.addPotionEffect(new PotionEffect(Potion.regeneration.id, 600, 4));
-            player.addPotionEffect(new PotionEffect(Potion.resistance.id, 6000, 0));
-            player.addPotionEffect(new PotionEffect(Potion.fireResistance.id, 6000, 0));
-         }
-      } else {
-         super.onFoodEaten(stack, worldIn, player);
-      }
-   }
+        if (itemStack.getMetadata() > 0) {
+            if (!world.isRemote) {
+                entityPlayer.addPotionEffect(new PotionEffect(Potion.regeneration.id, 600, 4));
+                entityPlayer.addPotionEffect(new PotionEffect(Potion.resistance.id, 6000, 0));
+                entityPlayer.addPotionEffect(new PotionEffect(Potion.fireResistance.id, 6000, 0));
+            }
+        } else {
+            super.onFoodEaten(itemStack, world, entityPlayer);
+        }
+    }
 
-   @Override
-   public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems) {
-      subItems.add(new ItemStack(itemIn, 1, 0));
-      subItems.add(new ItemStack(itemIn, 1, 1));
-   }
+    @Override
+    public void getSubItems(Item item, CreativeTabs creativeTabs, List list) {
+        list.add(new ItemStack(item, 1, 0));
+        list.add(new ItemStack(item, 1, 1));
+    }
 }

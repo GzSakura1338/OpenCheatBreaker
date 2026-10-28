@@ -4,69 +4,70 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenLiquids extends WorldGenerator {
-   public Block block;
+    public Block block;
 
-   public WorldGenLiquids(Block block) {
-      this.block = block;
-   }
+    public WorldGenLiquids(Block block) {
+        this.block = block;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      if (worldIn.getBlockState(position.up()).getBlock() != Blocks.stone) {
-         return false;
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        if (world.getBlock(n, n2 + 1, n3) != Blocks.stone) {
+            return false;
+        }
 
-      if (worldIn.getBlockState(position.down()).getBlock() != Blocks.stone) {
-         return false;
-      }
+        if (world.getBlock(n, n2 - 1, n3) != Blocks.stone) {
+            return false;
+        }
 
-      if (worldIn.getBlockState(position).getBlock().getMaterial() != Material.air && worldIn.getBlockState(position).getBlock() != Blocks.stone) {
-         return false;
-      }
+        if (world.getBlock(n, n2, n3).getMaterial() != Material.air && world.getBlock(n, n2, n3) != Blocks.stone) {
+            return false;
+        }
 
-      int n = 0;
-      if (worldIn.getBlockState(position.west()).getBlock() == Blocks.stone) {
-         n++;
-      }
+        int n4 = 0;
+        if (world.getBlock(n - 1, n2, n3) == Blocks.stone) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.east()).getBlock() == Blocks.stone) {
-         n++;
-      }
+        if (world.getBlock(n + 1, n2, n3) == Blocks.stone) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.north()).getBlock() == Blocks.stone) {
-         n++;
-      }
+        if (world.getBlock(n, n2, n3 - 1) == Blocks.stone) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.south()).getBlock() == Blocks.stone) {
-         n++;
-      }
+        if (world.getBlock(n, n2, n3 + 1) == Blocks.stone) {
+            n4++;
+        }
 
-      int n2 = 0;
-      if (worldIn.isAirBlock(position.west())) {
-         n2++;
-      }
+        int n5 = 0;
+        if (world.isAirBlock(n - 1, n2, n3)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.east())) {
-         n2++;
-      }
+        if (world.isAirBlock(n + 1, n2, n3)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.north())) {
-         n2++;
-      }
+        if (world.isAirBlock(n, n2, n3 - 1)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.south())) {
-         n2++;
-      }
+        if (world.isAirBlock(n, n2, n3 + 1)) {
+            n5++;
+        }
 
-      if (n == 3 && n2 == 1) {
-         worldIn.setBlockState(position, this.block.getDefaultState(), 2);
-         worldIn.forceBlockUpdateTick(this.block, position, rand);
-      }
+        if (n4 == 3 && n5 == 1) {
+            world.setBlock(n, n2, n3, this.block, 0, 2);
+            world.scheduledUpdatesAreImmediate = true;
+            this.block.updateTick(world, n, n2, n3, random);
+            world.scheduledUpdatesAreImmediate = false;
+        }
 
-      return true;
-   }
+        return true;
+    }
 }

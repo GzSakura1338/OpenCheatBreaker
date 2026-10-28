@@ -5,62 +5,62 @@ import java.util.List;
 import java.util.Random;
 import net.minecraft.util.ResourceLocation;
 
-public class SoundEventAccessorComposite implements ISoundEventAccessor<SoundPoolEntry> {
-   public List<ISoundEventAccessor<SoundPoolEntry>> soundPool = Lists.newArrayList();
-   public Random rnd = new Random();
-   public ResourceLocation soundLocation;
-   public double eventVolume;
-   public double eventPitch;
-   public SoundCategory category;
+public class SoundEventAccessorComposite implements ISoundEventAccessor {
+    public List soundPool = Lists.newArrayList();
+    public Random rnd = new Random();
+    public ResourceLocation id;
+    public double eventVolume;
+    public double eventPitch;
+    public SoundCategory soundCategory;
 
-   public SoundEventAccessorComposite(ResourceLocation soundLocation, double pitch, double volume, SoundCategory category) {
-      this.soundLocation = soundLocation;
-      this.eventVolume = volume;
-      this.eventPitch = pitch;
-      this.category = category;
-   }
+    public SoundEventAccessorComposite(ResourceLocation resourceLocation, double d, double d2, SoundCategory soundCategory) {
+        this.id = resourceLocation;
+        this.eventVolume = d2;
+        this.eventPitch = d;
+        this.soundCategory = soundCategory;
+    }
 
-   @Override
-   public int getWeight() {
-      int n = 0;
+    @Override
+    public int getWeight() {
+        int n = 0;
 
-      for (ISoundEventAccessor soundEventAccessor : this.soundPool) {
-         n += soundEventAccessor.getWeight();
-      }
+        for (ISoundEventAccessor soundEventAccessor : (Iterable<ISoundEventAccessor>)this.soundPool) {
+            n += soundEventAccessor.getWeight();
+        }
 
-      return n;
-   }
+        return n;
+    }
 
-   public SoundPoolEntry cloneEntry() {
-      int weight = this.getWeight();
-      if (!this.soundPool.isEmpty() && weight != 0) {
-         int nextInt = this.rnd.nextInt(weight);
+    public SoundPoolEntry getSound() {
+        int weight = this.getWeight();
+        if (!this.soundPool.isEmpty() && weight != 0) {
+            int nextInt = this.rnd.nextInt(weight);
 
-         for (ISoundEventAccessor soundEventAccessor : this.soundPool) {
-            nextInt -= soundEventAccessor.getWeight();
-            if (nextInt < 0) {
-               SoundPoolEntry cloneEntry = (SoundPoolEntry)soundEventAccessor.cloneEntry();
-               cloneEntry.setPitch(cloneEntry.getPitch() * this.eventPitch);
-               cloneEntry.setVolume(cloneEntry.getVolume() * this.eventVolume);
-               return cloneEntry;
+            for (ISoundEventAccessor soundEventAccessor : (Iterable<ISoundEventAccessor>)this.soundPool) {
+                nextInt -= soundEventAccessor.getWeight();
+                if (nextInt < 0) {
+                    SoundPoolEntry sound = (SoundPoolEntry)soundEventAccessor.getSound();
+                    sound.setPitch(sound.getPitch() * this.eventPitch);
+                    sound.setVolume(sound.getVolume() * this.eventVolume);
+                    return sound;
+                }
             }
-         }
 
-         return SoundHandler.missing_sound;
-      } else {
-         return SoundHandler.missing_sound;
-      }
-   }
+            return SoundHandler.missing_sound;
+        } else {
+            return SoundHandler.missing_sound;
+        }
+    }
 
-   public void addSoundToEventPool(ISoundEventAccessor<SoundPoolEntry> sound) {
-      this.soundPool.add(sound);
-   }
+    public void addSoundToEventPool(ISoundEventAccessor soundEventAccessor) {
+        this.soundPool.add(soundEventAccessor);
+    }
 
-   public ResourceLocation getSoundEventLocation() {
-      return this.soundLocation;
-   }
+    public ResourceLocation getSoundEventLocation() {
+        return this.id;
+    }
 
-   public SoundCategory getSoundCategory() {
-      return this.category;
-   }
+    public SoundCategory getSoundCategory() {
+        return this.soundCategory;
+    }
 }

@@ -1,19 +1,17 @@
 package net.minecraft.potion;
 
-import net.minecraft.util.ResourceLocation;
-
 public class PotionHealth extends Potion {
-   public PotionHealth(int potionID, ResourceLocation location, boolean badEffect, int potionColor) {
-      super(potionID, location, badEffect, potionColor);
-   }
+    public PotionHealth(int n, boolean flag, int n2) {
+        super(n, flag, n2);
+    }
 
-   @Override
-   public boolean isInstant() {
-      return true;
-   }
+    @Override
+    public boolean isInstant() {
+        return true;
+    }
 
-   @Override
-   public boolean isReady(int n, int n2) {
-      return n >= 1;
-   }
+    @Override
+    public boolean isReady(int n, int n2) {
+        return n >= 1;
+    }
 }

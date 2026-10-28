@@ -1,533 +1,497 @@
 package net.minecraft.block;
 
-import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
-import net.minecraft.util.EnumFacing.Plane;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public abstract class BlockRailBase extends Block {
-   public boolean isPowered;
+    public boolean isPowered;
 
-   public static boolean isRailBlock(World worldIn, BlockPos pos) {
-      return isRailBlock(worldIn.getBlockState(pos));
-   }
+    public static boolean isRailBlockAt(World world, int n, int n2, int n3) {
+        return isRailBlock(world.getBlock(n, n2, n3));
+    }
 
-   public static boolean isRailBlock(IBlockState state) {
-      Block block = state.getBlock();
-      return block == Blocks.rail || block == Blocks.golden_rail || block == Blocks.detector_rail || block == Blocks.activator_rail;
-   }
+    public static boolean isRailBlock(Block block) {
+        return block == Blocks.rail || block == Blocks.golden_rail || block == Blocks.detector_rail || block == Blocks.activator_rail;
+    }
 
-   public BlockRailBase(boolean isPowered) {
-      super(Material.circuits);
-      this.isPowered = isPowered;
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
-      this.setCreativeTab(CreativeTabs.tabTransport);
-   }
+    public BlockRailBase(boolean flag) {
+        super(Material.circuits);
+        this.isPowered = flag;
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
+        this.setCreativeTab(CreativeTabs.tabTransport);
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+    public boolean isPowered() {
+        return this.isPowered;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-   @Override
-   public MovingObjectPosition collisionRayTrace(World worldIn, BlockPos pos, Vec3 start, Vec3 end) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.collisionRayTrace(worldIn, pos, start, end);
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      BlockRailBase.EnumRailDirection enumRailDirection = blockState.getBlock() == this ? blockState.getValue(this.getShapeProperty()) : null;
-      if (enumRailDirection != null && enumRailDirection.isAscending()) {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.625F, 1.0F);
-      } else {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
-      }
-   }
+    @Override
+    public MovingObjectPosition collisionRayTrace(World worldIn, int x, int y, int z, Vec3 startVec, Vec3 endVec) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.collisionRayTrace(worldIn, x, y, z, startVec, endVec);
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (blockMetadata >= 2 && blockMetadata <= 5) {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.625F, 1.0F);
+        } else {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.125F, 1.0F);
+        }
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      return World.doesBlockHaveSolidTopSurface(worldIn, pos.down());
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
-      if (!worldIn.isRemote) {
-         state = this.updateBlockState(worldIn, pos, state, true);
-         if (this.isPowered) {
-            this.onNeighborBlockChange(worldIn, pos, state, this);
-         }
-      }
-   }
+    @Override
+    public int getRenderType() {
+        return 9;
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!worldIn.isRemote) {
-         BlockRailBase.EnumRailDirection value = state.getValue(this.getShapeProperty());
-         boolean flag = false;
-         if (!World.doesBlockHaveSolidTopSurface(worldIn, pos.down())) {
-            flag = true;
-         }
+    @Override
+    public int quantityDropped(Random random) {
+        return 1;
+    }
 
-         if (value == BlockRailBase.EnumRailDirection.ASCENDING_EAST && !World.doesBlockHaveSolidTopSurface(worldIn, pos.east())) {
-            flag = true;
-         } else if (value == BlockRailBase.EnumRailDirection.ASCENDING_WEST && !World.doesBlockHaveSolidTopSurface(worldIn, pos.west())) {
-            flag = true;
-         } else if (value == BlockRailBase.EnumRailDirection.ASCENDING_NORTH && !World.doesBlockHaveSolidTopSurface(worldIn, pos.north())) {
-            flag = true;
-         } else if (value == BlockRailBase.EnumRailDirection.ASCENDING_SOUTH && !World.doesBlockHaveSolidTopSurface(worldIn, pos.south())) {
-            flag = true;
-         }
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z);
+    }
 
-         if (flag) {
-            this.dropBlockAsItem(worldIn, pos, state, 0);
-            worldIn.setBlockToAir(pos);
-         } else {
-            this.onNeighborChangedInternal(worldIn, pos, state, neighborBlock);
-         }
-      }
-   }
+    @Override
+    public void onBlockAdded(World worldIn, int x, int y, int z) {
+        if (!worldIn.isRemote) {
+            this.refreshTrackShape(worldIn, x, y, z, true);
+            if (this.isPowered) {
+                this.onNeighborBlockChange(worldIn, x, y, z, this);
+            }
+        }
+    }
 
-   public void onNeighborChangedInternal(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!worldIn.isRemote) {
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            int n = blockMetadata;
+            if (this.isPowered) {
+                n = blockMetadata & 7;
+            }
 
-   public IBlockState updateBlockState(World worldIn, BlockPos blockPos, IBlockState blockState, boolean flag) {
-      return worldIn.isRemote ? blockState : new BlockRailBase.Rail(worldIn, blockPos, blockState).getRealignedHelper(worldIn.isBlockPowered(blockPos), flag).getBlockState();
-   }
+            boolean flag = !World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z);
+            if (n == 2 && !World.doesBlockHaveSolidTopSurface(worldIn, x + 1, y, z)) {
+                flag = true;
+            }
 
-   @Override
-   public int getMobilityFlag() {
-      return 0;
-   }
+            if (n == 3 && !World.doesBlockHaveSolidTopSurface(worldIn, x - 1, y, z)) {
+                flag = true;
+            }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.CUTOUT;
-   }
+            if (n == 4 && !World.doesBlockHaveSolidTopSurface(worldIn, x, y, z - 1)) {
+                flag = true;
+            }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      super.breakBlock(worldIn, pos, state);
-      if (state.getValue(this.getShapeProperty()).isAscending()) {
-         worldIn.notifyNeighborsOfStateChange(pos.up(), this);
-      }
+            if (n == 5 && !World.doesBlockHaveSolidTopSurface(worldIn, x, y, z + 1)) {
+                flag = true;
+            }
 
-      if (this.isPowered) {
-         worldIn.notifyNeighborsOfStateChange(pos, this);
-         worldIn.notifyNeighborsOfStateChange(pos.down(), this);
-      }
-   }
-
-   public abstract IProperty<BlockRailBase.EnumRailDirection> getShapeProperty();
-
-   public enum EnumRailDirection implements IStringSerializable {
-      NORTH_SOUTH(0, "north_south"),
-      EAST_WEST(1, "east_west"),
-      ASCENDING_EAST(2, "ascending_east"),
-      ASCENDING_WEST(3, "ascending_west"),
-      ASCENDING_NORTH(4, "ascending_north"),
-      ASCENDING_SOUTH(5, "ascending_south"),
-      SOUTH_EAST(6, "south_east"),
-      SOUTH_WEST(7, "south_west"),
-      NORTH_WEST(8, "north_west"),
-      NORTH_EAST(9, "north_east");
-
-      public int meta;
-      public String name;
-      public static BlockRailBase.EnumRailDirection[] META_LOOKUP = new BlockRailBase.EnumRailDirection[values().length];
-
-      EnumRailDirection(int meta, String name) {
-         this.meta = meta;
-         this.name = name;
-      }
-
-      public int getMetadata() {
-         return this.meta;
-      }
-
-      @Override
-      public String toString() {
-         return this.name;
-      }
-
-      public boolean isAscending() {
-         return this == ASCENDING_NORTH || this == ASCENDING_EAST || this == ASCENDING_SOUTH || this == ASCENDING_WEST;
-      }
-
-      public static BlockRailBase.EnumRailDirection byMetadata(int meta) {
-         if (meta < 0 || meta >= META_LOOKUP.length) {
-            meta = 0;
-         }
-
-         return META_LOOKUP[meta];
-      }
-
-      @Override
-      public String getName() {
-         return this.name;
-      }
-
-      static {
-         for (BlockRailBase.EnumRailDirection enumRailDirection : values()) {
-            META_LOOKUP[enumRailDirection.getMetadata()] = enumRailDirection;
-         }
-      }
-   }
-
-   public class Rail {
-      public List<BlockPos> neighbors = Lists.newArrayList();
-      public World world;
-      public BlockPos pos;
-      public IBlockState state;
-      public BlockRailBase block;
-      public boolean isPowered;
-
-      public Rail(World worldIn, BlockPos pos, IBlockState state) {
-         this.world = worldIn;
-         this.pos = pos;
-         this.state = state;
-         this.block = (BlockRailBase)state.getBlock();
-         BlockRailBase.EnumRailDirection value = state.getValue(BlockRailBase.this.getShapeProperty());
-         this.isPowered = this.block.isPowered;
-         this.computeNeighbors(value);
-      }
-
-      public void computeNeighbors(BlockRailBase.EnumRailDirection enumRailDirection) {
-         this.neighbors.clear();
-         switch (enumRailDirection) {
-            case NORTH_SOUTH:
-               this.neighbors.add(this.pos.north());
-               this.neighbors.add(this.pos.south());
-               break;
-            case EAST_WEST:
-               this.neighbors.add(this.pos.west());
-               this.neighbors.add(this.pos.east());
-               break;
-            case ASCENDING_EAST:
-               this.neighbors.add(this.pos.west());
-               this.neighbors.add(this.pos.east().up());
-               break;
-            case ASCENDING_WEST:
-               this.neighbors.add(this.pos.west().up());
-               this.neighbors.add(this.pos.east());
-               break;
-            case ASCENDING_NORTH:
-               this.neighbors.add(this.pos.north().up());
-               this.neighbors.add(this.pos.south());
-               break;
-            case ASCENDING_SOUTH:
-               this.neighbors.add(this.pos.north());
-               this.neighbors.add(this.pos.south().up());
-               break;
-            case SOUTH_EAST:
-               this.neighbors.add(this.pos.east());
-               this.neighbors.add(this.pos.south());
-               break;
-            case SOUTH_WEST:
-               this.neighbors.add(this.pos.west());
-               this.neighbors.add(this.pos.south());
-               break;
-            case NORTH_WEST:
-               this.neighbors.add(this.pos.west());
-               this.neighbors.add(this.pos.north());
-               break;
-            case NORTH_EAST:
-               this.neighbors.add(this.pos.east());
-               this.neighbors.add(this.pos.north());
-         }
-      }
-
-      public void correctNeighbors() {
-         for (int i = 0; i < this.neighbors.size(); i++) {
-            BlockRailBase.Rail findRailAt = this.findRailAt(this.neighbors.get(i));
-            if (findRailAt != null && findRailAt.isNeighbor(this)) {
-               this.neighbors.set(i, findRailAt.pos);
+            if (flag) {
+                this.dropBlockAsItem(worldIn, x, y, z, worldIn.getBlockMetadata(x, y, z), 0);
+                worldIn.setBlockToAir(x, y, z);
             } else {
-               this.neighbors.remove(i--);
+                this.onRedstoneSignal(worldIn, x, y, z, blockMetadata, n, neighbor);
             }
-         }
-      }
+        }
+    }
 
-      public boolean hasRailAt(BlockPos pos) {
-         return BlockRailBase.isRailBlock(this.world, pos)
-            || BlockRailBase.isRailBlock(this.world, pos.up())
-            || BlockRailBase.isRailBlock(this.world, pos.down());
-      }
+    public void onRedstoneSignal(World world, int n, int n2, int n3, int n4, int n5, Block block) {
+    }
 
-      public BlockRailBase.Rail findRailAt(BlockPos pos) {
-         IBlockState blockState = this.world.getBlockState(pos);
-         if (BlockRailBase.isRailBlock(blockState)) {
-            return BlockRailBase.this.new Rail(this.world, pos, blockState);
-         }
+    public void refreshTrackShape(World world, int n, int n2, int n3, boolean flag) {
+        if (!world.isRemote) {
+            new BlockRailBase.Rail(world, n, n2, n3).process(world.isBlockIndirectlyGettingPowered(n, n2, n3), flag);
+        }
+    }
 
-         BlockPos up = pos.up();
-         blockState = this.world.getBlockState(up);
-         if (BlockRailBase.isRailBlock(blockState)) {
-            return BlockRailBase.this.new Rail(this.world, up, blockState);
-         }
+    @Override
+    public int getMobilityFlag() {
+        return 0;
+    }
 
-         up = pos.down();
-         blockState = this.world.getBlockState(up);
-         return BlockRailBase.isRailBlock(blockState) ? BlockRailBase.this.new Rail(this.world, up, blockState) : null;
-      }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        int meta2 = meta;
+        if (this.isPowered) {
+            meta2 = meta & 7;
+        }
 
-      public boolean isNeighbor(BlockRailBase.Rail rail) {
-         return this.isNeighbor(rail.pos);
-      }
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+        if (meta2 == 2 || meta2 == 3 || meta2 == 4 || meta2 == 5) {
+            worldIn.notifyBlocksOfNeighborChange(x, y + 1, z, blockBroken);
+        }
 
-      public boolean isNeighbor(BlockPos blockPos) {
-         for (int i = 0; i < this.neighbors.size(); i++) {
-            BlockPos blockPos2 = this.neighbors.get(i);
-            if (blockPos2.getX() == blockPos.getX() && blockPos2.getZ() == blockPos.getZ()) {
-               return true;
-            }
-         }
+        if (this.isPowered) {
+            worldIn.notifyBlocksOfNeighborChange(x, y, z, blockBroken);
+            worldIn.notifyBlocksOfNeighborChange(x, y - 1, z, blockBroken);
+        }
+    }
 
-         return false;
-      }
+    public class Rail {
+        public List list = new ArrayList();
+        public World world;
+        public int intValue;
+        public int intValue2;
+        public int intValue3;
+        public boolean flag;
 
-      public int countAdjacentRails() {
-         int n = 0;
-
-         for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-            if (this.hasRailAt(this.pos.offset(enumFacing))) {
-               n++;
-            }
-         }
-
-         return n;
-      }
-
-      public boolean willAlignTo(BlockRailBase.Rail rail) {
-         return this.isNeighbor(rail) || this.neighbors.size() != 2;
-      }
-
-      public void realignTo(BlockRailBase.Rail rail) {
-         this.neighbors.add(rail.pos);
-         BlockPos north = this.pos.north();
-         BlockPos south = this.pos.south();
-         BlockPos west = this.pos.west();
-         BlockPos east = this.pos.east();
-         boolean isNeighbor = this.isNeighbor(north);
-         boolean isNeighbor2 = this.isNeighbor(south);
-         boolean isNeighbor3 = this.isNeighbor(west);
-         boolean isNeighbor4 = this.isNeighbor(east);
-         BlockRailBase.EnumRailDirection enumRailDirection = null;
-         if (isNeighbor || isNeighbor2) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_SOUTH;
-         }
-
-         if (isNeighbor3 || isNeighbor4) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.EAST_WEST;
-         }
-
-         if (!this.isPowered) {
-            if (isNeighbor2 && isNeighbor4 && !isNeighbor && !isNeighbor3) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_EAST;
+        public Rail(World world, int n, int n2, int n3) {
+            this.world = world;
+            this.intValue = n;
+            this.intValue2 = n2;
+            this.intValue3 = n3;
+            Block block = world.getBlock(n, n2, n3);
+            int blockMetadata = world.getBlockMetadata(n, n2, n3);
+            if (((BlockRailBase)block).isPowered) {
+                this.flag = true;
+                blockMetadata &= -9;
+            } else {
+                this.flag = false;
             }
 
-            if (isNeighbor2 && isNeighbor3 && !isNeighbor && !isNeighbor4) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_WEST;
+            this.process(blockMetadata);
+        }
+
+        public void process(int n) {
+            this.list.clear();
+            if (n == 0) {
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 - 1));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 + 1));
+            } else if (n == 1) {
+                this.list.add(new ChunkPosition(this.intValue - 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue + 1, this.intValue2, this.intValue3));
+            } else if (n == 2) {
+                this.list.add(new ChunkPosition(this.intValue - 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue + 1, this.intValue2 + 1, this.intValue3));
+            } else if (n == 3) {
+                this.list.add(new ChunkPosition(this.intValue - 1, this.intValue2 + 1, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue + 1, this.intValue2, this.intValue3));
+            } else if (n == 4) {
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2 + 1, this.intValue3 - 1));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 + 1));
+            } else if (n == 5) {
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 - 1));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2 + 1, this.intValue3 + 1));
+            } else if (n == 6) {
+                this.list.add(new ChunkPosition(this.intValue + 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 + 1));
+            } else if (n == 7) {
+                this.list.add(new ChunkPosition(this.intValue - 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 + 1));
+            } else if (n == 8) {
+                this.list.add(new ChunkPosition(this.intValue - 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 - 1));
+            } else if (n == 9) {
+                this.list.add(new ChunkPosition(this.intValue + 1, this.intValue2, this.intValue3));
+                this.list.add(new ChunkPosition(this.intValue, this.intValue2, this.intValue3 - 1));
+            }
+        }
+
+        public void run() {
+            for (int i = 0; i < this.list.size(); i++) {
+                BlockRailBase.Rail findRail = this.findRail((ChunkPosition)this.list.get(i));
+                if (findRail != null && findRail.checkRail(this)) {
+                    this.list.set(i, new ChunkPosition(findRail.intValue, findRail.intValue2, findRail.intValue3));
+                } else {
+                    this.list.remove(i--);
+                }
+            }
+        }
+
+        public boolean isRailBlockAt(int n, int n2, int n3) {
+            return BlockRailBase.isRailBlockAt(this.world, n, n2, n3)
+                || BlockRailBase.isRailBlockAt(this.world, n, n2 + 1, n3)
+                || BlockRailBase.isRailBlockAt(this.world, n, n2 - 1, n3);
+        }
+
+        public BlockRailBase.Rail findRail(ChunkPosition chunkPosition) {
+            return BlockRailBase.isRailBlockAt(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY, chunkPosition.chunkPosZ)
+                ? BlockRailBase.this.new Rail(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY, chunkPosition.chunkPosZ)
+                : (
+                    BlockRailBase.isRailBlockAt(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY + 1, chunkPosition.chunkPosZ)
+                        ? BlockRailBase.this.new Rail(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY + 1, chunkPosition.chunkPosZ)
+                        : (
+                            BlockRailBase.isRailBlockAt(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY - 1, chunkPosition.chunkPosZ)
+                                ? BlockRailBase.this.new Rail(this.world, chunkPosition.chunkPosX, chunkPosition.chunkPosY - 1, chunkPosition.chunkPosZ)
+                                : null
+                        )
+                );
+        }
+
+        public boolean checkRail(BlockRailBase.Rail rail) {
+            for (int i = 0; i < this.list.size(); i++) {
+                ChunkPosition chunkPosition = (ChunkPosition)this.list.get(i);
+                if (chunkPosition.chunkPosX == rail.intValue && chunkPosition.chunkPosZ == rail.intValue3) {
+                    return true;
+                }
             }
 
-            if (isNeighbor && isNeighbor3 && !isNeighbor2 && !isNeighbor4) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_WEST;
-            }
-
-            if (isNeighbor && isNeighbor4 && !isNeighbor2 && !isNeighbor3) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_EAST;
-            }
-         }
-
-         if (enumRailDirection == BlockRailBase.EnumRailDirection.NORTH_SOUTH) {
-            if (BlockRailBase.isRailBlock(this.world, north.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_NORTH;
-            }
-
-            if (BlockRailBase.isRailBlock(this.world, south.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_SOUTH;
-            }
-         }
-
-         if (enumRailDirection == BlockRailBase.EnumRailDirection.EAST_WEST) {
-            if (BlockRailBase.isRailBlock(this.world, east.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_EAST;
-            }
-
-            if (BlockRailBase.isRailBlock(this.world, west.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_WEST;
-            }
-         }
-
-         if (enumRailDirection == null) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_SOUTH;
-         }
-
-         this.state = this.state.withProperty(this.block.getShapeProperty(), enumRailDirection);
-         this.world.setBlockState(this.pos, this.state, 3);
-      }
-
-      public boolean willAlignTo(BlockPos blockPos) {
-         BlockRailBase.Rail findRailAt = this.findRailAt(blockPos);
-         if (findRailAt == null) {
             return false;
-         }
+        }
 
-         findRailAt.correctNeighbors();
-         return findRailAt.willAlignTo(this);
-      }
-
-      public BlockRailBase.Rail getRealignedHelper(boolean flag, boolean flag2) {
-         BlockPos north = this.pos.north();
-         BlockPos south = this.pos.south();
-         BlockPos west = this.pos.west();
-         BlockPos east = this.pos.east();
-         boolean willAlignTo = this.willAlignTo(north);
-         boolean willAlignTo2 = this.willAlignTo(south);
-         boolean willAlignTo3 = this.willAlignTo(west);
-         boolean willAlignTo4 = this.willAlignTo(east);
-         BlockRailBase.EnumRailDirection enumRailDirection = null;
-         if ((willAlignTo || willAlignTo2) && !willAlignTo3 && !willAlignTo4) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_SOUTH;
-         }
-
-         if ((willAlignTo3 || willAlignTo4) && !willAlignTo && !willAlignTo2) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.EAST_WEST;
-         }
-
-         if (!this.isPowered) {
-            if (willAlignTo2 && willAlignTo4 && !willAlignTo && !willAlignTo3) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_EAST;
+        public boolean check(int n, int n2, int n3) {
+            for (int i = 0; i < this.list.size(); i++) {
+                ChunkPosition chunkPosition = (ChunkPosition)this.list.get(i);
+                if (chunkPosition.chunkPosX == n && chunkPosition.chunkPosZ == n3) {
+                    return true;
+                }
             }
 
-            if (willAlignTo2 && willAlignTo3 && !willAlignTo && !willAlignTo4) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_WEST;
+            return false;
+        }
+
+        public int countAdjacentRails() {
+            int n = 0;
+            if (this.isRailBlockAt(this.intValue, this.intValue2, this.intValue3 - 1)) {
+                n++;
             }
 
-            if (willAlignTo && willAlignTo3 && !willAlignTo2 && !willAlignTo4) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_WEST;
+            if (this.isRailBlockAt(this.intValue, this.intValue2, this.intValue3 + 1)) {
+                n++;
             }
 
-            if (willAlignTo && willAlignTo4 && !willAlignTo2 && !willAlignTo3) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_EAST;
-            }
-         }
-
-         if (enumRailDirection == null) {
-            if (willAlignTo || willAlignTo2) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_SOUTH;
+            if (this.isRailBlockAt(this.intValue - 1, this.intValue2, this.intValue3)) {
+                n++;
             }
 
-            if (willAlignTo3 || willAlignTo4) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.EAST_WEST;
+            if (this.isRailBlockAt(this.intValue + 1, this.intValue2, this.intValue3)) {
+                n++;
             }
 
-            if (!this.isPowered) {
-               if (flag) {
-                  if (willAlignTo2 && willAlignTo4) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_EAST;
-                  }
+            return n;
+        }
 
-                  if (willAlignTo3 && willAlignTo2) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_WEST;
-                  }
+        public boolean checkRail2(BlockRailBase.Rail rail) {
+            return this.checkRail(rail) || this.list.size() != 2;
+        }
 
-                  if (willAlignTo4 && willAlignTo) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_EAST;
-                  }
-
-                  if (willAlignTo && willAlignTo3) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_WEST;
-                  }
-               } else {
-                  if (willAlignTo && willAlignTo3) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_WEST;
-                  }
-
-                  if (willAlignTo4 && willAlignTo) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_EAST;
-                  }
-
-                  if (willAlignTo3 && willAlignTo2) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_WEST;
-                  }
-
-                  if (willAlignTo2 && willAlignTo4) {
-                     enumRailDirection = BlockRailBase.EnumRailDirection.SOUTH_EAST;
-                  }
-               }
-            }
-         }
-
-         if (enumRailDirection == BlockRailBase.EnumRailDirection.NORTH_SOUTH) {
-            if (BlockRailBase.isRailBlock(this.world, north.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_NORTH;
+        public void handleRail(BlockRailBase.Rail rail) {
+            this.list.add(new ChunkPosition(rail.intValue, rail.intValue2, rail.intValue3));
+            boolean check = this.check(this.intValue, this.intValue2, this.intValue3 - 1);
+            boolean check2 = this.check(this.intValue, this.intValue2, this.intValue3 + 1);
+            boolean check3 = this.check(this.intValue - 1, this.intValue2, this.intValue3);
+            boolean check4 = this.check(this.intValue + 1, this.intValue2, this.intValue3);
+            byte b = -1;
+            if (check || check2) {
+                b = 0;
             }
 
-            if (BlockRailBase.isRailBlock(this.world, south.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_SOUTH;
-            }
-         }
-
-         if (enumRailDirection == BlockRailBase.EnumRailDirection.EAST_WEST) {
-            if (BlockRailBase.isRailBlock(this.world, east.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_EAST;
+            if (check3 || check4) {
+                b = 1;
             }
 
-            if (BlockRailBase.isRailBlock(this.world, west.up())) {
-               enumRailDirection = BlockRailBase.EnumRailDirection.ASCENDING_WEST;
+            if (!this.flag) {
+                if (check2 && check4 && !check && !check3) {
+                    b = 6;
+                }
+
+                if (check2 && check3 && !check && !check4) {
+                    b = 7;
+                }
+
+                if (check && check3 && !check2 && !check4) {
+                    b = 8;
+                }
+
+                if (check && check4 && !check2 && !check3) {
+                    b = 9;
+                }
             }
-         }
 
-         if (enumRailDirection == null) {
-            enumRailDirection = BlockRailBase.EnumRailDirection.NORTH_SOUTH;
-         }
+            if (b == 0) {
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue, this.intValue2 + 1, this.intValue3 - 1)) {
+                    b = 4;
+                }
 
-         this.computeNeighbors(enumRailDirection);
-         this.state = this.state.withProperty(this.block.getShapeProperty(), enumRailDirection);
-         if (flag2 || this.world.getBlockState(this.pos) != this.state) {
-            this.world.setBlockState(this.pos, this.state, 3);
-
-            for (int i = 0; i < this.neighbors.size(); i++) {
-               BlockRailBase.Rail findRailAt = this.findRailAt(this.neighbors.get(i));
-               if (findRailAt != null) {
-                  findRailAt.correctNeighbors();
-                  if (findRailAt.willAlignTo(this)) {
-                     findRailAt.realignTo(this);
-                  }
-               }
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue, this.intValue2 + 1, this.intValue3 + 1)) {
+                    b = 5;
+                }
             }
-         }
 
-         return this;
-      }
+            if (b == 1) {
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue + 1, this.intValue2 + 1, this.intValue3)) {
+                    b = 2;
+                }
 
-      public IBlockState getBlockState() {
-         return this.state;
-      }
-   }
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue - 1, this.intValue2 + 1, this.intValue3)) {
+                    b = 3;
+                }
+            }
+
+            if (b < 0) {
+                b = 0;
+            }
+
+            int n = b;
+            if (this.flag) {
+                n = this.world.getBlockMetadata(this.intValue, this.intValue2, this.intValue3) & 8 | b;
+            }
+
+            this.world.setBlockMetadataWithNotify(this.intValue, this.intValue2, this.intValue3, n, 3);
+        }
+
+        public boolean check2(int n, int n2, int n3) {
+            BlockRailBase.Rail findRail = this.findRail(new ChunkPosition(n, n2, n3));
+            if (findRail == null) {
+                return false;
+            }
+
+            findRail.run();
+            return findRail.checkRail2(this);
+        }
+
+        public void process(boolean flag, boolean flag2) {
+            boolean check2 = this.check2(this.intValue, this.intValue2, this.intValue3 - 1);
+            boolean check22 = this.check2(this.intValue, this.intValue2, this.intValue3 + 1);
+            boolean check23 = this.check2(this.intValue - 1, this.intValue2, this.intValue3);
+            boolean check24 = this.check2(this.intValue + 1, this.intValue2, this.intValue3);
+            byte b = -1;
+            if ((check2 || check22) && !check23 && !check24) {
+                b = 0;
+            }
+
+            if ((check23 || check24) && !check2 && !check22) {
+                b = 1;
+            }
+
+            if (!this.flag) {
+                if (check22 && check24 && !check2 && !check23) {
+                    b = 6;
+                }
+
+                if (check22 && check23 && !check2 && !check24) {
+                    b = 7;
+                }
+
+                if (check2 && check23 && !check22 && !check24) {
+                    b = 8;
+                }
+
+                if (check2 && check24 && !check22 && !check23) {
+                    b = 9;
+                }
+            }
+
+            if (b == -1) {
+                if (check2 || check22) {
+                    b = 0;
+                }
+
+                if (check23 || check24) {
+                    b = 1;
+                }
+
+                if (!this.flag) {
+                    if (flag) {
+                        if (check22 && check24) {
+                            b = 6;
+                        }
+
+                        if (check23 && check22) {
+                            b = 7;
+                        }
+
+                        if (check24 && check2) {
+                            b = 9;
+                        }
+
+                        if (check2 && check23) {
+                            b = 8;
+                        }
+                    } else {
+                        if (check2 && check23) {
+                            b = 8;
+                        }
+
+                        if (check24 && check2) {
+                            b = 9;
+                        }
+
+                        if (check23 && check22) {
+                            b = 7;
+                        }
+
+                        if (check22 && check24) {
+                            b = 6;
+                        }
+                    }
+                }
+            }
+
+            if (b == 0) {
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue, this.intValue2 + 1, this.intValue3 - 1)) {
+                    b = 4;
+                }
+
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue, this.intValue2 + 1, this.intValue3 + 1)) {
+                    b = 5;
+                }
+            }
+
+            if (b == 1) {
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue + 1, this.intValue2 + 1, this.intValue3)) {
+                    b = 2;
+                }
+
+                if (BlockRailBase.isRailBlockAt(this.world, this.intValue - 1, this.intValue2 + 1, this.intValue3)) {
+                    b = 3;
+                }
+            }
+
+            if (b < 0) {
+                b = 0;
+            }
+
+            this.process(b);
+            int n = b;
+            if (this.flag) {
+                n = this.world.getBlockMetadata(this.intValue, this.intValue2, this.intValue3) & 8 | b;
+            }
+
+            if (flag2 || this.world.getBlockMetadata(this.intValue, this.intValue2, this.intValue3) != n) {
+                this.world.setBlockMetadataWithNotify(this.intValue, this.intValue2, this.intValue3, n, 3);
+
+                for (int i = 0; i < this.list.size(); i++) {
+                    BlockRailBase.Rail findRail = this.findRail((ChunkPosition)this.list.get(i));
+                    if (findRail != null) {
+                        findRail.run();
+                        if (findRail.checkRail2(this)) {
+                            findRail.handleRail(this);
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

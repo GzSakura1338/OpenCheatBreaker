@@ -1,4 +1,6 @@
 package net.minecraft.util;
 
-public interface IObjectIntIterable<T> extends Iterable<T> {
+import net.minecraft.block.Block;
+
+public interface IObjectIntIterable extends Iterable<Block> {
 }

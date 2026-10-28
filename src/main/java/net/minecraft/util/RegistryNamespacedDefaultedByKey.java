@@ -1,37 +1,36 @@
 package net.minecraft.util;
 
-import org.apache.commons.lang3.Validate;
+public class RegistryNamespacedDefaultedByKey extends RegistryNamespaced {
+    public String text;
+    public Object defaultValue;
 
-public class RegistryNamespacedDefaultedByKey<K, V> extends RegistryNamespaced<K, V> {
-   public K defaultValueKey;
-   public V defaultValue;
+    public RegistryNamespacedDefaultedByKey(String str) {
+        this.text = str;
+    }
 
-   public RegistryNamespacedDefaultedByKey(K defaultValueKeyIn) {
-      this.defaultValueKey = (K)defaultValueKeyIn;
-   }
+    @Override
+    public void addObject(int n, String str, Object obj) {
+        if (this.text.equals(str)) {
+            this.defaultValue = obj;
+        }
 
-   @Override
-   public void register(int id, K key, V value) {
-      if (this.defaultValueKey.equals(key)) {
-         this.defaultValue = (V)value;
-      }
+        super.addObject(n, str, obj);
+    }
 
-      super.register(id, (K)key, (V)value);
-   }
+    @Override
+    public Object getObject(String str) {
+        Object object = super.getObject(str);
+        return object == null ? this.defaultValue : object;
+    }
 
-   public void validateKey() {
-      Validate.notNull(this.defaultValueKey);
-   }
+    @Override
+    public Object getObjectById(int n) {
+        Object objectById = super.getObjectById(n);
+        return objectById == null ? this.defaultValue : objectById;
+    }
 
-   @Override
-   public V getObject(K name) {
-      Object object = super.getObject((K)name);
-      return (V)(object == null ? this.defaultValue : object);
-   }
-
-   @Override
-   public V getObjectById(int id) {
-      Object objectById = super.getObjectById(id);
-      return (V)(objectById == null ? this.defaultValue : objectById);
-   }
+    @Override
+    public Object getObject(Object obj) {
+        return this.getObject((String)obj);
+    }
 }

@@ -2,36 +2,31 @@ package net.minecraft.inventory;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.world.IWorldNameable;
 
-public interface IInventory extends IWorldNameable {
-   int getSizeInventory();
+public interface IInventory {
+    int getSizeInventory();
 
-   ItemStack getStackInSlot(int n);
+    ItemStack getStackInSlot(int n);
 
-   ItemStack decrStackSize(int n, int n2);
+    ItemStack decrStackSize(int n, int n2);
 
-   ItemStack removeStackFromSlot(int n);
+    ItemStack getStackInSlotOnClosing(int n);
 
-   void setInventorySlotContents(int n, ItemStack itemStack);
+    void setInventorySlotContents(int n, ItemStack itemStack);
 
-   int getInventoryStackLimit();
+    String getInventoryName();
 
-   void markDirty();
+    boolean isCustomInventoryName();
 
-   boolean isUseableByPlayer(EntityPlayer entityPlayer);
+    int getInventoryStackLimit();
 
-   void openInventory(EntityPlayer entityPlayer);
+    void markDirty();
 
-   void closeInventory(EntityPlayer entityPlayer);
+    boolean isUseableByPlayer(EntityPlayer entityPlayer);
 
-   boolean isItemValidForSlot(int n, ItemStack itemStack);
+    void openChest();
 
-   int getField(int n);
+    void closeChest();
 
-   void setField(int n, int n2);
-
-   int getFieldCount();
-
-   void clear();
+    boolean isItemValidForSlot(int n, ItemStack itemStack);
 }

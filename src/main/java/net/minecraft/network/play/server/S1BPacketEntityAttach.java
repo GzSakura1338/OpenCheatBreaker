@@ -2,51 +2,57 @@ package net.minecraft.network.play.server;
 
 import java.io.IOException;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 
-public class S1BPacketEntityAttach implements Packet<INetHandlerPlayClient> {
-   public int leash;
-   public int entityId;
-   public int vehicleEntityId;
+public class S1BPacketEntityAttach extends Packet {
+    public int attachedId;
+    public int id;
+    public int holdingId;
 
-   public S1BPacketEntityAttach() {
-   }
+    public S1BPacketEntityAttach() {
+    }
 
-   public S1BPacketEntityAttach(int leashIn, Entity entityIn, Entity vehicle) {
-      this.leash = leashIn;
-      this.entityId = entityIn.getEntityId();
-      this.vehicleEntityId = vehicle != null ? vehicle.getEntityId() : -1;
-   }
+    public S1BPacketEntityAttach(int n, Entity entity, Entity entity2) {
+        this.attachedId = n;
+        this.id = entity.getEntityId();
+        this.holdingId = entity2 != null ? entity2.getEntityId() : -1;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.entityId = buf.readInt();
-      this.vehicleEntityId = buf.readInt();
-      this.leash = buf.readUnsignedByte();
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.id = data.readInt();
+        this.holdingId = data.readInt();
+        this.attachedId = data.readUnsignedByte();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeInt(this.entityId);
-      buf.writeInt(this.vehicleEntityId);
-      buf.writeByte(this.leash);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.id);
+        data.writeInt(this.holdingId);
+        data.writeByte(this.attachedId);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleEntityAttach(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleEntityAttach(this);
+    }
 
-   public int getLeash() {
-      return this.leash;
-   }
+    public int getAttachedEntityId() {
+        return this.attachedId;
+    }
 
-   public int getEntityId() {
-      return this.entityId;
-   }
+    public int getId() {
+        return this.id;
+    }
 
-   public int getVehicleEntityId() {
-      return this.vehicleEntityId;
-   }
+    public int getHoldingEntityId() {
+        return this.holdingId;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

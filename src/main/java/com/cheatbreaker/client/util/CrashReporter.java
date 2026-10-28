@@ -2,7 +2,6 @@ package com.cheatbreaker.client.util;
 
 import com.cheatbreaker.client.CheatBreaker;
 import com.cheatbreaker.client.network.packet.CrashReportPacket;
-import com.cheatbreaker.client.util.ClientVersion;
 import com.cheatbreaker.client.util.CrashCauseHints;
 import com.cheatbreaker.client.util.ExceptionHints;
 import java.awt.Toolkit;
@@ -18,44 +17,38 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.optifine.Config;
 
 public class CrashReporter {
-    public static final String DEFAULT_TITLE = "Something went wrong";
-    public static final long EXIT_DELAY_MS = 7000L;
-    public static Minecraft mc = Minecraft.getMinecraft();
-    public static final String DEFAULT_MESSAGE = "Your client has crashed due to an unknown bug or error.";
-    public static final String MEMORY_FORMAT = "%dMB/%dMB of %dMB";
     public static final String CRASH_ID_FORMAT = "CB-CRASH-%s";
+    public static final long EXIT_DELAY_MS = 7000L;
+    public static final String DEFAULT_TITLE = "Something went wrong";
+    public static Minecraft mc = Minecraft.getMinecraft();
+    public static final String MEMORY_FORMAT = "%dMB/%dMB of %dMB";
     public static Map<String, String> exceptionHints = new ExceptionHints();
+    public static final String DEFAULT_MESSAGE = "Your client has crashed.";
     public static Map<String, String> crashCauseHints = new CrashCauseHints();
 
-    public static String getReadableName(String string) {
-        String string2;
-        if (!string.contains(" ")) {
-            string2 = string.replaceAll("(Error|Exception)$", "");
-            string2 = string2.replaceAll("(\\p{Ll})(\\p{Lu})", "$1 $2");
-        } else {
-            string2 = DEFAULT_TITLE;
+    public static void sleepBeforeExit() {
+        try {
+            Thread.sleep(7000L);
         }
-        return string2;
+        catch (InterruptedException interruptedException) {
+            interruptedException.printStackTrace();
+        }
     }
 
-    public static String getJvmInfo() {
-        return String.format("%s (%s), %s", System.getProperty("java.vm.name"), System.getProperty("java.vm.info"), System.getProperty("java.vm.vendor"));
+    public static CrashReportPacket createReport(UUID uUID, String string) {
+        String string2 = CrashReporter.getMemoryInfo();
+        return new CrashReportPacket(uUID.toString(), "OptiFine_1.7.10_HD_U_E7", CrashReporter.getServerAddress(), CheatBreaker.getInstance().getClientVersion(), CheatBreaker.getInstance().getGitCommit(), CheatBreaker.getInstance().getBranch(), CrashReporter.getOsInfo(), CrashReporter.getText(), CrashReporter.getGpuInfo(), string2, CrashReporter.getJavaInfo(), CrashReporter.getJvmInfo(), CrashReporter.getJvmArguments(), string);
     }
 
     public static String getGpuInfo() {
         return String.format("%s (%s), %s", Config.openGlRenderer, Config.openGlVendor, Config.openGlVersion);
     }
 
-    public static String getJavaInfo() {
-        return String.format("%s, %s", System.getProperty("java.version"), System.getProperty("java.vendor"));
-    }
-
-    public static void sendReport(CrashReportPacket crashReportPacket) {
-        CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().sendPacket(crashReportPacket);
+    public static String getJvmInfo() {
+        return String.format("%s (%s), %s", System.getProperty("java.vm.name"), System.getProperty("java.vm.info"), System.getProperty("java.vm.vendor"));
     }
 
     public static String getJvmArguments() {
@@ -65,12 +58,9 @@ public class CrashReporter {
         return String.format("%d total; %s", list2.size(), String.join((CharSequence)" ", list2));
     }
 
-    public static void showDialog(String string, String string2) {
-        new Thread(() -> JOptionPane.showMessageDialog(null, string2, string, 0)).start();
-    }
-
-    public static String getOsInfo() {
-        return String.format("%s (%s) version %s", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
+    public static void copyToClipboard(StringSelection stringSelection) {
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        clipboard.setContents(stringSelection, null);
     }
 
     public static void openLink(URI uRI) {
@@ -84,14 +74,16 @@ public class CrashReporter {
         }
     }
 
-    public static CrashReportPacket createReport(UUID uUID, String string) {
-        String string2 = CrashReporter.getMemoryInfo();
-        return new CrashReportPacket(uUID.toString(), ClientVersion.text, CrashReporter.getServerAddress(), CheatBreaker.getInstance().getClientVersion(), CheatBreaker.getInstance().getGitCommit(), CheatBreaker.getInstance().getBranch(), CrashReporter.getOsInfo(), CrashReporter.getCpuInfo(), CrashReporter.getGpuInfo(), string2, CrashReporter.getJavaInfo(), CrashReporter.getJvmInfo(), CrashReporter.getJvmArguments(), string);
+    public static String getText() {
+        return String.format("%d logical processors", Config.getAvailableProcessors());
     }
 
-    public static void copyToClipboard(StringSelection stringSelection) {
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        clipboard.setContents(stringSelection, null);
+    public static boolean shouldSkipReport(Throwable throwable) {
+        return CheatBreaker.getInstance() == null || CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet() == null || !CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().isOpen() || throwable == null || throwable.getClass() == Throwable.class || throwable.getClass().getName().contains(".fml.client.SplashProgress");
+    }
+
+    public static void sendReport(CrashReportPacket crashReportPacket) {
+        CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().sendPacket(crashReportPacket);
     }
 
     public static void handleCrash(Throwable throwable, String string) {
@@ -130,6 +122,18 @@ public class CrashReporter {
         CrashReporter.sleepBeforeExit();
     }
 
+    public static String getMemoryInfo() {
+        Runtime runtime = Runtime.getRuntime();
+        long l = runtime.maxMemory() / 1024L / 1024L;
+        long l2 = runtime.totalMemory() / 1024L / 1024L;
+        long l3 = runtime.freeMemory() / 1024L / 1024L;
+        return String.format(MEMORY_FORMAT, l3, l2, l);
+    }
+
+    public static String getJavaInfo() {
+        return String.format("%s, %s", System.getProperty("java.version"), System.getProperty("java.vendor"));
+    }
+
     public static String getServerAddress() {
         if (mc.isSingleplayer()) {
             return "Singleplayer";
@@ -140,32 +144,26 @@ public class CrashReporter {
         return "Unknown";
     }
 
-    public static String getMemoryInfo() {
-        Runtime runtime = Runtime.getRuntime();
-        long l = runtime.maxMemory() / 1024L / 1024L;
-        long l2 = runtime.totalMemory() / 1024L / 1024L;
-        long l3 = runtime.freeMemory() / 1024L / 1024L;
-        return String.format(MEMORY_FORMAT, l3, l2, l);
+    public static String getOsInfo() {
+        return String.format("%s (%s) version %s", System.getProperty("os.name"), System.getProperty("os.arch"), System.getProperty("os.version"));
+    }
+
+    public static void showDialog(String string, String string2) {
+        new Thread(() -> JOptionPane.showMessageDialog(null, string2, string, 0)).start();
     }
 
     public CrashReporter() {
         throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
     }
 
-    public static String getCpuInfo() {
-        return String.format("%s (%d logical processors)", OpenGlHelper.getCpu(), Config.getAvailableProcessors());
-    }
-
-    public static boolean shouldSkipReport(Throwable throwable) {
-        return CheatBreaker.getInstance() == null || CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet() == null || !CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().isOpen() || throwable == null || throwable.getClass() == Throwable.class || throwable.getClass().getName().contains(".fml.client.SplashProgress");
-    }
-
-    public static void sleepBeforeExit() {
-        try {
-            Thread.sleep(7000L);
+    public static String getReadableName(String string) {
+        String string2;
+        if (!string.contains(" ")) {
+            string2 = string.replaceAll("(Error|Exception)$", "");
+            string2 = string2.replaceAll("(\\p{Ll})(\\p{Lu})", "$1 $2");
+        } else {
+            string2 = DEFAULT_TITLE;
         }
-        catch (InterruptedException interruptedException) {
-            interruptedException.printStackTrace();
-        }
+        return string2;
     }
 }

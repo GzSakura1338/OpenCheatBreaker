@@ -11,346 +11,340 @@ import net.minecraft.client.gui.GuiYesNoCallback;
 import net.minecraft.server.MinecraftServer;
 
 public class WaypointsScreen extends AbstractMinimapScreen implements GuiYesNoCallback {
-   public String title = "Waypoints";
-   public boolean editClicked = false;
-   public Waypoint selectedWaypoint = null;
-   public Waypoint newWaypoint = null;
-   public boolean deleteClicked = false;
-   public boolean newClicked = false;
-   public String tooltip = null;
-   public GuiButton minimapWaypointsSortbyname;
-   public Random random = new Random();
-   public boolean changedSort = false;
-   public GuiButton minimapWaypointsTeleportto;
-   public IVoxelMap voxelMap;
-   public GuiButton selectserverEdit;
-   public GuiScreen guiScreen;
-   public GuiButton selectserverDelete;
-   public MinimapSettings minimapSettings;
-   public GuiButton minimapWaypointsSortbycreated;
-   public GuiButton minimapWaypointsSortbycolor;
-   public WaypointListSlot waypointListSlot;
-   public IWaypointManager waypointManager;
-   public GuiButton minimapWaypointsSortbydistance;
+    public GuiButton minimapWaypointsSortbydistance;
+    public String title = "Waypoints";
+    public boolean editClicked = false;
+    public Waypoint selectedWaypoint = null;
+    public Waypoint newWaypoint = null;
+    public boolean deleteClicked = false;
+    public GuiButton minimapWaypointsSortbycreated;
+    public boolean newClicked = false;
+    public GuiButton minimapWaypointsSortbycolor;
+    public GuiButton selectserverEdit;
+    public String tooltip = null;
+    public GuiButton minimapWaypointsSortbyname;
+    public GuiButton selectserverDelete;
+    public Random random = new Random();
+    public GuiButton minimapWaypointsTeleportto;
+    public WaypointListSlot waypointListSlot;
+    public boolean changedSort = false;
+    public IVoxelMap voxelMap;
+    public GuiScreen guiScreen;
+    public MinimapSettings minimapSettings;
+    public IWaypointManager waypointManager;
 
-   public boolean canTeleport() {
-      boolean isIntegratedServerRunning = this.minimapSettings.mc.isIntegratedServerRunning();
-      return isIntegratedServerRunning ? MinecraftServer.getServer().worldServers[0].getWorldInfo().areCommandsAllowed() : true;
-   }
+    public static GuiButton findGuiButton(WaypointsScreen waypointsScreen) {
+        return waypointsScreen.minimapWaypointsTeleportto;
+    }
 
-   public WaypointsScreen(GuiScreen guiScreen, IVoxelMap voxelMap) {
-      this.voxelMap = voxelMap;
-      this.guiScreen = guiScreen;
-      this.minimapSettings = voxelMap.getMapOptions();
-      this.waypointManager = voxelMap.getWaypointManager();
-   }
+    public boolean canTeleport() {
+        boolean isIntegratedServerRunning = this.minimapSettings.mc.isIntegratedServerRunning();
+        return isIntegratedServerRunning ? MinecraftServer.getServer().worldServers[0].getWorldInfo().areCommandsAllowed() : true;
+    }
 
-   public static GuiButton getDeleteButton(WaypointsScreen waypointsScreen) {
-      return waypointsScreen.selectserverDelete;
-   }
+    @Override
+    public void initGui() {
+        boolean flag = false;
+        this.title = Translations.translate("minimap.waypoints.title");
+        this.waypointListSlot = new WaypointListSlot(this);
+        this.waypointListSlot.registerScrollButtons(7, 8);
+        this.minimapSettings.getClass();
+        this.getButtonList()
+            .add(this.minimapWaypointsSortbyname = new GuiButton(2, this.getWidth() / 2 - 154, 34, 77, 20, Translations.translate("minimap.waypoints.sortbyname")));
+        this.minimapSettings.getClass();
+        this.getButtonList()
+            .add(
+                this.minimapWaypointsSortbydistance = new GuiButton(
+                    3, this.getWidth() / 2 - 77, 34, 77, 20, Translations.translate("minimap.waypoints.sortbydistance")
+                )
+            );
+        this.minimapSettings.getClass();
+        this.getButtonList()
+            .add(this.minimapWaypointsSortbycreated = new GuiButton(1, this.getWidth() / 2, 34, 77, 20, Translations.translate("minimap.waypoints.sortbycreated")));
+        this.minimapSettings.getClass();
+        this.getButtonList()
+            .add(
+                this.minimapWaypointsSortbycolor = new GuiButton(4, this.getWidth() / 2 + 77, 34, 77, 20, Translations.translate("minimap.waypoints.sortbycolor"))
+            );
+        this.getButtonList()
+            .add(this.selectserverEdit = new GuiButton(-1, this.getWidth() / 2 - 154, this.getHeight() - 52, 100, 20, Translations.translate("selectServer.edit")));
+        this.getButtonList()
+            .add(
+                this.selectserverDelete = new GuiButton(-2, this.getWidth() / 2 - 50, this.getHeight() - 52, 100, 20, Translations.translate("selectServer.delete"))
+            );
+        this.getButtonList()
+            .add(
+                this.minimapWaypointsTeleportto = new GuiButton(
+                    -3, this.getWidth() / 2 + 4 + 50, this.getHeight() - 52, 100, 20, Translations.translate("minimap.waypoints.teleportto")
+                )
+            );
+        this.getButtonList()
+            .add(new GuiButton(-4, this.getWidth() / 2 - 154, this.getHeight() - 28, 100, 20, Translations.translate("minimap.waypoints.newwaypoint")));
+        this.getButtonList().add(new GuiButton(-5, this.getWidth() / 2 - 50, this.getHeight() - 28, 100, 20, Translations.translate("menu.options")));
+        this.getButtonList().add(new GuiButton(65336, this.getWidth() / 2 + 4 + 50, this.getHeight() - 28, 100, 20, Translations.translate("gui.done")));
+        boolean flag2 = this.selectedWaypoint != null;
+        this.selectserverEdit.enabled = flag2;
+        this.selectserverDelete.enabled = flag2;
+        this.minimapWaypointsTeleportto.enabled = flag2 && this.canTeleport();
+        this.updateSortButtons();
+    }
 
-   public void drawTooltip(String str, int n, int n2) {
-      if (str != null) {
-         int n3 = n + 12;
-         int n4 = n2 - 12;
-         int stringWidth = this.getFontRendererObj().getStringWidth(str);
-         this.drawGradientRect(n3 - 3, n4 - 3, n3 + stringWidth + 3, n4 + 8 + 3, -1073741824, -1073741824);
-         this.getFontRendererObj().drawStringWithShadow(str, n3, n4, -1);
-      }
-   }
+    public void drawTooltip(String str, int n, int n2) {
+        if (str != null) {
+            int n3 = n + 12;
+            int n4 = n2 - 12;
+            int stringWidth = this.getFontRendererObj().getStringWidth(str);
+            drawVerticalGradient(n3 - 3, n4 - 3, n3 + stringWidth + 3, n4 + 8 + 3, -1073741824, -1073741824);
+            this.getFontRendererObj().drawShadowedString(str, n3, n4, -1);
+        }
+    }
 
-   @Override
-   public void actionPerformed(GuiButton guiButton) {
-      if (guiButton.enabled) {
-         if (guiButton.id > 0) {
-            this.minimapSettings.setWaypointSortBy(guiButton.id);
-            this.changedSort = true;
-            this.updateSortButtons();
-         }
+    @Override
+    public void onGuiClosed() {
+        if (this.changedSort) {
+            super.onGuiClosed();
+        }
+    }
 
-         if (guiButton.id == -1) {
-            this.editWaypoint(this.selectedWaypoint);
-         }
+    public void setSelectedWaypoint(Waypoint waypoint) {
+        this.selectedWaypoint = waypoint;
+        boolean flag = this.selectedWaypoint != null;
+        this.selectserverEdit.enabled = flag;
+        this.selectserverDelete.enabled = flag;
+        this.minimapWaypointsTeleportto.enabled = flag && this.canTeleport();
+    }
 
-         if (guiButton.id == -2) {
-            String name = this.selectedWaypoint.name;
-            if (name != null) {
-               this.deleteClicked = true;
-               String translate = Translations.translate("minimap.waypoints.deleteconfirm");
-               String str = "'" + name + "' " + Translations.translate("selectServer.deleteWarning");
-               String translate2 = Translations.translate("selectServer.deleteButton");
-               String translate3 = Translations.translate("gui.cancel");
-               GuiYesNo guiYesNo = new GuiYesNo(this, translate, str, translate2, translate3, this.waypointManager.getWaypoints().indexOf(this.selectedWaypoint));
-               this.getMc().displayGuiScreen(guiYesNo);
+    public void editWaypoint(Waypoint waypoint) throws java.io.IOException {
+        this.editClicked = true;
+        this.getMc().displayGuiScreen(new WaypointEditScreen(this.voxelMap, this, waypoint));
+    }
+
+    @Override
+    public void actionPerformed(GuiButton guiButton) throws java.io.IOException {
+        if (guiButton.enabled) {
+            if (guiButton.id > 0) {
+                this.minimapSettings.setWaypointSortBy(guiButton.id);
+                this.changedSort = true;
+                this.updateSortButtons();
             }
-         }
 
-         if (guiButton.id == -3) {
-            if (this.minimapSettings.mc.isIntegratedServerRunning()) {
-               this.minimapSettings.mc.thePlayer.sendChatMessage("/ztp " + this.selectedWaypoint.name);
-               this.getMc().displayGuiScreen(null);
-            } else {
-               if (this.selectedWaypoint.getY() > 0) {
-                  this.minimapSettings
-                     .mc
-                     .thePlayer
-                     .sendChatMessage(
-                        "/tp "
-                           + this.minimapSettings.mc.thePlayer.getName()
-                           + " "
-                           + this.selectedWaypoint.getX()
-                           + " "
-                           + this.selectedWaypoint.getY()
-                           + " "
-                           + this.selectedWaypoint.getZ()
-                     );
-                  this.minimapSettings
-                     .mc
-                     .thePlayer
-                     .sendChatMessage("/tppos " + this.selectedWaypoint.getX() + " " + this.selectedWaypoint.getY() + " " + this.selectedWaypoint.getZ());
-               } else {
-                  this.minimapSettings
-                     .mc
-                     .thePlayer
-                     .sendChatMessage(
-                        "/tp "
-                           + this.minimapSettings.mc.thePlayer.getName()
-                           + " "
-                           + this.selectedWaypoint.getX()
-                           + " "
-                           + (this.minimapSettings.mc.thePlayer.dimension != -1 ? "128" : "64")
-                           + " "
-                           + this.selectedWaypoint.getZ()
-                     );
-                  this.minimapSettings
-                     .mc
-                     .thePlayer
-                     .sendChatMessage(
-                        "/tppos "
-                           + this.selectedWaypoint.getX()
-                           + " "
-                           + (this.minimapSettings.mc.thePlayer.dimension != -1 ? "256" : "64")
-                           + " "
-                           + this.selectedWaypoint.getZ()
-                     );
-               }
-
-               this.getMc().displayGuiScreen(null);
+            if (guiButton.id == -1) {
+                this.editWaypoint(this.selectedWaypoint);
             }
-         }
 
-         if (guiButton.id == -4) {
-            this.createWaypoint();
-         }
+            if (guiButton.id == -2) {
+                String name = this.selectedWaypoint.name;
+                if (name != null) {
+                    this.deleteClicked = true;
+                    String translate = Translations.translate("minimap.waypoints.deleteconfirm");
+                    String str = "'" + name + "' " + Translations.translate("selectServer.deleteWarning");
+                    String translate2 = Translations.translate("selectServer.deleteButton");
+                    String translate3 = Translations.translate("gui.cancel");
+                    GuiYesNo guiYesNo = new GuiYesNo(this, translate, str, translate2, translate3, this.waypointManager.getWaypoints().indexOf(this.selectedWaypoint));
+                    this.getMc().displayGuiScreen(guiYesNo);
+                }
+            }
 
-         if (guiButton.id == -5) {
-            this.getMc().displayGuiScreen(new WaypointOptionsScreen(this, this.minimapSettings));
-         }
+            if (guiButton.id == -3) {
+                if (this.minimapSettings.mc.isIntegratedServerRunning()) {
+                    this.minimapSettings.mc.thePlayer.sendChatMessage("/ztp " + this.selectedWaypoint.name);
+                    this.getMc().displayGuiScreen(null);
+                } else {
+                    if (this.selectedWaypoint.getY() > 0) {
+                        this.minimapSettings
+                            .mc
+                            .thePlayer
+                            .sendChatMessage(
+                                "/tp "
+                                    + this.minimapSettings.mc.thePlayer.getCommandSenderName()
+                                    + " "
+                                    + this.selectedWaypoint.getX()
+                                    + " "
+                                    + this.selectedWaypoint.getY()
+                                    + " "
+                                    + this.selectedWaypoint.getZ()
+                            );
+                        this.minimapSettings
+                            .mc
+                            .thePlayer
+                            .sendChatMessage("/tppos " + this.selectedWaypoint.getX() + " " + this.selectedWaypoint.getY() + " " + this.selectedWaypoint.getZ());
+                    } else {
+                        this.minimapSettings
+                            .mc
+                            .thePlayer
+                            .sendChatMessage(
+                                "/tp "
+                                    + this.minimapSettings.mc.thePlayer.getCommandSenderName()
+                                    + " "
+                                    + this.selectedWaypoint.getX()
+                                    + " "
+                                    + (this.minimapSettings.mc.thePlayer.dimension != -1 ? "128" : "64")
+                                    + " "
+                                    + this.selectedWaypoint.getZ()
+                            );
+                        this.minimapSettings
+                            .mc
+                            .thePlayer
+                            .sendChatMessage(
+                                "/tppos "
+                                    + this.selectedWaypoint.getX()
+                                    + " "
+                                    + (this.minimapSettings.mc.thePlayer.dimension != -1 ? "256" : "64")
+                                    + " "
+                                    + this.selectedWaypoint.getZ()
+                            );
+                    }
 
-         if (guiButton.id == 65336) {
-            this.getMc().displayGuiScreen(this.guiScreen);
-         }
-      }
-   }
+                    this.getMc().displayGuiScreen(null);
+                }
+            }
 
-   @Override
-   public void initGui() {
-      boolean flag = false;
-      this.title = Translations.translate("minimap.waypoints.title");
-      this.waypointListSlot = new WaypointListSlot(this);
-      this.waypointListSlot.registerScrollButtons(7, 8);
-      this.minimapSettings.getClass();
-      this.getButtonList()
-         .add(this.minimapWaypointsSortbyname = new GuiButton(2, this.getWidth() / 2 - 154, 34, 77, 20, Translations.translate("minimap.waypoints.sortbyname")));
-      this.minimapSettings.getClass();
-      this.getButtonList()
-         .add(
-            this.minimapWaypointsSortbydistance = new GuiButton(
-               3, this.getWidth() / 2 - 77, 34, 77, 20, Translations.translate("minimap.waypoints.sortbydistance")
-            )
-         );
-      this.minimapSettings.getClass();
-      this.getButtonList()
-         .add(this.minimapWaypointsSortbycreated = new GuiButton(1, this.getWidth() / 2, 34, 77, 20, Translations.translate("minimap.waypoints.sortbycreated")));
-      this.minimapSettings.getClass();
-      this.getButtonList()
-         .add(
-            this.minimapWaypointsSortbycolor = new GuiButton(4, this.getWidth() / 2 + 77, 34, 77, 20, Translations.translate("minimap.waypoints.sortbycolor"))
-         );
-      this.getButtonList()
-         .add(this.selectserverEdit = new GuiButton(-1, this.getWidth() / 2 - 154, this.getHeight() - 52, 100, 20, Translations.translate("selectServer.edit")));
-      this.getButtonList()
-         .add(
-            this.selectserverDelete = new GuiButton(-2, this.getWidth() / 2 - 50, this.getHeight() - 52, 100, 20, Translations.translate("selectServer.delete"))
-         );
-      this.getButtonList()
-         .add(
-            this.minimapWaypointsTeleportto = new GuiButton(
-               -3, this.getWidth() / 2 + 4 + 50, this.getHeight() - 52, 100, 20, Translations.translate("minimap.waypoints.teleportto")
-            )
-         );
-      this.getButtonList()
-         .add(new GuiButton(-4, this.getWidth() / 2 - 154, this.getHeight() - 28, 100, 20, Translations.translate("minimap.waypoints.newwaypoint")));
-      this.getButtonList().add(new GuiButton(-5, this.getWidth() / 2 - 50, this.getHeight() - 28, 100, 20, Translations.translate("menu.options")));
-      this.getButtonList().add(new GuiButton(65336, this.getWidth() / 2 + 4 + 50, this.getHeight() - 28, 100, 20, Translations.translate("gui.done")));
-      boolean flag2 = this.selectedWaypoint != null;
-      this.selectserverEdit.enabled = flag2;
-      this.selectserverDelete.enabled = flag2;
-      this.minimapWaypointsTeleportto.enabled = flag2 && this.canTeleport();
-      this.updateSortButtons();
-   }
+            if (guiButton.id == -4) {
+                this.createWaypoint();
+            }
 
-   public static String setTooltip(WaypointsScreen waypointsScreen, String str) {
-      return waypointsScreen.tooltip = str;
-   }
+            if (guiButton.id == -5) {
+                this.getMc().displayGuiScreen(new WaypointOptionsScreen(this, this.minimapSettings));
+            }
 
-   @Override
-   public void drawScreen(int n, int n2, float f) {
-      super.run8();
-      this.tooltip = null;
-      this.waypointListSlot.drawScreen(n, n2, f);
-      this.drawCenteredString(this.getFontRendererObj(), this.title, this.getWidth() / 2, 20, 16777215);
-      super.drawScreen(n, n2, f);
-      if (this.tooltip != null) {
-         this.drawTooltip(this.tooltip, n, n2);
-      }
-   }
+            if (guiButton.id == 65336) {
+                this.getMc().displayGuiScreen(this.guiScreen);
+            }
+        }
+    }
 
-   public void setSelectedWaypoint(Waypoint waypoint) {
-      this.selectedWaypoint = waypoint;
-      boolean flag = this.selectedWaypoint != null;
-      this.selectserverEdit.enabled = flag;
-      this.selectserverDelete.enabled = flag;
-      this.minimapWaypointsTeleportto.enabled = flag && this.canTeleport();
-   }
+    public static String setTooltip(WaypointsScreen waypointsScreen, String str) {
+        return waypointsScreen.tooltip = str;
+    }
 
-   public static GuiButton getTeleportButton(WaypointsScreen waypointsScreen) {
-      return waypointsScreen.minimapWaypointsTeleportto;
-   }
+    public WaypointsScreen(GuiScreen guiScreen, IVoxelMap voxelMap) {
+        this.voxelMap = voxelMap;
+        this.guiScreen = guiScreen;
+        this.minimapSettings = voxelMap.getMapOptions();
+        this.waypointManager = voxelMap.getWaypointManager();
+    }
 
-   @Override
-   public void handleMouseInput() throws java.io.IOException {
-      super.handleMouseInput();
-      this.waypointListSlot.handleMouseInput();
-   }
+    public static GuiButton findGuiButton2(WaypointsScreen waypointsScreen) {
+        return waypointsScreen.selectserverDelete;
+    }
 
-   public void createWaypoint() {
-      this.newClicked = true;
-      float f;
-      float f2;
-      float f3;
-      if (this.waypointManager.getWaypoints().size() == 0) {
-         f = 0.0F;
-         f2 = 1.0F;
-         f3 = 0.0F;
-      } else {
-         f = this.random.nextFloat();
-         f2 = this.random.nextFloat();
-         f3 = this.random.nextFloat();
-      }
+    @Override
+    public void drawScreen(int n, int n2, float f) throws java.io.IOException {
+        super.drawMinimapBackground();
+        this.tooltip = null;
+        this.waypointListSlot.drawScreen(n, n2, f);
+        this.drawCenteredString(this.getFontRendererObj(), this.title, this.getWidth() / 2, 20, 16777215);
+        super.drawScreen(n, n2, f);
+        if (this.tooltip != null) {
+            this.drawTooltip(this.tooltip, n, n2);
+        }
+    }
 
-      TreeSet treeSet = new TreeSet();
-      treeSet.add(this.minimapSettings.mc.thePlayer.dimension);
-      this.newWaypoint = new Waypoint(
-         "",
-         this.minimapSettings.mc.thePlayer.dimension != -1 ? MinecraftHelper.getBlockX() : MinecraftHelper.getBlockX() * 8,
-         this.minimapSettings.mc.thePlayer.dimension != -1 ? MinecraftHelper.getBlockZ() : MinecraftHelper.getBlockZ() * 8,
-         MinecraftHelper.getPlayerY() - 1,
-         true,
-         f,
-         f2,
-         f3,
-         "",
-         this.voxelMap.getWaypointManager().getCurrentSubworld(),
-         treeSet
-      );
-      this.getMc().displayGuiScreen(new WaypointEditScreen(this.voxelMap, this, this.newWaypoint));
-   }
+    public void toggleSelectedWaypoint() {
+        this.selectedWaypoint.enabled = !this.selectedWaypoint.enabled;
+        this.waypointManager.saveWaypoints();
+    }
 
-   public void updateSortButtons() {
-      int abs = Math.abs(this.minimapSettings.waypointSortBy);
-      boolean flag = this.minimapSettings.waypointSortBy > 0;
-      this.waypointListSlot.process(abs, flag);
-      String str = flag ? "↑" : "↓";
-      this.minimapSettings.getClass();
-      if (abs == 2) {
-         this.minimapWaypointsSortbyname.displayString = str + " " + Translations.translate("mco.configure.world.name") + " " + str;
-      } else {
-         this.minimapWaypointsSortbyname.displayString = Translations.translate("mco.configure.world.name");
-      }
+    public static GuiButton findGuiButton3(WaypointsScreen waypointsScreen) {
+        return waypointsScreen.selectserverEdit;
+    }
 
-      this.minimapSettings.getClass();
-      if (abs == 3) {
-         this.minimapWaypointsSortbydistance.displayString = str + " " + Translations.translate("minimap.waypoints.sortbydistance") + " " + str;
-      } else {
-         this.minimapWaypointsSortbydistance.displayString = Translations.translate("minimap.waypoints.sortbydistance");
-      }
+    public void createWaypoint() throws java.io.IOException {
+        this.newClicked = true;
+        float f;
+        float f2;
+        float f3;
+        if (this.waypointManager.getWaypoints().size() == 0) {
+            f = 0.0F;
+            f2 = 1.0F;
+            f3 = 0.0F;
+        } else {
+            f = this.random.nextFloat();
+            f2 = this.random.nextFloat();
+            f3 = this.random.nextFloat();
+        }
 
-      this.minimapSettings.getClass();
-      if (abs == 1) {
-         this.minimapWaypointsSortbycreated.displayString = str + " " + Translations.translate("minimap.waypoints.sortbycreated") + " " + str;
-      } else {
-         this.minimapWaypointsSortbycreated.displayString = Translations.translate("minimap.waypoints.sortbycreated");
-      }
+        TreeSet treeSet = new TreeSet();
+        treeSet.add(this.minimapSettings.mc.thePlayer.dimension);
+        this.newWaypoint = new Waypoint(
+            "",
+            this.minimapSettings.mc.thePlayer.dimension != -1 ? MinecraftHelper.getBlockX() : MinecraftHelper.getBlockX() * 8,
+            this.minimapSettings.mc.thePlayer.dimension != -1 ? MinecraftHelper.getBlockZ() : MinecraftHelper.getBlockZ() * 8,
+            MinecraftHelper.getPlayerY() - 1,
+            true,
+            f,
+            f2,
+            f3,
+            "",
+            this.voxelMap.getWaypointManager().getCurrentSubworld(),
+            treeSet
+        );
+        this.getMc().displayGuiScreen(new WaypointEditScreen(this.voxelMap, this, this.newWaypoint));
+    }
 
-      this.minimapSettings.getClass();
-      if (abs == 4) {
-         this.minimapWaypointsSortbycolor.displayString = str + " " + Translations.translate("minimap.waypoints.sortbycolor") + " " + str;
-      } else {
-         this.minimapWaypointsSortbycolor.displayString = Translations.translate("minimap.waypoints.sortbycolor");
-      }
-   }
+    public void updateSortButtons() {
+        int abs = Math.abs(this.minimapSettings.waypointSortBy);
+        boolean flag = this.minimapSettings.waypointSortBy > 0;
+        this.waypointListSlot.sortWaypoints(abs, flag);
+        String str = flag ? "↑" : "↓";
+        this.minimapSettings.getClass();
+        if (abs == 2) {
+            this.minimapWaypointsSortbyname.displayString = str + " " + Translations.translate("mco.configure.world.name") + " " + str;
+        } else {
+            this.minimapWaypointsSortbyname.displayString = Translations.translate("mco.configure.world.name");
+        }
 
-   @Override
-   public void onGuiClosed() {
-      if (this.changedSort) {
-         super.onGuiClosed();
-      }
-   }
+        this.minimapSettings.getClass();
+        if (abs == 3) {
+            this.minimapWaypointsSortbydistance.displayString = str + " " + Translations.translate("minimap.waypoints.sortbydistance") + " " + str;
+        } else {
+            this.minimapWaypointsSortbydistance.displayString = Translations.translate("minimap.waypoints.sortbydistance");
+        }
 
-   @Override
-   public void confirmClicked(boolean flag, int n) {
-      if (this.deleteClicked) {
-         this.deleteClicked = false;
-         if (flag) {
-            this.waypointManager.deleteWaypoint(this.selectedWaypoint);
-            this.selectedWaypoint = null;
-         }
+        this.minimapSettings.getClass();
+        if (abs == 1) {
+            this.minimapWaypointsSortbycreated.displayString = str + " " + Translations.translate("minimap.waypoints.sortbycreated") + " " + str;
+        } else {
+            this.minimapWaypointsSortbycreated.displayString = Translations.translate("minimap.waypoints.sortbycreated");
+        }
 
-         this.getMc().displayGuiScreen(this);
-      }
+        this.minimapSettings.getClass();
+        if (abs == 4) {
+            this.minimapWaypointsSortbycolor.displayString = str + " " + Translations.translate("minimap.waypoints.sortbycolor") + " " + str;
+        } else {
+            this.minimapWaypointsSortbycolor.displayString = Translations.translate("minimap.waypoints.sortbycolor");
+        }
+    }
 
-      if (this.editClicked) {
-         this.editClicked = false;
-         if (flag) {
-            this.waypointManager.saveWaypoints();
-         }
+    @Override
+    public void confirmClicked(boolean flag, int n) throws java.io.IOException {
+        if (this.deleteClicked) {
+            this.deleteClicked = false;
+            if (flag) {
+                this.waypointManager.deleteWaypoint(this.selectedWaypoint);
+                this.selectedWaypoint = null;
+            }
 
-         this.getMc().displayGuiScreen(this);
-      }
+            this.getMc().displayGuiScreen(this);
+        }
 
-      if (this.newClicked) {
-         this.newClicked = false;
-         if (flag) {
-            this.waypointManager.addWaypoint(this.newWaypoint);
-            this.setSelectedWaypoint(this.newWaypoint);
-         }
+        if (this.editClicked) {
+            this.editClicked = false;
+            if (flag) {
+                this.waypointManager.saveWaypoints();
+            }
 
-         this.getMc().displayGuiScreen(this);
-      }
-   }
+            this.getMc().displayGuiScreen(this);
+        }
 
-   public void editWaypoint(Waypoint waypoint) {
-      this.editClicked = true;
-      this.getMc().displayGuiScreen(new WaypointEditScreen(this.voxelMap, this, waypoint));
-   }
+        if (this.newClicked) {
+            this.newClicked = false;
+            if (flag) {
+                this.waypointManager.addWaypoint(this.newWaypoint);
+                this.setSelectedWaypoint(this.newWaypoint);
+            }
 
-   public static GuiButton getEditButton(WaypointsScreen waypointsScreen) {
-      return waypointsScreen.selectserverEdit;
-   }
-
-   public void toggleSelectedWaypoint() {
-      this.selectedWaypoint.enabled = !this.selectedWaypoint.enabled;
-      this.waypointManager.saveWaypoints();
-   }
+            this.getMc().displayGuiScreen(this);
+        }
+    }
 }

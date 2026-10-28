@@ -4,39 +4,44 @@ import com.google.gson.JsonObject;
 import com.mojang.authlib.GameProfile;
 import java.io.File;
 
-public class UserListWhitelist extends UserList<GameProfile, UserListWhitelistEntry> {
-   public UserListWhitelist(File file) {
-      super(file);
-   }
+public class UserListWhitelist extends UserList {
+    public UserListWhitelist(File file) {
+        super(file);
+    }
 
-   @Override
-   public UserListEntry<GameProfile> createEntry(JsonObject entryData) {
-      return new UserListWhitelistEntry(entryData);
-   }
+    @Override
+    public UserListEntry createEntry(JsonObject entryData) {
+        return new UserListWhitelistEntry(entryData);
+    }
 
-   @Override
-   public String[] getKeys() {
-      String[] strs = new String[this.getValues().size()];
-      int n = 0;
+    @Override
+    public String[] getKeys() {
+        String[] strs = new String[this.getValues().size()];
+        int n = 0;
 
-      for (UserListWhitelistEntry userListWhitelistEntry : this.getValues().values()) {
-         strs[n++] = userListWhitelistEntry.getValue().getName();
-      }
+        for (UserListWhitelistEntry userListWhitelistEntry : (Iterable<UserListWhitelistEntry>)this.getValues().values()) {
+            strs[n++] = ((GameProfile)userListWhitelistEntry.getValue()).getName();
+        }
 
-      return strs;
-   }
+        return strs;
+    }
 
-   public String getObjectKey(GameProfile obj) {
-      return obj.getId().toString();
-   }
+    public String getObjectKey(GameProfile gameProfile) {
+        return gameProfile.getId().toString();
+    }
 
-   public GameProfile getBannedProfile(String name) {
-      for (UserListWhitelistEntry userListWhitelistEntry : this.getValues().values()) {
-         if (name.equalsIgnoreCase(userListWhitelistEntry.getValue().getName())) {
-            return userListWhitelistEntry.getValue();
-         }
-      }
+    public GameProfile getProfile(String str) {
+        for (UserListWhitelistEntry userListWhitelistEntry : (Iterable<UserListWhitelistEntry>)this.getValues().values()) {
+            if (str.equalsIgnoreCase(((GameProfile)userListWhitelistEntry.getValue()).getName())) {
+                return (GameProfile)userListWhitelistEntry.getValue();
+            }
+        }
 
-      return null;
-   }
+        return null;
+    }
+
+    @Override
+    public String getObjectKey(Object obj) {
+        return this.getObjectKey((GameProfile)obj);
+    }
 }

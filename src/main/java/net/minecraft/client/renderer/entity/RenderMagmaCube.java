@@ -1,27 +1,38 @@
 package net.minecraft.client.renderer.entity;
 
 import net.minecraft.client.model.ModelMagmaCube;
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.EntityMagmaCube;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
-public class RenderMagmaCube extends RenderLiving<EntityMagmaCube> {
-   public static ResourceLocation magmaCubeTextures = new ResourceLocation("textures/entity/slime/magmacube.png");
+public class RenderMagmaCube extends RenderLiving {
+    public static ResourceLocation magmaCubeTextures = new ResourceLocation("textures/entity/slime/magmacube.png");
 
-   public RenderMagmaCube(RenderManager renderManagerIn) {
-      super(renderManagerIn, new ModelMagmaCube(), 0.25F);
-   }
+    public RenderMagmaCube() {
+        super(new ModelMagmaCube(), 0.25F);
+    }
 
-   public ResourceLocation getEntityTexture(EntityMagmaCube entity) {
-      return magmaCubeTextures;
-   }
+    public ResourceLocation getEntityTexture(EntityMagmaCube entityMagmaCube) {
+        return magmaCubeTextures;
+    }
 
-   public void preRenderCallback(EntityMagmaCube entitylivingbaseIn, float partialTickTime) {
-      int slimeSize = entitylivingbaseIn.getSlimeSize();
-      float f = (entitylivingbaseIn.prevSquishFactor + (entitylivingbaseIn.squishFactor - entitylivingbaseIn.prevSquishFactor) * partialTickTime)
-         / (slimeSize * 0.5F + 1.0F);
-      float f2 = 1.0F / (f + 1.0F);
-      float f3 = slimeSize;
-      GlStateManager.scale(f2 * f3, 1.0F / f2 * f3, f2 * f3);
-   }
+    public void preRenderCallback(EntityMagmaCube entityMagmaCube, float f) {
+        int slimeSize = entityMagmaCube.getSlimeSize();
+        float f2 = (entityMagmaCube.prevSquishFactor + (entityMagmaCube.squishFactor - entityMagmaCube.prevSquishFactor) * f) / (slimeSize * 0.5F + 1.0F);
+        float f3 = 1.0F / (f2 + 1.0F);
+        float f4 = slimeSize;
+        GL11.glScalef(f3 * f4, 1.0F / f3 * f4, f3 * f4);
+    }
+
+    @Override
+    public void preRenderCallback(EntityLivingBase entityLivingBase, float f) {
+        this.preRenderCallback((EntityMagmaCube)entityLivingBase, f);
+    }
+
+    @Override
+    public ResourceLocation getEntityTexture(Entity entity) {
+        return this.getEntityTexture((EntityMagmaCube)entity);
+    }
 }

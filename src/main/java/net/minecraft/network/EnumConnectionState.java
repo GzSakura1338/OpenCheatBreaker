@@ -2,17 +2,17 @@ package net.minecraft.network;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.hash.TIntObjectHashMap;
 import java.util.Map;
-import net.minecraft.network.EnumPacketDirection;
-import net.minecraft.network.Packet;
 import net.minecraft.network.handshake.client.C00Handshake;
 import net.minecraft.network.login.client.C00PacketLoginStart;
 import net.minecraft.network.login.client.C01PacketEncryptionResponse;
 import net.minecraft.network.login.server.S00PacketDisconnect;
 import net.minecraft.network.login.server.S01PacketEncryptionRequest;
 import net.minecraft.network.login.server.S02PacketLoginSuccess;
-import net.minecraft.network.login.server.S03PacketEnableCompression;
 import net.minecraft.network.play.client.C00PacketKeepAlive;
 import net.minecraft.network.play.client.C01PacketChatMessage;
 import net.minecraft.network.play.client.C02PacketUseEntity;
@@ -34,8 +34,9 @@ import net.minecraft.network.play.client.C14PacketTabComplete;
 import net.minecraft.network.play.client.C15PacketClientSettings;
 import net.minecraft.network.play.client.C16PacketClientStatus;
 import net.minecraft.network.play.client.C17PacketCustomPayload;
-import net.minecraft.network.play.client.C18PacketSpectate;
-import net.minecraft.network.play.client.C19PacketResourcePackStatus;
+import net.minecraft.network.play.client.C03PacketPlayer.C04PacketPlayerPosition;
+import net.minecraft.network.play.client.C03PacketPlayer.C05PacketPlayerLook;
+import net.minecraft.network.play.client.C03PacketPlayer.C06PacketPlayerPosLook;
 import net.minecraft.network.play.server.S00PacketKeepAlive;
 import net.minecraft.network.play.server.S01PacketJoinGame;
 import net.minecraft.network.play.server.S02PacketChat;
@@ -98,15 +99,9 @@ import net.minecraft.network.play.server.S3DPacketDisplayScoreboard;
 import net.minecraft.network.play.server.S3EPacketTeams;
 import net.minecraft.network.play.server.S3FPacketCustomPayload;
 import net.minecraft.network.play.server.S40PacketDisconnect;
-import net.minecraft.network.play.server.S41PacketServerDifficulty;
-import net.minecraft.network.play.server.S42PacketCombatEvent;
-import net.minecraft.network.play.server.S43PacketCamera;
-import net.minecraft.network.play.server.S44PacketWorldBorder;
-import net.minecraft.network.play.server.S45PacketTitle;
-import net.minecraft.network.play.server.S46PacketSetCompressionLevel;
-import net.minecraft.network.play.server.S47PacketPlayerListHeaderFooter;
-import net.minecraft.network.play.server.S48PacketResourcePackSend;
-import net.minecraft.network.play.server.S49PacketUpdateEntityNBT;
+import net.minecraft.network.play.server.S14PacketEntity.S15PacketEntityRelMove;
+import net.minecraft.network.play.server.S14PacketEntity.S16PacketEntityLook;
+import net.minecraft.network.play.server.S14PacketEntity.S17PacketEntityLookMove;
 import net.minecraft.network.status.client.C00PacketServerQuery;
 import net.minecraft.network.status.client.C01PacketPing;
 import net.minecraft.network.status.server.S00PacketServerInfo;
@@ -114,170 +109,146 @@ import net.minecraft.network.status.server.S01PacketPong;
 import org.apache.logging.log4j.LogManager;
 
 public enum EnumConnectionState {
-    HANDSHAKING(-1){
+    HANDSHAKING("HANDSHAKING", 0, -1, null) {
         {
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C00Handshake.class);
+            this.findEnumConnectionState(0, C00Handshake.class);
         }
-    }
-    ,
-    PLAY(0){
+    },
+    PLAY("PLAY", 1, 0, null) {
         {
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S00PacketKeepAlive.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S01PacketJoinGame.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S02PacketChat.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S03PacketTimeUpdate.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S04PacketEntityEquipment.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S05PacketSpawnPosition.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S06PacketUpdateHealth.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S07PacketRespawn.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S08PacketPlayerPosLook.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S09PacketHeldItemChange.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0APacketUseBed.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0BPacketAnimation.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0CPacketSpawnPlayer.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0DPacketCollectItem.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0EPacketSpawnObject.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S0FPacketSpawnMob.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S10PacketSpawnPainting.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S11PacketSpawnExperienceOrb.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S12PacketEntityVelocity.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S13PacketDestroyEntities.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S14PacketEntity.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S14PacketEntity.S15PacketEntityRelMove.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S14PacketEntity.S16PacketEntityLook.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S14PacketEntity.S17PacketEntityLookMove.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S18PacketEntityTeleport.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S19PacketEntityHeadLook.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S19PacketEntityStatus.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S1BPacketEntityAttach.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S1CPacketEntityMetadata.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S1DPacketEntityEffect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S1EPacketRemoveEntityEffect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S1FPacketSetExperience.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S20PacketEntityProperties.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S21PacketChunkData.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S22PacketMultiBlockChange.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S23PacketBlockChange.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S24PacketBlockAction.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S25PacketBlockBreakAnim.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S26PacketMapChunkBulk.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S27PacketExplosion.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S28PacketEffect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S29PacketSoundEffect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2APacketParticles.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2BPacketChangeGameState.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2CPacketSpawnGlobalEntity.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2DPacketOpenWindow.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2EPacketCloseWindow.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S2FPacketSetSlot.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S30PacketWindowItems.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S31PacketWindowProperty.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S32PacketConfirmTransaction.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S33PacketUpdateSign.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S34PacketMaps.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S35PacketUpdateTileEntity.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S36PacketSignEditorOpen.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S37PacketStatistics.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S38PacketPlayerListItem.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S39PacketPlayerAbilities.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3APacketTabComplete.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3BPacketScoreboardObjective.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3CPacketUpdateScore.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3DPacketDisplayScoreboard.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3EPacketTeams.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S3FPacketCustomPayload.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S40PacketDisconnect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S41PacketServerDifficulty.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S42PacketCombatEvent.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S43PacketCamera.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S44PacketWorldBorder.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S45PacketTitle.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S46PacketSetCompressionLevel.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S47PacketPlayerListHeaderFooter.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S48PacketResourcePackSend.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S49PacketUpdateEntityNBT.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C00PacketKeepAlive.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C01PacketChatMessage.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C02PacketUseEntity.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C03PacketPlayer.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C03PacketPlayer.C04PacketPlayerPosition.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C03PacketPlayer.C05PacketPlayerLook.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C03PacketPlayer.C06PacketPlayerPosLook.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C07PacketPlayerDigging.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C08PacketPlayerBlockPlacement.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C09PacketHeldItemChange.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0APacketAnimation.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0BPacketEntityAction.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0CPacketInput.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0DPacketCloseWindow.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0EPacketClickWindow.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C0FPacketConfirmTransaction.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C10PacketCreativeInventoryAction.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C11PacketEnchantItem.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C12PacketUpdateSign.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C13PacketPlayerAbilities.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C14PacketTabComplete.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C15PacketClientSettings.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C16PacketClientStatus.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C17PacketCustomPayload.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C18PacketSpectate.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C19PacketResourcePackStatus.class);
+            this.findEnumConnectionState2(0, S00PacketKeepAlive.class);
+            this.findEnumConnectionState2(1, S01PacketJoinGame.class);
+            this.findEnumConnectionState2(2, S02PacketChat.class);
+            this.findEnumConnectionState2(3, S03PacketTimeUpdate.class);
+            this.findEnumConnectionState2(4, S04PacketEntityEquipment.class);
+            this.findEnumConnectionState2(5, S05PacketSpawnPosition.class);
+            this.findEnumConnectionState2(6, S06PacketUpdateHealth.class);
+            this.findEnumConnectionState2(7, S07PacketRespawn.class);
+            this.findEnumConnectionState2(8, S08PacketPlayerPosLook.class);
+            this.findEnumConnectionState2(9, S09PacketHeldItemChange.class);
+            this.findEnumConnectionState2(10, S0APacketUseBed.class);
+            this.findEnumConnectionState2(11, S0BPacketAnimation.class);
+            this.findEnumConnectionState2(12, S0CPacketSpawnPlayer.class);
+            this.findEnumConnectionState2(13, S0DPacketCollectItem.class);
+            this.findEnumConnectionState2(14, S0EPacketSpawnObject.class);
+            this.findEnumConnectionState2(15, S0FPacketSpawnMob.class);
+            this.findEnumConnectionState2(16, S10PacketSpawnPainting.class);
+            this.findEnumConnectionState2(17, S11PacketSpawnExperienceOrb.class);
+            this.findEnumConnectionState2(18, S12PacketEntityVelocity.class);
+            this.findEnumConnectionState2(19, S13PacketDestroyEntities.class);
+            this.findEnumConnectionState2(20, S14PacketEntity.class);
+            this.findEnumConnectionState2(21, S15PacketEntityRelMove.class);
+            this.findEnumConnectionState2(22, S16PacketEntityLook.class);
+            this.findEnumConnectionState2(23, S17PacketEntityLookMove.class);
+            this.findEnumConnectionState2(24, S18PacketEntityTeleport.class);
+            this.findEnumConnectionState2(25, S19PacketEntityHeadLook.class);
+            this.findEnumConnectionState2(26, S19PacketEntityStatus.class);
+            this.findEnumConnectionState2(27, S1BPacketEntityAttach.class);
+            this.findEnumConnectionState2(28, S1CPacketEntityMetadata.class);
+            this.findEnumConnectionState2(29, S1DPacketEntityEffect.class);
+            this.findEnumConnectionState2(30, S1EPacketRemoveEntityEffect.class);
+            this.findEnumConnectionState2(31, S1FPacketSetExperience.class);
+            this.findEnumConnectionState2(32, S20PacketEntityProperties.class);
+            this.findEnumConnectionState2(33, S21PacketChunkData.class);
+            this.findEnumConnectionState2(34, S22PacketMultiBlockChange.class);
+            this.findEnumConnectionState2(35, S23PacketBlockChange.class);
+            this.findEnumConnectionState2(36, S24PacketBlockAction.class);
+            this.findEnumConnectionState2(37, S25PacketBlockBreakAnim.class);
+            this.findEnumConnectionState2(38, S26PacketMapChunkBulk.class);
+            this.findEnumConnectionState2(39, S27PacketExplosion.class);
+            this.findEnumConnectionState2(40, S28PacketEffect.class);
+            this.findEnumConnectionState2(41, S29PacketSoundEffect.class);
+            this.findEnumConnectionState2(42, S2APacketParticles.class);
+            this.findEnumConnectionState2(43, S2BPacketChangeGameState.class);
+            this.findEnumConnectionState2(44, S2CPacketSpawnGlobalEntity.class);
+            this.findEnumConnectionState2(45, S2DPacketOpenWindow.class);
+            this.findEnumConnectionState2(46, S2EPacketCloseWindow.class);
+            this.findEnumConnectionState2(47, S2FPacketSetSlot.class);
+            this.findEnumConnectionState2(48, S30PacketWindowItems.class);
+            this.findEnumConnectionState2(49, S31PacketWindowProperty.class);
+            this.findEnumConnectionState2(50, S32PacketConfirmTransaction.class);
+            this.findEnumConnectionState2(51, S33PacketUpdateSign.class);
+            this.findEnumConnectionState2(52, S34PacketMaps.class);
+            this.findEnumConnectionState2(53, S35PacketUpdateTileEntity.class);
+            this.findEnumConnectionState2(54, S36PacketSignEditorOpen.class);
+            this.findEnumConnectionState2(55, S37PacketStatistics.class);
+            this.findEnumConnectionState2(56, S38PacketPlayerListItem.class);
+            this.findEnumConnectionState2(57, S39PacketPlayerAbilities.class);
+            this.findEnumConnectionState2(58, S3APacketTabComplete.class);
+            this.findEnumConnectionState2(59, S3BPacketScoreboardObjective.class);
+            this.findEnumConnectionState2(60, S3CPacketUpdateScore.class);
+            this.findEnumConnectionState2(61, S3DPacketDisplayScoreboard.class);
+            this.findEnumConnectionState2(62, S3EPacketTeams.class);
+            this.findEnumConnectionState2(63, S3FPacketCustomPayload.class);
+            this.findEnumConnectionState2(64, S40PacketDisconnect.class);
+            this.findEnumConnectionState(0, C00PacketKeepAlive.class);
+            this.findEnumConnectionState(1, C01PacketChatMessage.class);
+            this.findEnumConnectionState(2, C02PacketUseEntity.class);
+            this.findEnumConnectionState(3, C03PacketPlayer.class);
+            this.findEnumConnectionState(4, C04PacketPlayerPosition.class);
+            this.findEnumConnectionState(5, C05PacketPlayerLook.class);
+            this.findEnumConnectionState(6, C06PacketPlayerPosLook.class);
+            this.findEnumConnectionState(7, C07PacketPlayerDigging.class);
+            this.findEnumConnectionState(8, C08PacketPlayerBlockPlacement.class);
+            this.findEnumConnectionState(9, C09PacketHeldItemChange.class);
+            this.findEnumConnectionState(10, C0APacketAnimation.class);
+            this.findEnumConnectionState(11, C0BPacketEntityAction.class);
+            this.findEnumConnectionState(12, C0CPacketInput.class);
+            this.findEnumConnectionState(13, C0DPacketCloseWindow.class);
+            this.findEnumConnectionState(14, C0EPacketClickWindow.class);
+            this.findEnumConnectionState(15, C0FPacketConfirmTransaction.class);
+            this.findEnumConnectionState(16, C10PacketCreativeInventoryAction.class);
+            this.findEnumConnectionState(17, C11PacketEnchantItem.class);
+            this.findEnumConnectionState(18, C12PacketUpdateSign.class);
+            this.findEnumConnectionState(19, C13PacketPlayerAbilities.class);
+            this.findEnumConnectionState(20, C14PacketTabComplete.class);
+            this.findEnumConnectionState(21, C15PacketClientSettings.class);
+            this.findEnumConnectionState(22, C16PacketClientStatus.class);
+            this.findEnumConnectionState(23, C17PacketCustomPayload.class);
         }
-    }
-    ,
-    STATUS(1){
+    },
+    STATUS("STATUS", 2, 1, null) {
         {
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C00PacketServerQuery.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S00PacketServerInfo.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C01PacketPing.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S01PacketPong.class);
+            this.findEnumConnectionState(0, C00PacketServerQuery.class);
+            this.findEnumConnectionState2(0, S00PacketServerInfo.class);
+            this.findEnumConnectionState(1, C01PacketPing.class);
+            this.findEnumConnectionState2(1, S01PacketPong.class);
         }
-    }
-    ,
-    LOGIN(2){
+    },
+    LOGIN("LOGIN", 3, 2, null) {
         {
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S00PacketDisconnect.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S01PacketEncryptionRequest.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S02PacketLoginSuccess.class);
-            this.registerPacket(EnumPacketDirection.CLIENTBOUND, S03PacketEnableCompression.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C00PacketLoginStart.class);
-            this.registerPacket(EnumPacketDirection.SERVERBOUND, C01PacketEncryptionResponse.class);
+            this.findEnumConnectionState2(0, S00PacketDisconnect.class);
+            this.findEnumConnectionState2(1, S01PacketEncryptionRequest.class);
+            this.findEnumConnectionState2(2, S02PacketLoginSuccess.class);
+            this.findEnumConnectionState(0, C00PacketLoginStart.class);
+            this.findEnumConnectionState(1, C01PacketEncryptionResponse.class);
         }
     };
 
-    public static int intValue;
-    public static int intValue2;
-    public static EnumConnectionState[] STATES_BY_ID;
-    public Map<EnumPacketDirection, BiMap<Integer, Class<? extends Packet>>> directionMaps = Maps.newEnumMap(EnumPacketDirection.class);
+    public static TIntObjectMap STATES_BY_ID = new TIntObjectHashMap();
+    public BiMap CLIENT_TO_SERVER = HashBiMap.create();
+    public BiMap SERVER_TO_CLIENT = HashBiMap.create();
     public int id;
-    public static Map<Class<? extends Packet>, EnumConnectionState> STATES_BY_CLASS;
+    public static Map STATES_BY_CLASS = Maps.newHashMap();
 
-    private EnumConnectionState(int protocolId) {
+    EnumConnectionState(int protocolId) {
         this.id = protocolId;
     }
 
-    public EnumConnectionState registerPacket(EnumPacketDirection direction, Class<? extends Packet> packetClass) {
-        BiMap<Integer, Class<? extends Packet>> biMap = this.directionMaps.get((Object)direction);
-        if (biMap == null) {
-            biMap = HashBiMap.create();
-            this.directionMaps.put(direction, biMap);
-        }
-        if (biMap.containsValue(packetClass)) {
-            String string = (Object)((Object)direction) + " packet " + packetClass + " is already known to ID " + biMap.inverse().get(packetClass);
-            LogManager.getLogger().fatal(string);
-            throw new IllegalArgumentException(string);
-        }
-        biMap.put(biMap.size(), packetClass);
-        return this;
+    public BiMap getClientToServer() {
+        return this.CLIENT_TO_SERVER;
     }
 
-    public Integer getPacketId(EnumPacketDirection direction, Packet packetIn) {
-        return (Integer)this.directionMaps.get((Object)direction).inverse().get(packetIn.getClass());
+    public BiMap getServerToClient() {
+        return this.SERVER_TO_CLIENT;
     }
 
-    public Packet getPacket(EnumPacketDirection direction, int packetId) throws IllegalAccessException, InstantiationException {
-        Class clazz = (Class)this.directionMaps.get((Object)direction).get(packetId);
-        return clazz == null ? null : (Packet)clazz.newInstance();
+    public BiMap getReceivablePackets(boolean flag) {
+        return flag ? this.getServerToClient() : this.getClientToServer();
+    }
+
+    public BiMap getSendablePackets(boolean flag) {
+        return flag ? this.getClientToServer() : this.getServerToClient();
     }
 
     public int getId() {
@@ -285,38 +256,68 @@ public enum EnumConnectionState {
     }
 
     public static EnumConnectionState getById(int stateId) {
-        return stateId >= intValue && stateId <= intValue2 ? STATES_BY_ID[stateId - intValue] : null;
+        return (EnumConnectionState)STATES_BY_ID.get(stateId);
     }
 
     public static EnumConnectionState getFromPacket(Packet packetIn) {
-        return STATES_BY_CLASS.get(packetIn.getClass());
+        return (EnumConnectionState)STATES_BY_CLASS.get(packetIn.getClass());
     }
 
     static {
-        intValue = -1;
-        intValue2 = 2;
-        STATES_BY_ID = new EnumConnectionState[intValue2 - intValue + 1];
-        STATES_BY_CLASS = Maps.newHashMap();
-        for (EnumConnectionState enumConnectionState : EnumConnectionState.values()) {
-            int n = enumConnectionState.getId();
-            if (n < intValue || n > intValue2) {
-                throw new Error("Invalid protocol ID " + Integer.toString(n));
-            }
-            EnumConnectionState.STATES_BY_ID[n - EnumConnectionState.intValue] = enumConnectionState;
-            for (EnumPacketDirection enumPacketDirection : enumConnectionState.directionMaps.keySet()) {
-                for (Class clazz : enumConnectionState.directionMaps.get((Object)enumPacketDirection).values()) {
-                    if (STATES_BY_CLASS.containsKey(clazz) && STATES_BY_CLASS.get(clazz) != enumConnectionState) {
-                        throw new Error("Packet " + clazz + " is already assigned to protocol " + (Object)((Object)STATES_BY_CLASS.get(clazz)) + " - can't reassign to " + (Object)((Object)enumConnectionState));
-                    }
-                    try {
-                        clazz.newInstance();
-                    }
-                    catch (Throwable throwable) {
-                        throw new Error("Packet " + clazz + " fails instantiation checks! " + clazz);
-                    }
-                    STATES_BY_CLASS.put(clazz, enumConnectionState);
+        for (EnumConnectionState enumConnectionState : values()) {
+            STATES_BY_ID.put(enumConnectionState.getId(), enumConnectionState);
+
+            for (Class clazz : (Iterable<Class>)Iterables.concat(enumConnectionState.getServerToClient().values(), enumConnectionState.getClientToServer().values())) {
+                if (STATES_BY_CLASS.containsKey(clazz) && STATES_BY_CLASS.get(clazz) != enumConnectionState) {
+                    throw new Error("Packet " + clazz + " is already assigned to protocol " + STATES_BY_CLASS.get(clazz) + " - can't reassign to " + enumConnectionState);
                 }
+
+                STATES_BY_CLASS.put(clazz, enumConnectionState);
             }
+        }
+    }
+
+    EnumConnectionState(String str, int n, int n2, Object obj) {
+        this(n2);
+    }
+
+    public EnumConnectionState findEnumConnectionState(int n, Class clazz) {
+        if (this.CLIENT_TO_SERVER.containsKey(n)) {
+            String str = "Serverbound packet ID " + n + " is already assigned to " + this.CLIENT_TO_SERVER.get(n) + "; cannot re-assign to " + clazz;
+            LogManager.getLogger().fatal(str);
+            throw new IllegalArgumentException(str);
+        } else if (this.CLIENT_TO_SERVER.containsValue(clazz)) {
+            String str = "Serverbound packet "
+                + clazz
+                + " is already assigned to ID "
+                + this.CLIENT_TO_SERVER.inverse().get(clazz)
+                + "; cannot re-assign to "
+                + n;
+            LogManager.getLogger().fatal(str);
+            throw new IllegalArgumentException(str);
+        } else {
+            this.CLIENT_TO_SERVER.put(n, clazz);
+            return this;
+        }
+    }
+
+    public EnumConnectionState findEnumConnectionState2(int n, Class clazz) {
+        if (this.SERVER_TO_CLIENT.containsKey(n)) {
+            String str = "Clientbound packet ID " + n + " is already assigned to " + this.SERVER_TO_CLIENT.get(n) + "; cannot re-assign to " + clazz;
+            LogManager.getLogger().fatal(str);
+            throw new IllegalArgumentException(str);
+        } else if (this.SERVER_TO_CLIENT.containsValue(clazz)) {
+            String str = "Clientbound packet "
+                + clazz
+                + " is already assigned to ID "
+                + this.SERVER_TO_CLIENT.inverse().get(clazz)
+                + "; cannot re-assign to "
+                + n;
+            LogManager.getLogger().fatal(str);
+            throw new IllegalArgumentException(str);
+        } else {
+            this.SERVER_TO_CLIENT.put(n, clazz);
+            return this;
         }
     }
 }

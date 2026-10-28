@@ -6,31 +6,31 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.WebsocketPacketHandler;
 
 public class FriendRequestsPacket extends AbstractPacket {
-   public String json;
+    public String json;
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeString(this.json);
-   }
+    public FriendRequestsPacket() {
+    }
 
-   public FriendRequestsPacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.json = packetBuffer.readString();
+    }
 
-   public FriendRequestsPacket(String str) {
-      this.json = str;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handleFriendRequests(this);
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handleFriendRequests(this);
-   }
+    public FriendRequestsPacket(String str) {
+        this.json = str;
+    }
 
-   public String getJson() {
-      return this.json;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeString(this.json);
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.json = packetBuffer.readString();
-   }
+    public String getJson() {
+        return this.json;
+    }
 }

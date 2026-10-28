@@ -1,121 +1,81 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
-import java.util.EnumSet;
-import java.util.Set;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 
-public class S08PacketPlayerPosLook implements Packet<INetHandlerPlayClient> {
-   public double x;
-   public double y;
-   public double z;
-   public float yaw;
-   public float pitch;
-   public Set<S08PacketPlayerPosLook.EnumFlags> flags;
+public class S08PacketPlayerPosLook extends Packet {
+    public double x;
+    public double y;
+    public double z;
+    public float yaw;
+    public float pitch;
+    public boolean flag;
 
-   public S08PacketPlayerPosLook() {
-   }
+    public S08PacketPlayerPosLook() {
+    }
 
-   public S08PacketPlayerPosLook(double xIn, double yIn, double zIn, float yawIn, float pitchIn, Set<S08PacketPlayerPosLook.EnumFlags> set) {
-      this.x = xIn;
-      this.y = yIn;
-      this.z = zIn;
-      this.yaw = yawIn;
-      this.pitch = pitchIn;
-      this.flags = set;
-   }
+    public S08PacketPlayerPosLook(double d, double d2, double d3, float f, float f2, boolean flag) {
+        this.x = d;
+        this.y = d2;
+        this.z = d3;
+        this.yaw = f;
+        this.pitch = f2;
+        this.flag = flag;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.x = buf.readDouble();
-      this.y = buf.readDouble();
-      this.z = buf.readDouble();
-      this.yaw = buf.readFloat();
-      this.pitch = buf.readFloat();
-      this.flags = S08PacketPlayerPosLook.EnumFlags.getFlags(buf.readUnsignedByte());
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.x = data.readDouble();
+        this.y = data.readDouble();
+        this.z = data.readDouble();
+        this.yaw = data.readFloat();
+        this.pitch = data.readFloat();
+        this.flag = data.readBoolean();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeDouble(this.x);
-      buf.writeDouble(this.y);
-      buf.writeDouble(this.z);
-      buf.writeFloat(this.yaw);
-      buf.writeFloat(this.pitch);
-      buf.writeByte(S08PacketPlayerPosLook.EnumFlags.getBitField(this.flags));
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeDouble(this.x);
+        data.writeDouble(this.y);
+        data.writeDouble(this.z);
+        data.writeFloat(this.yaw);
+        data.writeFloat(this.pitch);
+        data.writeBoolean(this.flag);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handlePlayerPosLook(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) throws IOException {
+        handler.handlePlayerPosLook(this);
+    }
 
-   public double getX() {
-      return this.x;
-   }
+    public double getX() {
+        return this.x;
+    }
 
-   public double getY() {
-      return this.y;
-   }
+    public double getY() {
+        return this.y;
+    }
 
-   public double getZ() {
-      return this.z;
-   }
+    public double getZ() {
+        return this.z;
+    }
 
-   public float getYaw() {
-      return this.yaw;
-   }
+    public float getYaw() {
+        return this.yaw;
+    }
 
-   public float getPitch() {
-      return this.pitch;
-   }
+    public float getPitch() {
+        return this.pitch;
+    }
 
-   public Set<S08PacketPlayerPosLook.EnumFlags> getFlags() {
-      return this.flags;
-   }
+    public boolean isFlag() {
+        return this.flag;
+    }
 
-   public enum EnumFlags {
-      X(0),
-      Y(1),
-      Z(2),
-      Y_ROT(3),
-      X_ROT(4);
-
-      public int shift;
-
-      EnumFlags(int n) {
-         this.shift = n;
-      }
-
-      public int getMask() {
-         return 1 << this.shift;
-      }
-
-      public boolean isSet(int n) {
-         return (n & this.getMask()) == this.getMask();
-      }
-
-      public static Set<S08PacketPlayerPosLook.EnumFlags> getFlags(int n) {
-         EnumSet noneOf = EnumSet.noneOf(S08PacketPlayerPosLook.EnumFlags.class);
-
-         for (S08PacketPlayerPosLook.EnumFlags enumFlags : values()) {
-            if (enumFlags.isSet(n)) {
-               noneOf.add(enumFlags);
-            }
-         }
-
-         return noneOf;
-      }
-
-      public static int getBitField(Set<S08PacketPlayerPosLook.EnumFlags> set) {
-         int n = 0;
-
-         for (S08PacketPlayerPosLook.EnumFlags enumFlags : set) {
-            n |= enumFlags.getMask();
-         }
-
-         return n;
-      }
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) throws IOException {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

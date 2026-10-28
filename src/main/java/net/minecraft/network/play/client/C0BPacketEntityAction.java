@@ -2,61 +2,57 @@ package net.minecraft.network.play.client;
 
 import java.io.IOException;
 import net.minecraft.entity.Entity;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayServer;
 
-public class C0BPacketEntityAction implements Packet<INetHandlerPlayServer> {
-   public int entityID;
-   public C0BPacketEntityAction.Action action;
-   public int auxData;
+public class C0BPacketEntityAction extends Packet {
+    public int entityId;
+    public int intValue;
+    public int mountJumpHeight;
 
-   public C0BPacketEntityAction() {
-   }
+    public C0BPacketEntityAction() {
+    }
 
-   public C0BPacketEntityAction(Entity entity, C0BPacketEntityAction.Action action) {
-      this(entity, action, 0);
-   }
+    public C0BPacketEntityAction(Entity entity, int n) {
+        this(entity, n, 0);
+    }
 
-   public C0BPacketEntityAction(Entity entity, C0BPacketEntityAction.Action action, int auxData) {
-      this.entityID = entity.getEntityId();
-      this.action = action;
-      this.auxData = auxData;
-   }
+    public C0BPacketEntityAction(Entity entity, int n, int n2) {
+        this.entityId = entity.getEntityId();
+        this.intValue = n;
+        this.mountJumpHeight = n2;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.entityID = buf.readVarIntFromBuffer();
-      this.action = buf.readEnumValue(C0BPacketEntityAction.Action.class);
-      this.auxData = buf.readVarIntFromBuffer();
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.entityId = data.readInt();
+        this.intValue = data.readByte();
+        this.mountJumpHeight = data.readInt();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeVarIntToBuffer(this.entityID);
-      buf.writeEnumValue(this.action);
-      buf.writeVarIntToBuffer(this.auxData);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.entityId);
+        data.writeByte(this.intValue);
+        data.writeInt(this.mountJumpHeight);
+    }
 
-   public void processPacket(INetHandlerPlayServer handler) {
-      handler.processEntityAction(this);
-   }
+    public void processPacket(INetHandlerPlayServer handler) throws IOException {
+        handler.processEntityAction(this);
+    }
 
-   public C0BPacketEntityAction.Action getAction() {
-      return this.action;
-   }
+    public int getIntValue() {
+        return this.intValue;
+    }
 
-   public int getAuxData() {
-      return this.auxData;
-   }
+    public int getMountJumpHeight() {
+        return this.mountJumpHeight;
+    }
 
-   public enum Action {
-      START_SNEAKING,
-      STOP_SNEAKING,
-      STOP_SLEEPING,
-      START_SPRINTING,
-      STOP_SPRINTING,
-      RIDING_JUMP,
-      OPEN_INVENTORY;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) throws IOException {
+        this.processPacket((INetHandlerPlayServer)netHandler);
+    }
 }

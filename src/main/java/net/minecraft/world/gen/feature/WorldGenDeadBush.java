@@ -3,27 +3,31 @@ package net.minecraft.world.gen.feature;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenDeadBush extends WorldGenerator {
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      Block block;
-      while (
-         ((block = worldIn.getBlockState(position).getBlock()).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && position.getY() > 0
-      ) {
-         position = position.down();
-      }
+    public Block block;
 
-      for (int i = 0; i < 4; i++) {
-         BlockPos blockPos = position.add(rand.nextInt(8) - rand.nextInt(8), rand.nextInt(4) - rand.nextInt(4), rand.nextInt(8) - rand.nextInt(8));
-         if (worldIn.isAirBlock(blockPos) && Blocks.deadbush.canBlockStay(worldIn, blockPos, Blocks.deadbush.getDefaultState())) {
-            worldIn.setBlockState(blockPos, Blocks.deadbush.getDefaultState(), 2);
-         }
-      }
+    public WorldGenDeadBush(Block block) {
+        this.block = block;
+    }
 
-      return true;
-   }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        Block block;
+        while (((block = world.getBlock(n, n2, n3)).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && n2 > 0) {
+            n2--;
+        }
+
+        for (int i = 0; i < 4; i++) {
+            int n4 = n + random.nextInt(8) - random.nextInt(8);
+            int n5 = n2 + random.nextInt(4) - random.nextInt(4);
+            int n6 = n3 + random.nextInt(8) - random.nextInt(8);
+            if (world.isAirBlock(n4, n5, n6) && this.block.canBlockStay(world, n4, n5, n6)) {
+                world.setBlock(n4, n5, n6, this.block, 0, 2);
+            }
+        }
+
+        return true;
+    }
 }

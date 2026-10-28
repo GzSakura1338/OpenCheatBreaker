@@ -1,162 +1,100 @@
 package net.minecraft.block;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
-import java.util.Collection;
 import java.util.List;
-import net.minecraft.block.properties.IProperty;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.material.Material;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.IIcon;
 
-public abstract class BlockFlower extends BlockBush {
-   public PropertyEnum<BlockFlower.EnumFlowerType> type;
+public class BlockFlower extends BlockBush {
+    public static String[][] stringMatrix = new String[][]{
+        {"flower_dandelion"},
+        {
+                "flower_rose",
+                "flower_blue_orchid",
+                "flower_allium",
+                "flower_houstonia",
+                "flower_tulip_red",
+                "flower_tulip_orange",
+                "flower_tulip_white",
+                "flower_tulip_pink",
+                "flower_oxeye_daisy"
+        }
+    };
+    public static String[] stringArray = new String[]{
+        "poppy", "blueOrchid", "allium", "houstonia", "tulipRed", "tulipOrange", "tulipWhite", "tulipPink", "oxeyeDaisy"
+    };
+    public static String[] stringArray2 = new String[]{"dandelion"};
+    public IIcon[] iIconArray;
+    public int intValue;
 
-   public BlockFlower() {
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(
-               this.getTypeProperty(),
-               this.getBlockType() == BlockFlower.EnumFlowerColor.RED ? BlockFlower.EnumFlowerType.POPPY : BlockFlower.EnumFlowerType.DANDELION
-            )
-      );
-   }
+    public BlockFlower(int n) {
+        super(Material.plants);
+        this.intValue = n;
+    }
 
-   @Override
-   public int damageDropped(IBlockState state) {
-      return state.getValue(this.getTypeProperty()).getMeta();
-   }
-
-   @Override
-   public void getSubBlocks(Item itemIn, CreativeTabs tab, List<ItemStack> list) {
-      for (BlockFlower.EnumFlowerType enumFlowerType : BlockFlower.EnumFlowerType.getTypes(this.getBlockType())) {
-         list.add(new ItemStack(itemIn, 1, enumFlowerType.getMeta()));
-      }
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(this.getTypeProperty(), BlockFlower.EnumFlowerType.getType(this.getBlockType(), meta));
-   }
-
-   public abstract BlockFlower.EnumFlowerColor getBlockType();
-
-   public IProperty<BlockFlower.EnumFlowerType> getTypeProperty() {
-      if (this.type == null) {
-         this.type = PropertyEnum.create("type", BlockFlower.EnumFlowerType.class, new Predicate<BlockFlower.EnumFlowerType>() {
-            public boolean apply(BlockFlower.EnumFlowerType enumFlowerType) {
-               return enumFlowerType.getBlockType() == BlockFlower.this.getBlockType();
-            }
-         });
-      }
-
-      return this.type;
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(this.getTypeProperty()).getMeta();
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, this.getTypeProperty());
-   }
-
-   @Override
-   public Block.EnumOffsetType getOffsetType() {
-      return Block.EnumOffsetType.XZ;
-   }
-
-   public enum EnumFlowerColor {
-      YELLOW,
-      RED;
-
-      public BlockFlower getBlock() {
-         return this == YELLOW ? Blocks.yellow_flower : Blocks.red_flower;
-      }
-   }
-
-   public enum EnumFlowerType implements IStringSerializable {
-      DANDELION(BlockFlower.EnumFlowerColor.YELLOW, 0, "dandelion"),
-      POPPY(BlockFlower.EnumFlowerColor.RED, 0, "poppy"),
-      BLUE_ORCHID(BlockFlower.EnumFlowerColor.RED, 1, "blue_orchid", "blueOrchid"),
-      ALLIUM(BlockFlower.EnumFlowerColor.RED, 2, "allium"),
-      HOUSTONIA(BlockFlower.EnumFlowerColor.RED, 3, "houstonia"),
-      RED_TULIP(BlockFlower.EnumFlowerColor.RED, 4, "red_tulip", "tulipRed"),
-      ORANGE_TULIP(BlockFlower.EnumFlowerColor.RED, 5, "orange_tulip", "tulipOrange"),
-      WHITE_TULIP(BlockFlower.EnumFlowerColor.RED, 6, "white_tulip", "tulipWhite"),
-      PINK_TULIP(BlockFlower.EnumFlowerColor.RED, 7, "pink_tulip", "tulipPink"),
-      OXEYE_DAISY(BlockFlower.EnumFlowerColor.RED, 8, "oxeye_daisy", "oxeyeDaisy");
-
-      public BlockFlower.EnumFlowerColor blockType;
-      public int meta;
-      public String name;
-      public String unlocalizedName;
-      public static BlockFlower.EnumFlowerType[][] TYPES_FOR_BLOCK = new BlockFlower.EnumFlowerType[BlockFlower.EnumFlowerColor.values().length][];
-
-      EnumFlowerType(BlockFlower.EnumFlowerColor blockType, int meta, String name) {
-         this(blockType, meta, name, name);
-      }
-
-      EnumFlowerType(BlockFlower.EnumFlowerColor blockType, int meta, String name, String unlocalizedName) {
-         this.blockType = blockType;
-         this.meta = meta;
-         this.name = name;
-         this.unlocalizedName = unlocalizedName;
-      }
-
-      public BlockFlower.EnumFlowerColor getBlockType() {
-         return this.blockType;
-      }
-
-      public int getMeta() {
-         return this.meta;
-      }
-
-      public static BlockFlower.EnumFlowerType getType(BlockFlower.EnumFlowerColor blockType, int meta) {
-         BlockFlower.EnumFlowerType[] enumFlowerTypes = TYPES_FOR_BLOCK[blockType.ordinal()];
-         if (meta < 0 || meta >= enumFlowerTypes.length) {
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        if (meta >= this.iIconArray.length) {
             meta = 0;
-         }
+        }
 
-         return enumFlowerTypes[meta];
-      }
+        return this.iIconArray[meta];
+    }
 
-      public static BlockFlower.EnumFlowerType[] getTypes(BlockFlower.EnumFlowerColor flowerColor) {
-         return TYPES_FOR_BLOCK[flowerColor.ordinal()];
-      }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.iIconArray = new IIcon[stringMatrix[this.intValue].length];
 
-      @Override
-      public String toString() {
-         return this.name;
-      }
+        for (int i = 0; i < this.iIconArray.length; i++) {
+            this.iIconArray[i] = reg.registerIcon(stringMatrix[this.intValue][i]);
+        }
+    }
 
-      @Override
-      public String getName() {
-         return this.name;
-      }
+    @Override
+    public int damageDropped(int meta) {
+        return meta;
+    }
 
-      public String getUnlocalizedName() {
-         return this.unlocalizedName;
-      }
+    @Override
+    public void getSubBlocks(Item itemIn, CreativeTabs tab, List list) {
+        for (int i = 0; i < this.iIconArray.length; i++) {
+            list.add(new ItemStack(itemIn, 1, i));
+        }
+    }
 
-      static {
-         for (final BlockFlower.EnumFlowerColor enumFlowerColor : BlockFlower.EnumFlowerColor.values()) {
-            Collection collection = Collections2.filter(Lists.newArrayList(values()), new Predicate<BlockFlower.EnumFlowerType>() {
-               public boolean apply(BlockFlower.EnumFlowerType enumFlowerType) {
-                  return enumFlowerType.getBlockType() == enumFlowerColor;
-               }
-            });
-            TYPES_FOR_BLOCK[enumFlowerColor.ordinal()] = (net.minecraft.block.BlockFlower.EnumFlowerType[])collection.toArray(new BlockFlower.EnumFlowerType[collection.size()]);
-         }
-      }
-   }
+    public static BlockFlower findBlockFlower(String str) {
+        for (String str2 : stringArray2) {
+            if (str2.equals(str)) {
+                return Blocks.yellow_flower;
+            }
+        }
+
+        for (String str2 : stringArray) {
+            if (str2.equals(str)) {
+                return Blocks.red_flower;
+            }
+        }
+
+        return null;
+    }
+
+    public static int computeInt(String str) {
+        for (int i = 0; i < stringArray2.length; i++) {
+            if (stringArray2[i].equals(str)) {
+                return i;
+            }
+        }
+
+        for (int i = 0; i < stringArray.length; i++) {
+            if (stringArray[i].equals(str)) {
+                return i;
+            }
+        }
+
+        return 0;
+    }
 }

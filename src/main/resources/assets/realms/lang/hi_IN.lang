@@ -31,6 +31,7 @@ mco.configure.world.location=स्थान
 mco.configure.world.name=नाम
 mco.configure.world.reset.question.line1=अापका realm  पुनर्जीवित किया जाएगा और अपने मौजूदा realm खो जाएगा
 mco.configure.world.reset.question.line2=क्या आप सुनिश्चित  ऐसा करना चाहते हैं?
+mco.configure.world.restore.download.question.line1=आप अपने विश्व मानचित्र डाउनलोड करने के लिए अपने डिफ़ॉल्ट ब्राउज़र पर पुनः भेजे जाएंगे।
 mco.configure.world.restore.download.question.line2=क्या आप जारी रखना चाहते हैं?
 mco.configure.world.restore.question.line1=Its scope on '%s' (%s) to be restored
 mco.configure.world.restore.question.line2=क्या आप सुनिश्चित ऐसा करना चाहते हैं?

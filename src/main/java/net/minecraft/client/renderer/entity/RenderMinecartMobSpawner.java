@@ -1,19 +1,21 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.block.Block;
 import net.minecraft.client.renderer.tileentity.TileEntityMobSpawnerRenderer;
 import net.minecraft.entity.ai.EntityMinecartMobSpawner;
+import net.minecraft.entity.item.EntityMinecart;
 import net.minecraft.init.Blocks;
 
-public class RenderMinecartMobSpawner extends RenderMinecart<EntityMinecartMobSpawner> {
-   public RenderMinecartMobSpawner(RenderManager renderManagerIn) {
-      super(renderManagerIn);
-   }
+public class RenderMinecartMobSpawner extends RenderMinecart {
+    public void render(EntityMinecartMobSpawner entityMinecartMobSpawner, float f, Block block, int n) {
+        super.render(entityMinecartMobSpawner, f, block, n);
+        if (block == Blocks.mob_spawner) {
+            TileEntityMobSpawnerRenderer.renderEntity(entityMinecartMobSpawner.getSpawnerBehavior(), entityMinecartMobSpawner.posX, entityMinecartMobSpawner.posY, entityMinecartMobSpawner.posZ, f);
+        }
+    }
 
-   public void handleEntityMinecartTNT(EntityMinecartMobSpawner minecart, float partialTicks, IBlockState state) {
-      super.handleEntityMinecartTNT(minecart, partialTicks, state);
-      if (state.getBlock() == Blocks.mob_spawner) {
-         TileEntityMobSpawnerRenderer.renderMob(minecart.getSpawnerBehavior(), minecart.posX, minecart.posY, minecart.posZ, partialTicks);
-      }
-   }
+    @Override
+    public void render(EntityMinecart entityMinecart, float f, Block block, int n) {
+        this.render((EntityMinecartMobSpawner)entityMinecart, f, block, n);
+    }
 }

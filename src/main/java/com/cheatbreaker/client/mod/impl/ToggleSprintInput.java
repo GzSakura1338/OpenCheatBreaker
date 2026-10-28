@@ -9,37 +9,56 @@ import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.util.MovementInputFromOptions;
 
-public class ToggleSprintInput
-extends MovementInputFromOptions {
+public class ToggleSprintInput extends MovementInputFromOptions {
+    public static boolean sprintToggled = true;
+    public static boolean sprintKeyDown;
+    public static boolean doubleTap;
+    public static boolean sprintBeforeRiding;
+    public static boolean sprintHeldLong;
+    public static boolean wasRiding;
+    public static long sprintToggleTime;
+    public static boolean sprintLocked;
+    public static boolean sneakWhileRidingOrFlying;
+    public static String statusText;
+    public static boolean sneakReleasedForContainer;
     public static boolean holdToSprint;
     public static long sneakToggleTime;
-    public static boolean doubleTap;
-    public static boolean sprintToggled;
-    public static boolean sprintBeforeRiding;
-    public static long sprintToggleTime;
-    public static boolean sprintHeldLong;
     public static boolean sneakKeyDown;
-    public static boolean sprintLocked;
-    public static String statusText;
-    public static boolean sneakWhileRidingOrFlying;
-    public static boolean wasRiding;
-    public static boolean sprintKeyDown;
-    public static boolean sneakReleasedForContainer;
+
+    public ToggleSprintInput(GameSettings gameSettings) {
+        super(gameSettings);
+    }
+
+    public static boolean isSneakInContainerAllowed() {
+        return !CheatBreaker.getInstance().getModManager().toggleSprintMod.isRestricted() && ToggleSprintMod.sneakInContainer.getBooleanValue();
+    }
+
+    public void setSprintState(boolean bl, boolean bl2) {
+        sprintToggled = bl;
+        sprintLocked = bl2;
+    }
+
+    static {
+        sprintHeldLong = false;
+        sprintLocked = false;
+        statusText = "";
+        sneakReleasedForContainer = false;
+    }
 
     public static void update(Minecraft minecraft, MovementInputFromOptions movementInputFromOptions, EntityPlayerSP entityPlayerSP) {
         movementInputFromOptions.moveStrafe = 0.0f;
         movementInputFromOptions.moveForward = 0.0f;
         GameSettings gameSettings = minecraft.gameSettings;
-        if (gameSettings.keyBindForward.isKeyDown()) {
+        if (gameSettings.keyBindForward.getIsKeyPressed()) {
             movementInputFromOptions.moveForward += 1.0f;
         }
-        if (gameSettings.keyBindBack.isKeyDown()) {
+        if (gameSettings.keyBindBack.getIsKeyPressed()) {
             movementInputFromOptions.moveForward -= 1.0f;
         }
-        if (gameSettings.keyBindLeft.isKeyDown()) {
+        if (gameSettings.keyBindLeft.getIsKeyPressed()) {
             movementInputFromOptions.moveStrafe += 1.0f;
         }
-        if (gameSettings.keyBindRight.isKeyDown()) {
+        if (gameSettings.keyBindRight.getIsKeyPressed()) {
             movementInputFromOptions.moveStrafe -= 1.0f;
         }
         if (entityPlayerSP.isRiding() && !wasRiding) {
@@ -54,9 +73,9 @@ extends MovementInputFromOptions {
                 sprintHeldLong = false;
             }
         }
-        movementInputFromOptions.jump = gameSettings.keyBindJump.isKeyDown();
+        movementInputFromOptions.jump = gameSettings.keyBindJump.getIsKeyPressed();
         if (((Boolean)ToggleSprintMod.toggleSneak.getValue()).booleanValue() && CheatBreaker.getInstance().getModManager().toggleSprintMod.isEnabled()) {
-            if (gameSettings.keyBindSneak.isKeyDown() && !sneakKeyDown) {
+            if (gameSettings.keyBindSneak.getIsKeyPressed() && !sneakKeyDown) {
                 if (entityPlayerSP.isRiding() || entityPlayerSP.capabilities.isFlying) {
                     movementInputFromOptions.sneak = true;
                     sneakWhileRidingOrFlying = entityPlayerSP.isRiding();
@@ -66,7 +85,7 @@ extends MovementInputFromOptions {
                 sneakToggleTime = System.currentTimeMillis();
                 sneakKeyDown = true;
             }
-            if (!gameSettings.keyBindSneak.isKeyDown() && sneakKeyDown) {
+            if (!gameSettings.keyBindSneak.getIsKeyPressed() && sneakKeyDown) {
                 if (entityPlayerSP.capabilities.isFlying || sneakWhileRidingOrFlying) {
                     movementInputFromOptions.sneak = false;
                 } else if (System.currentTimeMillis() - sneakToggleTime > 300L) {
@@ -84,7 +103,7 @@ extends MovementInputFromOptions {
                 }
             }
         } else {
-            movementInputFromOptions.sneak = gameSettings.keyBindSneak.isKeyDown();
+            movementInputFromOptions.sneak = gameSettings.keyBindSneak.getIsKeyPressed();
         }
         if (movementInputFromOptions.sneak) {
             movementInputFromOptions.moveStrafe = (float)((double)movementInputFromOptions.moveStrafe * 0.3);
@@ -94,13 +113,13 @@ extends MovementInputFromOptions {
         boolean bl2 = !movementInputFromOptions.sneak && !entityPlayerSP.capabilities.isFlying && bl;
         holdToSprint = (Boolean)ToggleSprintMod.toggleSprint.getValue() == false;
         doubleTap = (Boolean)ToggleSprintMod.doubleTap.getValue();
-        if ((bl2 || holdToSprint) && gameSettings.keyBindSprint.isKeyDown() && !sprintKeyDown && !entityPlayerSP.capabilities.isFlying && !holdToSprint) {
+        if ((bl2 || holdToSprint) && gameSettings.keyBindSprint.getIsKeyPressed() && !sprintKeyDown && !entityPlayerSP.capabilities.isFlying && !holdToSprint) {
             sprintToggled = !sprintToggled;
             sprintToggleTime = System.currentTimeMillis();
             sprintKeyDown = true;
             sprintHeldLong = false;
         }
-        if ((bl2 || holdToSprint) && !gameSettings.keyBindSprint.isKeyDown() && sprintKeyDown) {
+        if ((bl2 || holdToSprint) && !gameSettings.keyBindSprint.getIsKeyPressed() && sprintKeyDown) {
             if (System.currentTimeMillis() - sprintToggleTime > 300L) {
                 sprintHeldLong = true;
             }
@@ -109,21 +128,12 @@ extends MovementInputFromOptions {
         ToggleSprintInput.updateStatusText(movementInputFromOptions, entityPlayerSP, gameSettings);
     }
 
-    public ToggleSprintInput(GameSettings gameSettings) {
-        super(gameSettings);
-    }
-
-    public void setSprintState(boolean bl, boolean bl2) {
-        sprintToggled = bl;
-        sprintLocked = bl2;
-    }
-
     public static void updateStatusText(MovementInputFromOptions movementInputFromOptions, EntityPlayerSP entityPlayerSP, GameSettings gameSettings) {
         String string = "";
         boolean bl = entityPlayerSP.capabilities.isFlying;
         boolean bl2 = entityPlayerSP.isRiding();
-        boolean bl3 = gameSettings.keyBindSneak.isKeyDown();
-        boolean bl4 = gameSettings.keyBindSprint.isKeyDown();
+        boolean bl3 = gameSettings.keyBindSneak.getIsKeyPressed();
+        boolean bl4 = gameSettings.keyBindSprint.getIsKeyPressed();
         if (bl) {
             DecimalFormat decimalFormat = new DecimalFormat("#.00");
             String string2 = string = (Boolean)ToggleSprintMod.flyBoost.getValue() != false && bl4 && entityPlayerSP.capabilities.isCreativeMode ? string + ((String)CheatBreaker.getInstance().getModManager().toggleSprintMod.flyBoostString.getValue()).replaceAll("%BOOST%", decimalFormat.format(ToggleSprintMod.flyBoostAmount.getValue())) : string + CheatBreaker.getInstance().getModManager().toggleSprintMod.flyString.getValue();
@@ -139,17 +149,5 @@ extends MovementInputFromOptions {
             string = bl4 ? string + CheatBreaker.getInstance().getModManager().toggleSprintMod.sprintingHeldString.getValue() : (bl5 ? string + CheatBreaker.getInstance().getModManager().toggleSprintMod.sprintingVanillaString.getValue() : string + CheatBreaker.getInstance().getModManager().toggleSprintMod.sprintingToggleString.getValue());
         }
         statusText = string;
-    }
-
-    static {
-        sprintToggled = true;
-        sprintHeldLong = false;
-        sprintLocked = false;
-        statusText = "";
-        sneakReleasedForContainer = false;
-    }
-
-    public static boolean isSneakInContainerAllowed() {
-        return !CheatBreaker.getInstance().getModManager().toggleSprintMod.isRestricted() && ToggleSprintMod.sneakInContainer.getBooleanValue();
     }
 }

@@ -2,137 +2,163 @@ package net.minecraft.item;
 
 import java.util.List;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class ItemBlock extends Item {
-   public Block block;
+    public Block blockInstance;
+    public IIcon iIcon;
 
-   public ItemBlock(Block block) {
-      this.block = block;
-   }
+    public ItemBlock(Block block) {
+        this.blockInstance = block;
+    }
 
-   public ItemBlock setUnlocalizedName(String unlocalizedName) {
-      super.setUnlocalizedName(unlocalizedName);
-      return this;
-   }
+    public ItemBlock setUnlocalizedName(String str) {
+        super.setUnlocalizedName(str);
+        return this;
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      Block block = blockState.getBlock();
-      if (!block.isReplaceable(worldIn, pos)) {
-         pos = pos.offset(side);
-      }
+    @Override
+    public int getSpriteNumber() {
+        return this.blockInstance.getItemIconName() != null ? 1 : 0;
+    }
 
-      if (stack.stackSize == 0) {
-         return false;
-      }
+    @Override
+    public IIcon getIconFromDamage(int n) {
+        return this.iIcon != null ? this.iIcon : this.blockInstance.getBlockTextureFromSide(1);
+    }
 
-      if (!playerIn.canPlayerEdit(pos, side, stack)) {
-         return false;
-      }
-
-      if (worldIn.canBlockBePlaced(this.block, pos, false, side, (Entity)null, stack)) {
-         int metadata = this.getMetadata(stack.getMetadata());
-         IBlockState onBlockPlaced = this.block.onBlockPlaced(worldIn, pos, side, hitX, hitY, hitZ, metadata, playerIn);
-         if (worldIn.setBlockState(pos, onBlockPlaced, 3)) {
-            onBlockPlaced = worldIn.getBlockState(pos);
-            if (onBlockPlaced.getBlock() == this.block) {
-               setTileEntityNBT(worldIn, playerIn, pos, stack);
-               this.block.onBlockPlacedBy(worldIn, pos, onBlockPlaced, playerIn, stack);
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        Block block = world.getBlock(n, n2, n3);
+        if (block == Blocks.snow_layer && (world.getBlockMetadata(n, n2, n3) & 7) < 1) {
+            n4 = 1;
+        } else if (block != Blocks.vine && block != Blocks.tallgrass && block != Blocks.deadbush) {
+            if (n4 == 0) {
+                n2--;
             }
 
-            worldIn.playSoundEffect(
-               pos.getX() + 0.5F,
-               pos.getY() + 0.5F,
-               pos.getZ() + 0.5F,
-               this.block.stepSound.getPlaceSound(),
-               (this.block.stepSound.getVolume() + 1.0F) / 2.0F,
-               this.block.stepSound.getFrequency() * 0.8F
-            );
-            stack.stackSize--;
-         }
-
-         return true;
-      } else {
-         return false;
-      }
-   }
-
-   public static boolean setTileEntityNBT(World worldIn, EntityPlayer pos, BlockPos stack, ItemStack itemStack) {
-      MinecraftServer server = MinecraftServer.getServer();
-      if (server == null) {
-         return false;
-      }
-
-      if (itemStack.hasTagCompound() && itemStack.getTagCompound().hasKey("BlockEntityTag", 10)) {
-         TileEntity tileEntity = worldIn.getTileEntity(stack);
-         if (tileEntity != null) {
-            if (!worldIn.isRemote && tileEntity.alwaysFalse() && !server.getConfigurationManager().canSendCommands(pos.getGameProfile())) {
-               return false;
+            if (n4 == 1) {
+                n2++;
             }
 
-            NBTTagCompound nbttagCompound = new NBTTagCompound();
-            NBTTagCompound nbttagCompound2 = (NBTTagCompound)nbttagCompound.copy();
-            tileEntity.writeToNBT(nbttagCompound);
-            NBTTagCompound tag = (NBTTagCompound)itemStack.getTagCompound().getTag("BlockEntityTag");
-            nbttagCompound.merge(tag);
-            nbttagCompound.setInteger("x", stack.getX());
-            nbttagCompound.setInteger("y", stack.getY());
-            nbttagCompound.setInteger("z", stack.getZ());
-            if (!nbttagCompound.equals(nbttagCompound2)) {
-               tileEntity.readFromNBT(nbttagCompound);
-               tileEntity.markDirty();
-               return true;
+            if (n4 == 2) {
+                n3--;
             }
-         }
-      }
 
-      return false;
-   }
+            if (n4 == 3) {
+                n3++;
+            }
 
-   public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side, EntityPlayer player, ItemStack stack) {
-      Block block = worldIn.getBlockState(pos).getBlock();
-      if (block == Blocks.snow_layer) {
-         side = EnumFacing.UP;
-      } else if (!block.isReplaceable(worldIn, pos)) {
-         pos = pos.offset(side);
-      }
+            if (n4 == 4) {
+                n--;
+            }
 
-      return worldIn.canBlockBePlaced(this.block, pos, false, side, (Entity)null, stack);
-   }
+            if (n4 == 5) {
+                n++;
+            }
+        }
 
-   @Override
-   public String getUnlocalizedName(ItemStack stack) {
-      return this.block.getUnlocalizedName();
-   }
+        if (itemStack.stackSize == 0) {
+            return false;
+        }
 
-   @Override
-   public String getUnlocalizedName() {
-      return this.block.getUnlocalizedName();
-   }
+        if (!entityPlayer.canPlayerEdit(n, n2, n3, n4, itemStack)) {
+            return false;
+        }
 
-   @Override
-   public CreativeTabs getCreativeTab() {
-      return this.block.getCreativeTabToDisplayOn();
-   }
+        if (n2 == 255 && this.blockInstance.getMaterial().isSolid()) {
+            return false;
+        }
 
-   @Override
-   public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems) {
-      this.block.getSubBlocks(itemIn, tab, subItems);
-   }
+        if (world.canPlaceEntityOnSide(this.blockInstance, n, n2, n3, false, n4, entityPlayer, itemStack)) {
+            int metadata = this.getMetadata(itemStack.getMetadata());
+            int onBlockPlaced = this.blockInstance.onBlockPlaced(world, n, n2, n3, n4, f, f2, f3, metadata);
+            if (world.setBlock(n, n2, n3, this.blockInstance, onBlockPlaced, 3)) {
+                if (world.getBlock(n, n2, n3) == this.blockInstance) {
+                    this.blockInstance.onBlockPlacedBy(world, n, n2, n3, entityPlayer, itemStack);
+                    this.blockInstance.onPostBlockPlaced(world, n, n2, n3, onBlockPlaced);
+                }
 
-   public Block getBlock() {
-      return this.block;
-   }
+                world.playSoundEffect(
+                    n + 0.5F,
+                    n2 + 0.5F,
+                    n3 + 0.5F,
+                    this.blockInstance.stepSound.getPlaceSound(),
+                    (this.blockInstance.stepSound.getVolume() + 1.0F) / 2.0F,
+                    this.blockInstance.stepSound.getFrequency() * 0.8F
+                );
+                itemStack.stackSize--;
+            }
+
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean checkWorld(World world, int n, int n2, int n3, int n4, EntityPlayer entityPlayer, ItemStack itemStack) {
+        Block block = world.getBlock(n, n2, n3);
+        if (block == Blocks.snow_layer) {
+            n4 = 1;
+        } else if (block != Blocks.vine && block != Blocks.tallgrass && block != Blocks.deadbush) {
+            if (n4 == 0) {
+                n2--;
+            }
+
+            if (n4 == 1) {
+                n2++;
+            }
+
+            if (n4 == 2) {
+                n3--;
+            }
+
+            if (n4 == 3) {
+                n3++;
+            }
+
+            if (n4 == 4) {
+                n--;
+            }
+
+            if (n4 == 5) {
+                n++;
+            }
+        }
+
+        return world.canPlaceEntityOnSide(this.blockInstance, n, n2, n3, false, n4, null, itemStack);
+    }
+
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        return this.blockInstance.getUnlocalizedName();
+    }
+
+    @Override
+    public String getUnlocalizedName() {
+        return this.blockInstance.getUnlocalizedName();
+    }
+
+    @Override
+    public CreativeTabs getCreativeTab() {
+        return this.blockInstance.getCreativeTabToDisplayOn();
+    }
+
+    @Override
+    public void getSubItems(Item item, CreativeTabs creativeTabs, List list) {
+        this.blockInstance.getSubBlocks(item, creativeTabs, list);
+    }
+
+    @Override
+    public void registerIcons(IIconRegister register) {
+        String itemIconName = this.blockInstance.getItemIconName();
+        if (itemIconName != null) {
+            this.iIcon = register.registerIcon(itemIconName);
+        }
+    }
 }

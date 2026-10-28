@@ -5,14 +5,14 @@ import net.minecraft.init.Items;
 import net.minecraft.world.World;
 
 public class ItemSoup extends ItemFood {
-   public ItemSoup(int healAmount) {
-      super(healAmount, false);
-      this.setMaxStackSize(1);
-   }
+    public ItemSoup(int n) {
+        super(n, false);
+        this.setMaxStackSize(1);
+    }
 
-   @Override
-   public ItemStack onItemUseFinish(ItemStack stack, World worldIn, EntityPlayer playerIn) {
-      super.onItemUseFinish(stack, worldIn, playerIn);
-      return new ItemStack(Items.bowl);
-   }
+    @Override
+    public ItemStack onItemUseFinish(ItemStack itemStack, World world, EntityPlayer entityPlayer) {
+        super.onItemUseFinish(itemStack, world, entityPlayer);
+        return new ItemStack(Items.bowl);
+    }
 }

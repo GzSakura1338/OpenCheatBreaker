@@ -1,55 +1,72 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.IChatComponent;
-import net.minecraft.world.World;
 
-public class S33PacketUpdateSign implements Packet<INetHandlerPlayClient> {
-   public World world;
-   public BlockPos blockPos;
-   public IChatComponent[] lines;
+public class S33PacketUpdateSign extends Packet {
+    public int intValue;
+    public int intValue2;
+    public int intValue3;
+    public String[] stringArray;
 
-   public S33PacketUpdateSign() {
-   }
+    public S33PacketUpdateSign() {
+    }
 
-   public S33PacketUpdateSign(World worldIn, BlockPos blockPosIn, IChatComponent[] linesIn) {
-      this.world = worldIn;
-      this.blockPos = blockPosIn;
-      this.lines = new IChatComponent[]{linesIn[0], linesIn[1], linesIn[2], linesIn[3]};
-   }
+    public S33PacketUpdateSign(int n, int n2, int n3, String[] strs) {
+        this.intValue = n;
+        this.intValue2 = n2;
+        this.intValue3 = n3;
+        this.stringArray = new String[]{strs[0], strs[1], strs[2], strs[3]};
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.blockPos = buf.readBlockPos();
-      this.lines = new IChatComponent[4];
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.intValue = data.readInt();
+        this.intValue2 = data.readShort();
+        this.intValue3 = data.readInt();
+        this.stringArray = new String[4];
 
-      for (int i = 0; i < 4; i++) {
-         this.lines[i] = buf.readChatComponent();
-      }
-   }
+        for (int i = 0; i < 4; i++) {
+            this.stringArray[i] = data.readStringFromBuffer(15);
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeBlockPos(this.blockPos);
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.intValue);
+        data.writeShort(this.intValue2);
+        data.writeInt(this.intValue3);
 
-      for (int i = 0; i < 4; i++) {
-         buf.writeChatComponent(this.lines[i]);
-      }
-   }
+        for (int i = 0; i < 4; i++) {
+            data.writeStringToBuffer(this.stringArray[i]);
+        }
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleUpdateSign(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleUpdateSign(this);
+    }
 
-   public BlockPos getPos() {
-      return this.blockPos;
-   }
+    public int getIntValue() {
+        return this.intValue;
+    }
 
-   public IChatComponent[] getLines() {
-      return this.lines;
-   }
+    public int getIntValue2() {
+        return this.intValue2;
+    }
+
+    public int getIntValue3() {
+        return this.intValue3;
+    }
+
+    public String[] getStringArray() {
+        return this.stringArray;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

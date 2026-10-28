@@ -8,120 +8,120 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PlayerCosmeticsPacket extends AbstractPacket {
-   public List<CosmeticData> cosmetics = new ArrayList<>();
-   public List<Integer> integerList = new ArrayList<>();
-   public List<Integer> integerList2 = new ArrayList<>();
-   public String playerId;
-   public String playerName;
-   public String text;
+    public List<CosmeticData> cosmetics = new ArrayList<>();
+    public List<Integer> integerList = new ArrayList<>();
+    public List<Integer> integerList2 = new ArrayList<>();
+    public String playerId;
+    public String playerName;
+    public String text;
 
-   public List<Integer> getIntegerList() {
-      return this.integerList;
-   }
+    public PlayerCosmeticsPacket() {
+    }
 
-   public PlayerCosmeticsPacket(String str, List<CosmeticData> list, String str2, String str3, List<Integer> list2, List<Integer> list3) {
-      this.playerId = str;
-      this.cosmetics = list;
-      this.playerName = str2;
-      this.text = str3;
-      this.integerList = list2;
-      this.integerList2 = list3;
-   }
+    public List<CosmeticData> getCosmetics() {
+        return this.cosmetics;
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeString(this.playerId);
-      packetBuffer.getByteBuf().writeInt(this.cosmetics.size());
+    public List<Integer> getIntegerList() {
+        return this.integerList;
+    }
 
-      for (CosmeticData cosmeticData : this.cosmetics) {
-         packetBuffer.getByteBuf().writeLong(cosmeticData.getId());
-         packetBuffer.getByteBuf().writeFloat(cosmeticData.getScale());
-         packetBuffer.getByteBuf().writeBoolean(cosmeticData.isEquipped());
-         packetBuffer.writeString(cosmeticData.getTexturePath());
-         packetBuffer.writeString(cosmeticData.getName());
-         packetBuffer.writeString(cosmeticData.getType());
-         packetBuffer.getByteBuf().writeInt(cosmeticData.getExtras().size());
+    public String getText() {
+        return this.text;
+    }
 
-         for (String str : cosmeticData.getExtras()) {
-            packetBuffer.writeString(str);
-         }
-      }
+    public String getPlayerName() {
+        return this.playerName;
+    }
 
-      packetBuffer.writeString(this.playerName);
-      packetBuffer.writeString(this.text);
+    public String getPlayerId() {
+        return this.playerId;
+    }
 
-      for (int n : this.integerList) {
-         packetBuffer.getByteBuf().writeInt(n);
-      }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.playerId = packetBuffer.readString();
+        int readInt = packetBuffer.getByteBuf().readInt();
+        this.cosmetics = new ArrayList<>();
 
-      for (int n : this.integerList2) {
-         packetBuffer.getByteBuf().writeInt(n);
-      }
-   }
+        for (int i = 0; i < readInt; i++) {
+            long readLong = packetBuffer.getByteBuf().readLong();
+            float readFloat = packetBuffer.getByteBuf().readFloat();
+            boolean readBoolean = packetBuffer.getByteBuf().readBoolean();
+            String readString = packetBuffer.readString();
+            String readString2 = packetBuffer.readString();
+            String readString3 = packetBuffer.readString();
+            int readInt2 = packetBuffer.getByteBuf().readInt();
+            ArrayList list = new ArrayList(readInt2);
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.playerId = packetBuffer.readString();
-      int readInt = packetBuffer.getByteBuf().readInt();
-      this.cosmetics = new ArrayList<>();
+            for (int j = 0; j < readInt2; j++) {
+                list.add(packetBuffer.readString());
+            }
 
-      for (int i = 0; i < readInt; i++) {
-         long readLong = packetBuffer.getByteBuf().readLong();
-         float readFloat = packetBuffer.getByteBuf().readFloat();
-         boolean readBoolean = packetBuffer.getByteBuf().readBoolean();
-         String readString = packetBuffer.readString();
-         String readString2 = packetBuffer.readString();
-         String readString3 = packetBuffer.readString();
-         int readInt2 = packetBuffer.getByteBuf().readInt();
-         ArrayList list = new ArrayList(readInt2);
+            this.cosmetics.add(new CosmeticData(readLong, readFloat, readBoolean, readString, readString2, readString3, list));
+        }
 
-         for (int j = 0; j < readInt2; j++) {
-            list.add(packetBuffer.readString());
-         }
+        this.playerName = packetBuffer.readString();
+        this.text = packetBuffer.readString();
+        this.integerList = new ArrayList<>();
 
-         this.cosmetics.add(new CosmeticData(readLong, readFloat, readBoolean, readString, readString2, readString3, list));
-      }
+        for (int i = 0; i < 2; i++) {
+            this.integerList.add(packetBuffer.getByteBuf().readInt());
+        }
 
-      this.playerName = packetBuffer.readString();
-      this.text = packetBuffer.readString();
-      this.integerList = new ArrayList<>();
+        this.integerList2 = new ArrayList<>();
 
-      for (int i = 0; i < 2; i++) {
-         this.integerList.add(packetBuffer.getByteBuf().readInt());
-      }
+        for (int i = 0; i < 2; i++) {
+            this.integerList2.add(packetBuffer.getByteBuf().readInt());
+        }
+    }
 
-      this.integerList2 = new ArrayList<>();
+    public PlayerCosmeticsPacket(String str, List<CosmeticData> list, String str2, String str3, List<Integer> list2, List<Integer> list3) {
+        this.playerId = str;
+        this.cosmetics = list;
+        this.playerName = str2;
+        this.text = str3;
+        this.integerList = list2;
+        this.integerList2 = list3;
+    }
 
-      for (int i = 0; i < 2; i++) {
-         this.integerList2.add(packetBuffer.getByteBuf().readInt());
-      }
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeString(this.playerId);
+        packetBuffer.getByteBuf().writeInt(this.cosmetics.size());
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handlePlayerCosmetics(this);
-   }
+        for (CosmeticData cosmeticData : this.cosmetics) {
+            packetBuffer.getByteBuf().writeLong(cosmeticData.getId());
+            packetBuffer.getByteBuf().writeFloat(cosmeticData.getScale());
+            packetBuffer.getByteBuf().writeBoolean(cosmeticData.isEquipped());
+            packetBuffer.writeString(cosmeticData.getTexturePath());
+            packetBuffer.writeString(cosmeticData.getName());
+            packetBuffer.writeString(cosmeticData.getType());
+            packetBuffer.getByteBuf().writeInt(cosmeticData.getExtras().size());
 
-   public String getText() {
-      return this.text;
-   }
+            for (String str : cosmeticData.getExtras()) {
+                packetBuffer.writeString(str);
+            }
+        }
 
-   public List<Integer> getIntegerList2() {
-      return this.integerList2;
-   }
+        packetBuffer.writeString(this.playerName);
+        packetBuffer.writeString(this.text);
 
-   public List<CosmeticData> getCosmetics() {
-      return this.cosmetics;
-   }
+        for (int n : this.integerList) {
+            packetBuffer.getByteBuf().writeInt(n);
+        }
 
-   public String getPlayerId() {
-      return this.playerId;
-   }
+        for (int n : this.integerList2) {
+            packetBuffer.getByteBuf().writeInt(n);
+        }
+    }
 
-   public String getPlayerName() {
-      return this.playerName;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handlePlayerCosmetics(this);
+    }
 
-   public PlayerCosmeticsPacket() {
-   }
+    public List<Integer> getIntegerList2() {
+        return this.integerList2;
+    }
 }

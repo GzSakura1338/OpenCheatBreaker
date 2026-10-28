@@ -1,128 +1,81 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.client.renderer.texture.IIconRegister;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class BlockHugeMushroom extends Block {
-   public static PropertyEnum<BlockHugeMushroom.EnumType> VARIANT = PropertyEnum.create("variant", BlockHugeMushroom.EnumType.class);
-   public Block smallBlock;
+    public static String[] stringArray = new String[]{"skin_brown", "skin_red"};
+    public int intValue;
+    public IIcon[] iIconArray;
+    public IIcon iIcon3;
+    public IIcon iIcon2;
 
-   public BlockHugeMushroom(Material material, MapColor mapColor, Block block) {
-      super(material, mapColor);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(VARIANT, BlockHugeMushroom.EnumType.ALL_OUTSIDE));
-      this.smallBlock = block;
-   }
+    public BlockHugeMushroom(Material material, int n) {
+        super(material);
+        this.intValue = n;
+    }
 
-   @Override
-   public int quantityDropped(Random random) {
-      return Math.max(0, random.nextInt(10) - 7);
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return meta == 10 && side > 1
+            ? this.iIcon3
+            : (
+                meta >= 1 && meta <= 9 && side == 1
+                    ? this.iIconArray[this.intValue]
+                    : (
+                        meta >= 1 && meta <= 3 && side == 2
+                            ? this.iIconArray[this.intValue]
+                            : (
+                                meta >= 7 && meta <= 9 && side == 3
+                                    ? this.iIconArray[this.intValue]
+                                    : (
+                                        (meta == 1 || meta == 4 || meta == 7) && side == 4
+                                            ? this.iIconArray[this.intValue]
+                                            : (
+                                                (meta == 3 || meta == 6 || meta == 9) && side == 5
+                                                    ? this.iIconArray[this.intValue]
+                                                    : (meta == 14 ? this.iIconArray[this.intValue] : (meta == 15 ? this.iIcon3 : this.iIcon2))
+                                            )
+                                    )
+                            )
+                    )
+            );
+    }
 
-   @Override
-   public MapColor getMapColor(IBlockState state) {
-      switch (state.getValue(VARIANT)) {
-         case ALL_STEM:
-            return MapColor.clothColor;
-         case ALL_INSIDE:
-            return MapColor.sandColor;
-         case STEM:
-            return MapColor.sandColor;
-         default:
-            return super.getMapColor(state);
-      }
-   }
+    @Override
+    public int quantityDropped(Random random) {
+        int n = random.nextInt(10) - 7;
+        if (n < 0) {
+            n = 0;
+        }
 
-   @Override
-   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-      return Item.getItemFromBlock(this.smallBlock);
-   }
+        return n;
+    }
 
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return Item.getItemFromBlock(this.smallBlock);
-   }
+    @Override
+    public Item getItemDropped(int meta, Random random, int fortune) {
+        return Item.getItemById(Block.getIdFromBlock(Blocks.brown_mushroom) + this.intValue);
+    }
 
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      return this.getDefaultState();
-   }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        return Item.getItemById(Block.getIdFromBlock(Blocks.brown_mushroom) + this.intValue);
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(VARIANT, BlockHugeMushroom.EnumType.byMetadata(meta));
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.iIconArray = new IIcon[stringArray.length];
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(VARIANT).getMetadata();
-   }
+        for (int i = 0; i < this.iIconArray.length; i++) {
+            this.iIconArray[i] = reg.registerIcon(this.getTextureName() + "_" + stringArray[i]);
+        }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, VARIANT);
-   }
-
-   public enum EnumType implements IStringSerializable {
-      NORTH_WEST(1, "north_west"),
-      NORTH(2, "north"),
-      NORTH_EAST(3, "north_east"),
-      WEST(4, "west"),
-      CENTER(5, "center"),
-      EAST(6, "east"),
-      SOUTH_WEST(7, "south_west"),
-      SOUTH(8, "south"),
-      SOUTH_EAST(9, "south_east"),
-      STEM(10, "stem"),
-      ALL_INSIDE(0, "all_inside"),
-      ALL_OUTSIDE(14, "all_outside"),
-      ALL_STEM(15, "all_stem");
-
-      public int meta;
-      public String name;
-      public static BlockHugeMushroom.EnumType[] META_LOOKUP = new BlockHugeMushroom.EnumType[16];
-
-      EnumType(int meta, String name) {
-         this.meta = meta;
-         this.name = name;
-      }
-
-      public int getMetadata() {
-         return this.meta;
-      }
-
-      @Override
-      public String toString() {
-         return this.name;
-      }
-
-      public static BlockHugeMushroom.EnumType byMetadata(int meta) {
-         if (meta < 0 || meta >= META_LOOKUP.length) {
-            meta = 0;
-         }
-
-         BlockHugeMushroom.EnumType enumType = META_LOOKUP[meta];
-         return enumType == null ? META_LOOKUP[0] : enumType;
-      }
-
-      @Override
-      public String getName() {
-         return this.name;
-      }
-
-      static {
-         for (BlockHugeMushroom.EnumType enumType : values()) {
-            META_LOOKUP[enumType.getMetadata()] = enumType;
-         }
-      }
-   }
+        this.iIcon2 = reg.registerIcon(this.getTextureName() + "_inside");
+        this.iIcon3 = reg.registerIcon(this.getTextureName() + "_skin_stem");
+    }
 }

@@ -3,47 +3,47 @@ package com.cheatbreaker.client.font;
 import java.util.List;
 
 public class CachedString {
-   public List<CachedStringPart> parts;
-   public float width;
-   public long expiryTime;
-   public boolean shadow;
+    public List<CachedStringPart> parts;
+    public float width;
+    public long expiryTime;
+    public boolean shadow;
 
-   public void releaseParts() {
-      for (CachedStringPart cachedStringPart : this.parts) {
-         cachedStringPart.glDeleteLists();
-      }
-   }
+    public List<CachedStringPart> getParts() {
+        return this.parts;
+    }
 
-   public List<CachedStringPart> getParts() {
-      return this.parts;
-   }
+    public long getExpiryTime() {
+        return this.expiryTime;
+    }
 
-   public void prepareParts() {
-      for (CachedStringPart cachedStringPart : this.parts) {
-         cachedStringPart.render();
-      }
-   }
+    public void setExpiryTime(long l) {
+        this.expiryTime = l;
+    }
 
-   public void setExpiryTime(long l) {
-      this.expiryTime = l;
-   }
+    public CachedString(List<CachedStringPart> list, float f, long l, boolean flag) {
+        this.parts = list;
+        this.width = f;
+        this.expiryTime = l;
+        this.shadow = flag;
+    }
 
-   public CachedString(List<CachedStringPart> list, float f, long l, boolean flag) {
-      this.parts = list;
-      this.width = f;
-      this.expiryTime = l;
-      this.shadow = flag;
-   }
+    public boolean isShadow() {
+        return this.shadow;
+    }
 
-   public boolean isShadow() {
-      return this.shadow;
-   }
+    public float getWidth() {
+        return this.width;
+    }
 
-   public long getExpiryTime() {
-      return this.expiryTime;
-   }
+    public void releaseParts() {
+        for (CachedStringPart cachedStringPart : this.parts) {
+            cachedStringPart.glDeleteLists();
+        }
+    }
 
-   public float getWidth() {
-      return this.width;
-   }
+    public void prepareParts() {
+        for (CachedStringPart cachedStringPart : this.parts) {
+            cachedStringPart.render();
+        }
+    }
 }

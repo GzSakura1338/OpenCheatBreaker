@@ -4,20 +4,21 @@ import com.google.common.collect.Sets;
 import java.util.Set;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.Item.ToolMaterial;
 
 public class ItemSpade extends ItemTool {
-   public static Set<Block> EFFECTIVE_ON = Sets.newHashSet(
-      new Block[]{
-         Blocks.clay, Blocks.dirt, Blocks.farmland, Blocks.grass, Blocks.gravel, Blocks.mycelium, Blocks.sand, Blocks.snow, Blocks.snow_layer, Blocks.soul_sand
-      }
-   );
+    public static Set EFFECTIVE_BLOCKS = Sets.newHashSet(
+        new Block[]{
+            Blocks.grass, Blocks.dirt, Blocks.sand, Blocks.gravel, Blocks.snow_layer, Blocks.snow, Blocks.clay, Blocks.farmland, Blocks.soul_sand, Blocks.mycelium
+        }
+    );
 
-   public ItemSpade(Item.ToolMaterial material) {
-      super(1.0F, material, EFFECTIVE_ON);
-   }
+    public ItemSpade(ToolMaterial toolMaterial) {
+        super(1.0F, toolMaterial, EFFECTIVE_BLOCKS);
+    }
 
-   @Override
-   public boolean canHarvestBlock(Block blockIn) {
-      return blockIn == Blocks.snow_layer ? true : blockIn == Blocks.snow;
-   }
+    @Override
+    public boolean canItemHarvestBlock(Block block) {
+        return block == Blocks.snow_layer || block == Blocks.snow;
+    }
 }

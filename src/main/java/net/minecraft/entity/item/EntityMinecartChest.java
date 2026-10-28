@@ -1,61 +1,43 @@
 package net.minecraft.entity.item;
 
-import net.minecraft.block.BlockChest;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ContainerChest;
 import net.minecraft.item.Item;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class EntityMinecartChest extends EntityMinecartContainer {
-   public EntityMinecartChest(World worldIn) {
-      super(worldIn);
-   }
+    public EntityMinecartChest(World world) {
+        super(world);
+    }
 
-   public EntityMinecartChest(World worldIn, double x, double y, double z) {
-      super(worldIn, x, y, z);
-   }
+    public EntityMinecartChest(World world, double d, double d2, double d3) {
+        super(world, d, d2, d3);
+    }
 
-   @Override
-   public void killMinecart(DamageSource source) {
-      super.killMinecart(source);
-      if (this.worldObj.getGameRules().getBoolean("doEntityDrops")) {
-         this.dropItemWithOffset(Item.getItemFromBlock(Blocks.chest), 1, 0.0F);
-      }
-   }
+    @Override
+    public void killMinecart(DamageSource damageSource) {
+        super.killMinecart(damageSource);
+        this.dropItemWithOffset(Item.getItemFromBlock(Blocks.chest), 1, 0.0F);
+    }
 
-   @Override
-   public int getSizeInventory() {
-      return 27;
-   }
+    @Override
+    public int getSizeInventory() {
+        return 27;
+    }
 
-   @Override
-   public EntityMinecart.EnumMinecartType getMinecartType() {
-      return EntityMinecart.EnumMinecartType.CHEST;
-   }
+    @Override
+    public int getMinecartType() {
+        return 1;
+    }
 
-   @Override
-   public IBlockState getDefaultDisplayTile() {
-      return Blocks.chest.getDefaultState().withProperty(BlockChest.FACING, EnumFacing.NORTH);
-   }
+    @Override
+    public Block getDefaultDisplayTile() {
+        return Blocks.chest;
+    }
 
-   @Override
-   public int getDefaultDisplayTileOffset() {
-      return 8;
-   }
-
-   @Override
-   public String getGuiID() {
-      return "minecraft:chest";
-   }
-
-   @Override
-   public Container createContainer(InventoryPlayer playerInventory, EntityPlayer playerIn) {
-      return new ContainerChest(playerInventory, this, playerIn);
-   }
+    @Override
+    public int getDefaultDisplayTileOffset() {
+        return 8;
+    }
 }

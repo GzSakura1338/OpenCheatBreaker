@@ -4,52 +4,49 @@ import java.util.Random;
 import net.minecraft.util.MathHelper;
 
 public class NoiseGeneratorOctaves extends NoiseGenerator {
-   public int octaves;
-   public NoiseGeneratorImproved[] generatorCollection;
+    public int octaves;
+    public NoiseGeneratorImproved[] generatorCollection;
 
-   public NoiseGeneratorOctaves(Random seed, int octavesIn) {
-      this.octaves = octavesIn;
-      this.generatorCollection = new NoiseGeneratorImproved[octavesIn];
+    public NoiseGeneratorOctaves(Random random, int n) {
+        this.octaves = n;
+        this.generatorCollection = new NoiseGeneratorImproved[n];
 
-      for (int i = 0; i < octavesIn; i++) {
-         this.generatorCollection[i] = new NoiseGeneratorImproved(seed);
-      }
-   }
+        for (int i = 0; i < n; i++) {
+            this.generatorCollection[i] = new NoiseGeneratorImproved(random);
+        }
+    }
 
-   public double[] generateNoiseOctaves(
-      double[] noiseArray, int xOffset, int yOffset, int zOffset, int xSize, int ySize, int zSize, double xScale, double yScale, double zScale
-   ) {
-      if (noiseArray == null) {
-         noiseArray = new double[xSize * ySize * zSize];
-      } else {
-         for (int i = 0; i < noiseArray.length; i++) {
-            noiseArray[i] = 0.0;
-         }
-      }
+    public double[] generateNoiseOctaves(double[] doubles, int n, int n2, int n3, int n4, int n5, int n6, double d, double d2, double d3) {
+        if (doubles == null) {
+            doubles = new double[n4 * n5 * n6];
+        } else {
+            for (int i = 0; i < doubles.length; i++) {
+                doubles[i] = 0.0;
+            }
+        }
 
-      double d = 1.0;
+        double d4 = 1.0;
 
-      for (int i = 0; i < this.octaves; i++) {
-         double d2 = xOffset * d * xScale;
-         double d3 = yOffset * d * yScale;
-         double d4 = zOffset * d * zScale;
-         long l = MathHelper.floor_double_long(d2);
-         long l2 = MathHelper.floor_double_long(d4);
-         d2 -= l;
-         d4 -= l2;
-         l %= 16777216L;
-         l2 %= 16777216L;
-         d2 += l;
-         d4 += l2;
-         this.generatorCollection[i]
-            .populateNoiseArray(noiseArray, d2, d3, d4, xSize, ySize, zSize, xScale * d, yScale * d, zScale * d, d);
-         d /= 2.0;
-      }
+        for (int i = 0; i < this.octaves; i++) {
+            double d5 = n * d4 * d;
+            double d6 = n2 * d4 * d2;
+            double d7 = n3 * d4 * d3;
+            long l = MathHelper.floor_double_long(d5);
+            long l2 = MathHelper.floor_double_long(d7);
+            d5 -= l;
+            d7 -= l2;
+            l %= 16777216L;
+            l2 %= 16777216L;
+            d5 += l;
+            d7 += l2;
+            this.generatorCollection[i].populateNoiseArray(doubles, d5, d6, d7, n4, n5, n6, d * d4, d2 * d4, d3 * d4, d4);
+            d4 /= 2.0;
+        }
 
-      return noiseArray;
-   }
+        return doubles;
+    }
 
-   public double[] generateNoiseOctaves(double[] noiseArray, int xOffset, int zOffset, int xSize, int zSize, double xScale, double zScale, double d) {
-      return this.generateNoiseOctaves(noiseArray, xOffset, 10, zOffset, xSize, 1, zSize, xScale, 1.0, zScale);
-   }
+    public double[] generateNoiseOctaves(double[] doubles, int n, int n2, int n3, int n4, double d, double d2, double d3) {
+        return this.generateNoiseOctaves(doubles, n, 10, n2, n3, 1, n4, d, 1.0, d2);
+    }
 }

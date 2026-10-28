@@ -1,113 +1,114 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.world.EnumDifficulty;
-import net.minecraft.world.WorldSettings.GameType;
 import net.minecraft.world.WorldType;
+import net.minecraft.world.WorldSettings.GameType;
 
-public class S01PacketJoinGame implements Packet<INetHandlerPlayClient> {
-   public int entityId;
-   public int dimension;
-   public EnumDifficulty difficulty;
-   public GameType gameType;
-   public int maxPlayers;
-   public boolean hardcoreMode;
-   public WorldType worldType;
-   public boolean reducedDebugInfo;
+public class S01PacketJoinGame extends Packet {
+    public int playerEntityId;
+    public int viewDistance;
+    public EnumDifficulty difficulty;
+    public GameType gameMode;
+    public int maxPlayers;
+    public boolean hardcore;
+    public WorldType levelGeneratorType;
 
-   public S01PacketJoinGame() {
-   }
+    public S01PacketJoinGame() {
+    }
 
-   public S01PacketJoinGame(
-      int entityIdIn,
-      GameType gameTypeIn,
-      boolean hardcoreModeIn,
-      int dimensionIn,
-      EnumDifficulty difficultyIn,
-      int maxPlayersIn,
-      WorldType worldTypeIn,
-      boolean reducedDebugInfoIn
-   ) {
-      this.entityId = entityIdIn;
-      this.dimension = dimensionIn;
-      this.difficulty = difficultyIn;
-      this.gameType = gameTypeIn;
-      this.maxPlayers = maxPlayersIn;
-      this.hardcoreMode = hardcoreModeIn;
-      this.worldType = worldTypeIn;
-      this.reducedDebugInfo = reducedDebugInfoIn;
-   }
+    public S01PacketJoinGame(int n, GameType gameType, boolean flag, int n2, EnumDifficulty enumDifficulty, int n3, WorldType worldType) {
+        this.playerEntityId = n;
+        this.viewDistance = n2;
+        this.difficulty = enumDifficulty;
+        this.gameMode = gameType;
+        this.maxPlayers = n3;
+        this.hardcore = flag;
+        this.levelGeneratorType = worldType;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.entityId = buf.readInt();
-      int readUnsignedByte = buf.readUnsignedByte();
-      this.hardcoreMode = (readUnsignedByte & 8) == 8;
-      readUnsignedByte &= -9;
-      this.gameType = GameType.getByID(readUnsignedByte);
-      this.dimension = buf.readByte();
-      this.difficulty = EnumDifficulty.getDifficultyEnum(buf.readUnsignedByte());
-      this.maxPlayers = buf.readUnsignedByte();
-      this.worldType = WorldType.parseWorldType(buf.readStringFromBuffer(16));
-      if (this.worldType == null) {
-         this.worldType = WorldType.DEFAULT;
-      }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.playerEntityId = data.readInt();
+        short readUnsignedByte = data.readUnsignedByte();
+        this.hardcore = (readUnsignedByte & 8) == 8;
+        int n = readUnsignedByte & -9;
+        this.gameMode = GameType.getByID(n);
+        this.viewDistance = data.readByte();
+        this.difficulty = EnumDifficulty.getDifficultyEnum(data.readUnsignedByte());
+        this.maxPlayers = data.readUnsignedByte();
+        this.levelGeneratorType = WorldType.parseWorldType(data.readStringFromBuffer(16));
+        if (this.levelGeneratorType == null) {
+            this.levelGeneratorType = WorldType.DEFAULT;
+        }
+    }
 
-      this.reducedDebugInfo = buf.readBoolean();
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.playerEntityId);
+        int iD = this.gameMode.getID();
+        if (this.hardcore) {
+            iD |= 8;
+        }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeInt(this.entityId);
-      int iD = this.gameType.getID();
-      if (this.hardcoreMode) {
-         iD |= 8;
-      }
+        data.writeByte(iD);
+        data.writeByte(this.viewDistance);
+        data.writeByte(this.difficulty.getDifficultyId());
+        data.writeByte(this.maxPlayers);
+        data.writeStringToBuffer(this.levelGeneratorType.getWorldTypeName());
+    }
 
-      buf.writeByte(iD);
-      buf.writeByte(this.dimension);
-      buf.writeByte(this.difficulty.getDifficultyId());
-      buf.writeByte(this.maxPlayers);
-      buf.writeString(this.worldType.getWorldTypeName());
-      buf.writeBoolean(this.reducedDebugInfo);
-   }
+    public void processPacket(INetHandlerPlayClient handler) throws IOException {
+        handler.handleJoinGame(this);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleJoinGame(this);
-   }
+    @Override
+    public String serialize() {
+        return String.format(
+            "eid=%d, gameType=%d, hardcore=%b, dimension=%d, difficulty=%s, maxplayers=%d",
+            this.playerEntityId,
+            this.gameMode.getID(),
+            this.hardcore,
+            this.viewDistance,
+            this.difficulty,
+            this.maxPlayers
+        );
+    }
 
-   public int getEntityId() {
-      return this.entityId;
-   }
+    public int getEntityId() {
+        return this.playerEntityId;
+    }
 
-   public boolean isHardcoreMode() {
-      return this.hardcoreMode;
-   }
+    public boolean isHardcore() {
+        return this.hardcore;
+    }
 
-   public GameType getGameType() {
-      return this.gameType;
-   }
+    public GameType getGameMode() {
+        return this.gameMode;
+    }
 
-   public int getDimension() {
-      return this.dimension;
-   }
+    public int getChunkLoadDistance() {
+        return this.viewDistance;
+    }
 
-   public EnumDifficulty getDifficulty() {
-      return this.difficulty;
-   }
+    public EnumDifficulty getDifficulty() {
+        return this.difficulty;
+    }
 
-   public int getMaxPlayers() {
-      return this.maxPlayers;
-   }
+    public int getMaxPlayers() {
+        return this.maxPlayers;
+    }
 
-   public WorldType getWorldType() {
-      return this.worldType;
-   }
+    public WorldType getGeneratorType() {
+        return this.levelGeneratorType;
+    }
 
-   public boolean isReducedDebugInfo() {
-      return this.reducedDebugInfo;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) throws IOException {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

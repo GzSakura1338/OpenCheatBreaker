@@ -1,140 +1,129 @@
 package net.minecraft.network.play.server;
 
-import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.scoreboard.ScorePlayerTeam;
-import net.minecraft.scoreboard.Team.EnumVisible;
 
-public class S3EPacketTeams implements Packet<INetHandlerPlayClient> {
-   public String name = "";
-   public String displayName = "";
-   public String prefix = "";
-   public String suffix = "";
-   public String nameTagVisibility = EnumVisible.ALWAYS.internalName;
-   public int color = -1;
-   public Collection<String> players = Lists.newArrayList();
-   public int action;
-   public int friendlyFlags;
+public class S3EPacketTeams extends Packet {
+    public String teamName = "";
+    public String displayName = "";
+    public String playerPrefix = "";
+    public String nameTagVisibilityRule = "";
+    public Collection playerList = new ArrayList();
+    public int mode;
+    public int flags;
 
-   public S3EPacketTeams() {
-   }
+    public S3EPacketTeams() {
+    }
 
-   public S3EPacketTeams(ScorePlayerTeam teamIn, int actionIn) {
-      this.name = teamIn.getRegisteredName();
-      this.action = actionIn;
-      if (actionIn == 0 || actionIn == 2) {
-         this.displayName = teamIn.getTeamName();
-         this.prefix = teamIn.getColorPrefix();
-         this.suffix = teamIn.getColorSuffix();
-         this.friendlyFlags = teamIn.getFriendlyFlagsBitwise();
-         this.nameTagVisibility = teamIn.getNameTagVisibility().internalName;
-         this.color = teamIn.getChatFormat().getColorIndex();
-      }
+    public S3EPacketTeams(ScorePlayerTeam scorePlayerTeam, int n) {
+        this.teamName = scorePlayerTeam.getRegisteredName();
+        this.mode = n;
+        if (n == 0 || n == 2) {
+            this.displayName = scorePlayerTeam.getDisplayName();
+            this.playerPrefix = scorePlayerTeam.getColorPrefix();
+            this.nameTagVisibilityRule = scorePlayerTeam.getColorSuffix();
+            this.flags = scorePlayerTeam.getFriendlyFlagsBitwise();
+        }
 
-      if (actionIn == 0) {
-         this.players.addAll(teamIn.getMembershipCollection());
-      }
-   }
+        if (n == 0) {
+            this.playerList.addAll(scorePlayerTeam.getMembershipCollection());
+        }
+    }
 
-   public S3EPacketTeams(ScorePlayerTeam teamIn, Collection<String> playersIn, int actionIn) {
-      if (actionIn != 3 && actionIn != 4) {
-         throw new IllegalArgumentException("Method must be join or leave for player constructor");
-      }
+    public S3EPacketTeams(ScorePlayerTeam scorePlayerTeam, Collection collection, int n) {
+        if (n != 3 && n != 4) {
+            throw new IllegalArgumentException("Method must be join or leave for player constructor");
+        }
 
-      if (playersIn != null && !playersIn.isEmpty()) {
-         this.action = actionIn;
-         this.name = teamIn.getRegisteredName();
-         this.players.addAll(playersIn);
-      } else {
-         throw new IllegalArgumentException("Players cannot be null/empty");
-      }
-   }
+        if (collection != null && !collection.isEmpty()) {
+            this.mode = n;
+            this.teamName = scorePlayerTeam.getRegisteredName();
+            this.playerList.addAll(collection);
+        } else {
+            throw new IllegalArgumentException("Players cannot be null/empty");
+        }
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.name = buf.readStringFromBuffer(16);
-      this.action = buf.readByte();
-      if (this.action == 0 || this.action == 2) {
-         this.displayName = buf.readStringFromBuffer(32);
-         this.prefix = buf.readStringFromBuffer(16);
-         this.suffix = buf.readStringFromBuffer(16);
-         this.friendlyFlags = buf.readByte();
-         this.nameTagVisibility = buf.readStringFromBuffer(32);
-         this.color = buf.readByte();
-      }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.teamName = data.readStringFromBuffer(16);
+        this.mode = data.readByte();
+        if (this.mode == 0 || this.mode == 2) {
+            this.displayName = data.readStringFromBuffer(32);
+            this.playerPrefix = data.readStringFromBuffer(16);
+            this.nameTagVisibilityRule = data.readStringFromBuffer(16);
+            this.flags = data.readByte();
+        }
 
-      if (this.action == 0 || this.action == 3 || this.action == 4) {
-         int readVarIntFromBuffer = buf.readVarIntFromBuffer();
+        if (this.mode == 0 || this.mode == 3 || this.mode == 4) {
+            short readShort = data.readShort();
 
-         for (int i = 0; i < readVarIntFromBuffer; i++) {
-            this.players.add(buf.readStringFromBuffer(40));
-         }
-      }
-   }
+            for (int i = 0; i < readShort; i++) {
+                this.playerList.add(data.readStringFromBuffer(40));
+            }
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeString(this.name);
-      buf.writeByte(this.action);
-      if (this.action == 0 || this.action == 2) {
-         buf.writeString(this.displayName);
-         buf.writeString(this.prefix);
-         buf.writeString(this.suffix);
-         buf.writeByte(this.friendlyFlags);
-         buf.writeString(this.nameTagVisibility);
-         buf.writeByte(this.color);
-      }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeStringToBuffer(this.teamName);
+        data.writeByte(this.mode);
+        if (this.mode == 0 || this.mode == 2) {
+            data.writeStringToBuffer(this.displayName);
+            data.writeStringToBuffer(this.playerPrefix);
+            data.writeStringToBuffer(this.nameTagVisibilityRule);
+            data.writeByte(this.flags);
+        }
 
-      if (this.action == 0 || this.action == 3 || this.action == 4) {
-         buf.writeVarIntToBuffer(this.players.size());
+        if (this.mode == 0 || this.mode == 3 || this.mode == 4) {
+            data.writeShort(this.playerList.size());
 
-         for (String str : this.players) {
-            buf.writeString(str);
-         }
-      }
-   }
+            for (String str : (Iterable<String>)this.playerList) {
+                data.writeStringToBuffer(str);
+            }
+        }
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleTeams(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleTeams(this);
+    }
 
-   public String getName() {
-      return this.name;
-   }
+    public String getTeamName() {
+        return this.teamName;
+    }
 
-   public String getDisplayName() {
-      return this.displayName;
-   }
+    public String getDisplayName() {
+        return this.displayName;
+    }
 
-   public String getPrefix() {
-      return this.prefix;
-   }
+    public String getPlayerPrefix() {
+        return this.playerPrefix;
+    }
 
-   public String getSuffix() {
-      return this.suffix;
-   }
+    public String getNameTagVisibilityRule() {
+        return this.nameTagVisibilityRule;
+    }
 
-   public Collection<String> getPlayers() {
-      return this.players;
-   }
+    public Collection getPlayerList() {
+        return this.playerList;
+    }
 
-   public int getAction() {
-      return this.action;
-   }
+    public int getMode() {
+        return this.mode;
+    }
 
-   public int getFriendlyFlags() {
-      return this.friendlyFlags;
-   }
+    public int getFlags() {
+        return this.flags;
+    }
 
-   public int getColor() {
-      return this.color;
-   }
-
-   public String getNameTagVisibility() {
-      return this.nameTagVisibility;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

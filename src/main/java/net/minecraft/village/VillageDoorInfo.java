@@ -1,90 +1,65 @@
 package net.minecraft.village;
 
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-
 public class VillageDoorInfo {
-   public BlockPos doorBlockPos;
-   public EnumFacing insideDirection;
-   public BlockPos insideBlock;
-   public int lastActivityTimestamp;
-   public boolean isDetachedFromVillageFlag;
-   public int doorOpeningRestrictionCounter;
+    public int posX;
+    public int posY;
+    public int posZ;
+    public int insideDirectionX;
+    public int insideDirectionZ;
+    public int lastActivityTimestamp;
+    public boolean isDetachedFromVillageFlag;
+    public int doorOpeningRestrictionCounter;
 
-   public VillageDoorInfo(BlockPos pos, int n, int n2, int n3) {
-      this(pos, getFaceDirection(n, n2), n3);
-   }
+    public VillageDoorInfo(int n, int n2, int n3, int n4, int n5, int n6) {
+        this.posX = n;
+        this.posY = n2;
+        this.posZ = n3;
+        this.insideDirectionX = n4;
+        this.insideDirectionZ = n5;
+        this.lastActivityTimestamp = n6;
+    }
 
-   public static EnumFacing getFaceDirection(int deltaX, int deltaZ) {
-      return deltaX < 0 ? EnumFacing.WEST : (deltaX > 0 ? EnumFacing.EAST : (deltaZ < 0 ? EnumFacing.NORTH : EnumFacing.SOUTH));
-   }
+    public int getDistanceSquared(int n, int n2, int n3) {
+        int n4 = n - this.posX;
+        int n5 = n2 - this.posY;
+        int n6 = n3 - this.posZ;
+        return n4 * n4 + n5 * n5 + n6 * n6;
+    }
 
-   public VillageDoorInfo(BlockPos pos, EnumFacing facing, int timestamp) {
-      this.doorBlockPos = pos;
-      this.insideDirection = facing;
-      this.insideBlock = pos.offset(facing, 2);
-      this.lastActivityTimestamp = timestamp;
-   }
+    public int getInsideDistanceSquare(int n, int n2, int n3) {
+        int n4 = n - this.posX - this.insideDirectionX;
+        int n5 = n2 - this.posY;
+        int n6 = n3 - this.posZ - this.insideDirectionZ;
+        return n4 * n4 + n5 * n5 + n6 * n6;
+    }
 
-   public int getDistanceSquared(int x, int y, int z) {
-      return (int)this.doorBlockPos.distanceSq(x, y, z);
-   }
+    public int getInsidePosX() {
+        return this.posX + this.insideDirectionX;
+    }
 
-   public int getDistanceToDoorBlockSq(BlockPos pos) {
-      return (int)pos.distanceSq(this.getDoorBlockPos());
-   }
+    public int getInsidePosY() {
+        return this.posY;
+    }
 
-   public int getDistanceToInsideBlockSq(BlockPos pos) {
-      return (int)this.insideBlock.distanceSq(pos);
-   }
+    public int getInsidePosZ() {
+        return this.posZ + this.insideDirectionZ;
+    }
 
-   public boolean checkBlockPos(BlockPos pos) {
-      int n = pos.getX() - this.doorBlockPos.getX();
-      int n2 = pos.getZ() - this.doorBlockPos.getY();
-      return n * this.insideDirection.getFrontOffsetX() + n2 * this.insideDirection.getFrontOffsetZ() >= 0;
-   }
+    public boolean isInside(int n, int n2) {
+        int n3 = n - this.posX;
+        int n4 = n2 - this.posZ;
+        return n3 * this.insideDirectionX + n4 * this.insideDirectionZ >= 0;
+    }
 
-   public void resetDoorOpeningRestrictionCounter() {
-      this.doorOpeningRestrictionCounter = 0;
-   }
+    public void resetDoorOpeningRestrictionCounter() {
+        this.doorOpeningRestrictionCounter = 0;
+    }
 
-   public void incrementDoorOpeningRestrictionCounter() {
-      this.doorOpeningRestrictionCounter++;
-   }
+    public void incrementDoorOpeningRestrictionCounter() {
+        this.doorOpeningRestrictionCounter++;
+    }
 
-   public int getDoorOpeningRestrictionCounter() {
-      return this.doorOpeningRestrictionCounter;
-   }
-
-   public BlockPos getDoorBlockPos() {
-      return this.doorBlockPos;
-   }
-
-   public BlockPos getInsideBlockPos() {
-      return this.insideBlock;
-   }
-
-   public int getInsideOffsetX() {
-      return this.insideDirection.getFrontOffsetX() * 2;
-   }
-
-   public int getInsideOffsetZ() {
-      return this.insideDirection.getFrontOffsetZ() * 2;
-   }
-
-   public int getInsidePosY() {
-      return this.lastActivityTimestamp;
-   }
-
-   public void setLastActivityTimestamp(int timestamp) {
-      this.lastActivityTimestamp = timestamp;
-   }
-
-   public boolean getIsDetachedFromVillageFlag() {
-      return this.isDetachedFromVillageFlag;
-   }
-
-   public void setIsDetachedFromVillageFlag(boolean detached) {
-      this.isDetachedFromVillageFlag = detached;
-   }
+    public int getDoorOpeningRestrictionCounter() {
+        return this.doorOpeningRestrictionCounter;
+    }
 }

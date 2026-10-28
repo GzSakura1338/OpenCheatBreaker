@@ -12,121 +12,114 @@ import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraft.world.gen.structure.StructureVillagePieces.Road;
 
 public class MapGenVillage extends MapGenStructure {
-   public static List<BiomeGenBase> villageSpawnBiomes = Arrays.asList(BiomeGenBase.plains, BiomeGenBase.desert, BiomeGenBase.savanna);
-   public int terrainType;
-   public int distance = 32;
-   public int intValue = 8;
+    public static List villageSpawnBiomes = Arrays.asList(BiomeGenBase.plains, BiomeGenBase.desert, BiomeGenBase.savanna);
+    public int terrainType;
+    public int distance = 32;
+    public int intValue = 8;
 
-   public MapGenVillage() {
-   }
+    public MapGenVillage() {
+    }
 
-   public MapGenVillage(Map<String, String> map) {
-      this();
+    public MapGenVillage(Map map) {
+        this();
 
-      for (Entry entry : map.entrySet()) {
-         if (((String)entry.getKey()).equals("size")) {
-            this.terrainType = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.terrainType, 0);
-         } else if (((String)entry.getKey()).equals("distance")) {
-            this.distance = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.distance, this.intValue + 1);
-         }
-      }
-   }
-
-   @Override
-   public String getStructureName() {
-      return "Village";
-   }
-
-   @Override
-   public boolean canSpawnStructureAtCoords(int chunkX, int chunkZ) {
-      int chunkX2 = chunkX;
-      int chunkZ2 = chunkZ;
-      if (chunkX < 0) {
-         chunkX -= this.distance - 1;
-      }
-
-      if (chunkZ < 0) {
-         chunkZ -= this.distance - 1;
-      }
-
-      int n = chunkX / this.distance;
-      int n2 = chunkZ / this.distance;
-      Random setRandomSeed = this.worldObj.setRandomSeed(n, n2, 10387312);
-      n *= this.distance;
-      n2 *= this.distance;
-      n += setRandomSeed.nextInt(this.distance - this.intValue);
-      n2 += setRandomSeed.nextInt(this.distance - this.intValue);
-      if (chunkX2 == n && chunkZ2 == n2) {
-         boolean areBiomesViable = this.worldObj.getWorldChunkManager().areBiomesViable(chunkX2 * 16 + 8, chunkZ2 * 16 + 8, 0, villageSpawnBiomes);
-         if (areBiomesViable) {
-            return true;
-         }
-      }
-
-      return false;
-   }
-
-   @Override
-   public StructureStart getStructureStart(int chunkX, int chunkZ) {
-      return new MapGenVillage.Start(this.worldObj, this.rand, chunkX, chunkZ, this.terrainType);
-   }
-
-   public static class Start extends StructureStart {
-      public boolean hasMoreThanTwoComponents;
-
-      public Start() {
-      }
-
-      public Start(World worldIn, Random rand, int x, int z, int size) {
-         super(x, z);
-         List list = StructureVillagePieces.getStructureVillageWeightedPieceList(rand, size);
-         net.minecraft.world.gen.structure.StructureVillagePieces.Start start = new net.minecraft.world.gen.structure.StructureVillagePieces.Start(
-            worldIn.getWorldChunkManager(), 0, rand, (x << 4) + 2, (z << 4) + 2, list, size
-         );
-         this.components.add(start);
-         start.buildComponent(start, this.components, rand);
-         List structureComponentList2 = start.structureComponentList2;
-         List structureComponentList = start.structureComponentList;
-
-         while (!structureComponentList2.isEmpty() || !structureComponentList.isEmpty()) {
-            if (structureComponentList2.isEmpty()) {
-               int nextInt = rand.nextInt(structureComponentList.size());
-               StructureComponent structureComponent = (StructureComponent)structureComponentList.remove(nextInt);
-               structureComponent.buildComponent(start, this.components, rand);
-            } else {
-               int nextInt = rand.nextInt(structureComponentList2.size());
-               StructureComponent structureComponent = (StructureComponent)structureComponentList2.remove(nextInt);
-               structureComponent.buildComponent(start, this.components, rand);
+        for (Entry entry : (Iterable<Entry>)map.entrySet()) {
+            if (entry.getKey().equals("size")) {
+                this.terrainType = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.terrainType, 0);
+            } else if (entry.getKey().equals("distance")) {
+                this.distance = MathHelper.parseIntWithDefaultAndMax((String)entry.getValue(), this.distance, this.intValue + 1);
             }
-         }
+        }
+    }
 
-         this.updateBoundingBox();
-         int n = 0;
+    @Override
+    public String getStructureName() {
+        return "Village";
+    }
 
-         for (StructureComponent structureComponent : this.components) {
-            if (!(structureComponent instanceof Road)) {
-               n++;
+    @Override
+    public boolean canSpawnStructureAtCoords(int n, int n2) {
+        int n3 = n;
+        int n4 = n2;
+        if (n < 0) {
+            n -= this.distance - 1;
+        }
+
+        if (n2 < 0) {
+            n2 -= this.distance - 1;
+        }
+
+        int n5 = n / this.distance;
+        int n6 = n2 / this.distance;
+        Random setRandomSeed = this.worldObj.setRandomSeed(n5, n6, 10387312);
+        n5 *= this.distance;
+        n6 *= this.distance;
+        n5 += setRandomSeed.nextInt(this.distance - this.intValue);
+        n6 += setRandomSeed.nextInt(this.distance - this.intValue);
+        return n3 == n5 && n4 == n6 ? this.worldObj.getWorldChunkManager().areBiomesViable(n3 * 16 + 8, n4 * 16 + 8, 0, villageSpawnBiomes) : false;
+    }
+
+    @Override
+    public StructureStart getStructureStart(int n, int n2) {
+        return new MapGenVillage.Start(this.worldObj, this.rand, n, n2, this.terrainType);
+    }
+
+    public static class Start extends StructureStart {
+        public boolean hasMoreThanTwoComponents;
+
+        public Start() {
+        }
+
+        public Start(World world, Random random, int n, int n2, int n3) {
+            super(n, n2);
+            List list = StructureVillagePieces.getStructureVillageWeightedPieceList(random, n3);
+            net.minecraft.world.gen.structure.StructureVillagePieces.Start start = new net.minecraft.world.gen.structure.StructureVillagePieces.Start(
+                world.getWorldChunkManager(), 0, random, (n << 4) + 2, (n2 << 4) + 2, list, n3
+            );
+            this.components.add(start);
+            start.buildComponent(start, this.components, random);
+            List list2 = start.list2;
+            List list3 = start.list;
+
+            while (!list2.isEmpty() || !list3.isEmpty()) {
+                if (list2.isEmpty()) {
+                    int nextInt = random.nextInt(list3.size());
+                    StructureComponent structureComponent = (StructureComponent)list3.remove(nextInt);
+                    structureComponent.buildComponent(start, this.components, random);
+                } else {
+                    int nextInt = random.nextInt(list2.size());
+                    StructureComponent structureComponent = (StructureComponent)list2.remove(nextInt);
+                    structureComponent.buildComponent(start, this.components, random);
+                }
             }
-         }
 
-         this.hasMoreThanTwoComponents = n > 2;
-      }
+            this.updateBoundingBox();
+            int n4 = 0;
 
-      @Override
-      public boolean isSizeableStructure() {
-         return this.hasMoreThanTwoComponents;
-      }
+            for (StructureComponent structureComponent : (Iterable<StructureComponent>)this.components) {
+                if (!(structureComponent instanceof Road)) {
+                    n4++;
+                }
+            }
 
-      @Override
-      public void writeToNBT(NBTTagCompound tagCompound) {
-         super.writeToNBT(tagCompound);
-         tagCompound.setBoolean("Valid", this.hasMoreThanTwoComponents);
-      }
+            this.hasMoreThanTwoComponents = n4 > 2;
+        }
 
-      @Override
-      public void readFromNBT(NBTTagCompound tagCompound) {
-         super.readFromNBT(tagCompound);
-         this.hasMoreThanTwoComponents = tagCompound.getBoolean("Valid");
-      }
-   }
+        @Override
+        public boolean isSizeableStructure() {
+            return this.hasMoreThanTwoComponents;
+        }
+
+        @Override
+        public void serialize(NBTTagCompound nbttagCompound) {
+            super.serialize(nbttagCompound);
+            nbttagCompound.setBoolean("Valid", this.hasMoreThanTwoComponents);
+        }
+
+        @Override
+        public void handleNBTTagCompound(NBTTagCompound nbttagCompound) {
+            super.handleNBTTagCompound(nbttagCompound);
+            this.hasMoreThanTwoComponents = nbttagCompound.getBoolean("Valid");
+        }
+    }
 }

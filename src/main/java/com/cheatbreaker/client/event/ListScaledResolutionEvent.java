@@ -5,19 +5,19 @@ import java.util.List;
 import net.minecraft.client.gui.ScaledResolution;
 
 public class ListScaledResolutionEvent extends Event {
-   public ScaledResolution scaledResolution;
-   public List<AbstractMod> abstractModList;
+    public ScaledResolution scaledResolution;
+    public List<AbstractMod> abstractModList;
 
-   public ListScaledResolutionEvent(ScaledResolution scaledResolution, List<AbstractMod> list) {
-      this.scaledResolution = scaledResolution;
-      this.abstractModList = list;
-   }
+    public List<AbstractMod> getAbstractModList() {
+        return this.abstractModList;
+    }
 
-   public ScaledResolution getScaledResolution() {
-      return this.scaledResolution;
-   }
+    public ScaledResolution getScaledResolution() {
+        return this.scaledResolution;
+    }
 
-   public List<AbstractMod> getAbstractModList() {
-      return this.abstractModList;
-   }
+    public ListScaledResolutionEvent(ScaledResolution scaledResolution, List<AbstractMod> list) {
+        this.scaledResolution = scaledResolution;
+        this.abstractModList = list;
+    }
 }

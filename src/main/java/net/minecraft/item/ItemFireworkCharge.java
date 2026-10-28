@@ -1,141 +1,170 @@
 package net.minecraft.item;
 
 import java.util.List;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagIntArray;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 
 public class ItemFireworkCharge extends Item {
-   @Override
-   public int getColorFromItemStack(ItemStack stack, int renderPass) {
-      if (renderPass != 1) {
-         return super.getColorFromItemStack(stack, renderPass);
-      }
+    public IIcon iIcon;
 
-      NBTBase explosionTag = getExplosionTag(stack, "Colors");
-      if (!(explosionTag instanceof NBTTagIntArray)) {
-         return 9079434;
-      }
+    @Override
+    public IIcon getIconFromDamageForRenderPass(int n, int n2) {
+        return n2 > 0 ? this.iIcon : super.getIconFromDamageForRenderPass(n, n2);
+    }
 
-      NBTTagIntArray nbttagIntArray = (NBTTagIntArray)explosionTag;
-      int[] intArray = nbttagIntArray.getIntArray();
-      if (intArray.length == 1) {
-         return intArray[0];
-      }
+    @Override
+    public int getColorFromItemStack(ItemStack itemStack, int n) {
+        if (n != 1) {
+            return super.getColorFromItemStack(itemStack, n);
+        }
 
-      int n = 0;
-      int n2 = 0;
-      int n3 = 0;
-
-      for (int n4 : intArray) {
-         n += (n4 & 0xFF0000) >> 16;
-         n2 += (n4 & 0xFF00) >> 8;
-         n3 += (n4 & 0xFF) >> 0;
-      }
-
-      n /= intArray.length;
-      n2 /= intArray.length;
-      n3 /= intArray.length;
-      return n << 16 | n2 << 8 | n3;
-   }
-
-   public static NBTBase getExplosionTag(ItemStack stack, String key) {
-      if (stack.hasTagCompound()) {
-         NBTTagCompound compoundTag = stack.getTagCompound().getCompoundTag("Explosion");
-         if (compoundTag != null) {
-            return compoundTag.getTag(key);
-         }
-      }
-
-      return null;
-   }
-
-   @Override
-   public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced) {
-      if (stack.hasTagCompound()) {
-         NBTTagCompound compoundTag = stack.getTagCompound().getCompoundTag("Explosion");
-         if (compoundTag != null) {
-            addExplosionInfo(compoundTag, tooltip);
-         }
-      }
-   }
-
-   public static void addExplosionInfo(NBTTagCompound nbt, List<String> tooltip) {
-      byte byte2 = nbt.getByte("Type");
-      if (byte2 >= 0 && byte2 <= 4) {
-         tooltip.add(StatCollector.translateToLocal("item.fireworksCharge.type." + byte2).trim());
-      } else {
-         tooltip.add(StatCollector.translateToLocal("item.fireworksCharge.type").trim());
-      }
-
-      int[] intArray = nbt.getIntArray("Colors");
-      if (intArray.length > 0) {
-         boolean flag = true;
-         String str = "";
-
-         for (int n : intArray) {
-            if (!flag) {
-               str = str + ", ";
+        NBTBase explosionNbt = getExplosionNbt(itemStack, "Colors");
+        if (explosionNbt != null && explosionNbt instanceof NBTTagIntArray) {
+            NBTTagIntArray nbttagIntArray = (NBTTagIntArray)explosionNbt;
+            int[] intArray = nbttagIntArray.getIntArray();
+            if (intArray.length == 1) {
+                return intArray[0];
             }
 
-            flag = false;
-            boolean flag2 = false;
+            int n2 = 0;
+            int n3 = 0;
+            int n4 = 0;
+            int[] ints = intArray;
+            int length = intArray.length;
 
-            for (int i = 0; i < ItemDye.dyeColors.length; i++) {
-               if (n == ItemDye.dyeColors[i]) {
-                  flag2 = true;
-                  str = str + StatCollector.translateToLocal("item.fireworksCharge." + EnumDyeColor.byDyeDamage(i).getUnlocalizedName());
-                  break;
-               }
+            for (int i = 0; i < length; i++) {
+                int n5 = ints[i];
+                n2 += (n5 & 0xFF0000) >> 16;
+                n3 += (n5 & 0xFF00) >> 8;
+                n4 += (n5 & 0xFF) >> 0;
             }
 
-            if (!flag2) {
-               str = str + StatCollector.translateToLocal("item.fireworksCharge.customColor");
+            n2 /= intArray.length;
+            n3 /= intArray.length;
+            n4 /= intArray.length;
+            return n2 << 16 | n3 << 8 | n4;
+        } else {
+            return 9079434;
+        }
+    }
+
+    @Override
+    public boolean requiresMultipleRenderPasses() {
+        return true;
+    }
+
+    public static NBTBase getExplosionNbt(ItemStack itemStack, String str) {
+        if (itemStack.hasTagCompound()) {
+            NBTTagCompound compoundTag = itemStack.getTagCompound().getCompoundTag("Explosion");
+            if (compoundTag != null) {
+                return compoundTag.getTag(str);
             }
-         }
+        }
 
-         tooltip.add(str);
-      }
+        return null;
+    }
 
-      int[] intArray2 = nbt.getIntArray("FadeColors");
-      if (intArray2.length > 0) {
-         boolean flag = true;
-         String str = StatCollector.translateToLocal("item.fireworksCharge.fadeTo") + " ";
+    @Override
+    public void addInformation(ItemStack itemStack, EntityPlayer entityPlayer, List list, boolean flag) {
+        if (itemStack.hasTagCompound()) {
+            NBTTagCompound compoundTag = itemStack.getTagCompound().getCompoundTag("Explosion");
+            if (compoundTag != null) {
+                addExplosionInfo(compoundTag, list);
+            }
+        }
+    }
 
-         for (int n : intArray2) {
-            if (!flag) {
-               str = str + ", ";
+    public static void addExplosionInfo(NBTTagCompound nbttagCompound, List list) {
+        byte byte2 = nbttagCompound.getByte("Type");
+        if (byte2 >= 0 && byte2 <= 4) {
+            list.add(StatCollector.translateToLocal("item.fireworksCharge.type." + byte2).trim());
+        } else {
+            list.add(StatCollector.translateToLocal("item.fireworksCharge.type").trim());
+        }
+
+        int[] intArray = nbttagCompound.getIntArray("Colors");
+        if (intArray.length > 0) {
+            boolean flag = true;
+            String str = "";
+            int[] ints = intArray;
+            int length = intArray.length;
+
+            for (int i = 0; i < length; i++) {
+                int n = ints[i];
+                if (!flag) {
+                    str = str + ", ";
+                }
+
+                flag = false;
+                boolean flag2 = false;
+
+                for (int j = 0; j < 16; j++) {
+                    if (n == ItemDye.dyeColors[j]) {
+                        flag2 = true;
+                        str = str + StatCollector.translateToLocal("item.fireworksCharge." + ItemDye.dyeColorNames[j]);
+                        break;
+                    }
+                }
+
+                if (!flag2) {
+                    str = str + StatCollector.translateToLocal("item.fireworksCharge.customColor");
+                }
             }
 
-            flag = false;
-            boolean flag2 = false;
+            list.add(str);
+        }
 
-            for (int i = 0; i < 16; i++) {
-               if (n == ItemDye.dyeColors[i]) {
-                  flag2 = true;
-                  str = str + StatCollector.translateToLocal("item.fireworksCharge." + EnumDyeColor.byDyeDamage(i).getUnlocalizedName());
-                  break;
-               }
+        int[] intArray2 = nbttagCompound.getIntArray("FadeColors");
+        if (intArray2.length > 0) {
+            boolean flag = true;
+            String str = StatCollector.translateToLocal("item.fireworksCharge.fadeTo") + " ";
+            int[] ints = intArray2;
+            int length = intArray2.length;
+
+            for (int i = 0; i < length; i++) {
+                int n = ints[i];
+                if (!flag) {
+                    str = str + ", ";
+                }
+
+                flag = false;
+                boolean flag2 = false;
+
+                for (int j = 0; j < 16; j++) {
+                    if (n == ItemDye.dyeColors[j]) {
+                        flag2 = true;
+                        str = str + StatCollector.translateToLocal("item.fireworksCharge." + ItemDye.dyeColorNames[j]);
+                        break;
+                    }
+                }
+
+                if (!flag2) {
+                    str = str + StatCollector.translateToLocal("item.fireworksCharge.customColor");
+                }
             }
 
-            if (!flag2) {
-               str = str + StatCollector.translateToLocal("item.fireworksCharge.customColor");
-            }
-         }
+            list.add(str);
+        }
 
-         tooltip.add(str);
-      }
+        boolean boolean2 = nbttagCompound.getBoolean("Trail");
+        if (boolean2) {
+            list.add(StatCollector.translateToLocal("item.fireworksCharge.trail"));
+        }
 
-      boolean boolean2 = nbt.getBoolean("Trail");
-      if (boolean2) {
-         tooltip.add(StatCollector.translateToLocal("item.fireworksCharge.trail"));
-      }
+        boolean boolean3 = nbttagCompound.getBoolean("Flicker");
+        if (boolean3) {
+            list.add(StatCollector.translateToLocal("item.fireworksCharge.flicker"));
+        }
+    }
 
-      boolean boolean3 = nbt.getBoolean("Flicker");
-      if (boolean3) {
-         tooltip.add(StatCollector.translateToLocal("item.fireworksCharge.flicker"));
-      }
-   }
+    @Override
+    public void registerIcons(IIconRegister register) {
+        super.registerIcons(register);
+        this.iIcon = register.registerIcon(this.getIconString() + "_overlay");
+    }
 }

@@ -6,16 +6,16 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.WebsocketPacketHandler;
 
 public class ShutdownPacket extends AbstractPacket {
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handleShutdown(this);
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handleShutdown(this);
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+    }
 }

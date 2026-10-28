@@ -1,23 +1,38 @@
 package net.minecraft.item;
 
 import java.util.List;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.util.IIcon;
 
 public class ItemCoal extends Item {
-   public ItemCoal() {
-      this.setHasSubtypes(true);
-      this.setMaxDamage(0);
-      this.setCreativeTab(CreativeTabs.tabMaterials);
-   }
+    public IIcon iIcon;
 
-   @Override
-   public String getUnlocalizedName(ItemStack stack) {
-      return stack.getMetadata() == 1 ? "item.charcoal" : "item.coal";
-   }
+    public ItemCoal() {
+        this.setHasSubtypes(true);
+        this.setMaxDurability(0);
+        this.setCreativeTab(CreativeTabs.tabMaterials);
+    }
 
-   @Override
-   public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems) {
-      subItems.add(new ItemStack(itemIn, 1, 0));
-      subItems.add(new ItemStack(itemIn, 1, 1));
-   }
+    @Override
+    public String getUnlocalizedName(ItemStack stack) {
+        return stack.getMetadata() == 1 ? "item.charcoal" : "item.coal";
+    }
+
+    @Override
+    public void getSubItems(Item item, CreativeTabs creativeTabs, List list) {
+        list.add(new ItemStack(item, 1, 0));
+        list.add(new ItemStack(item, 1, 1));
+    }
+
+    @Override
+    public IIcon getIconFromDamage(int n) {
+        return n == 1 ? this.iIcon : super.getIconFromDamage(n);
+    }
+
+    @Override
+    public void registerIcons(IIconRegister register) {
+        super.registerIcons(register);
+        this.iIcon = register.registerIcon("charcoal");
+    }
 }

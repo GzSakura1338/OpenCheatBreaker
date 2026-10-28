@@ -7,179 +7,175 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 
 public class JsonUtils {
-   public static boolean isString(JsonObject jsonObject, String str) {
-      return !isJsonPrimitive(jsonObject, str) ? false : jsonObject.getAsJsonPrimitive(str).isString();
-   }
+    public static boolean jsonObjectFieldTypeIsString(JsonObject jsonObject, String str) {
+        return jsonObjectFieldTypeIsPrimitive(jsonObject, str) && jsonObject.getAsJsonPrimitive(str).isString();
+    }
 
-   public static boolean isString(JsonElement jsonElement) {
-      return !jsonElement.isJsonPrimitive() ? false : jsonElement.getAsJsonPrimitive().isString();
-   }
+    public static boolean jsonElementTypeIsString(JsonElement jsonElement) {
+        return jsonElement.isJsonPrimitive() && jsonElement.getAsJsonPrimitive().isString();
+    }
 
-   public static boolean isBoolean(JsonObject jsonObject, String str) {
-      return !isJsonPrimitive(jsonObject, str) ? false : jsonObject.getAsJsonPrimitive(str).isBoolean();
-   }
+    public static boolean jsonObjectFieldTypeIsArray(JsonObject jsonObject, String str) {
+        return jsonObjectHasNamedField(jsonObject, str) && jsonObject.get(str).isJsonArray();
+    }
 
-   public static boolean isJsonArray(JsonObject jsonObject, String str) {
-      return !hasField(jsonObject, str) ? false : jsonObject.get(str).isJsonArray();
-   }
+    public static boolean jsonObjectFieldTypeIsPrimitive(JsonObject jsonObject, String str) {
+        return jsonObjectHasNamedField(jsonObject, str) && jsonObject.get(str).isJsonPrimitive();
+    }
 
-   public static boolean isJsonPrimitive(JsonObject jsonObject, String str) {
-      return !hasField(jsonObject, str) ? false : jsonObject.get(str).isJsonPrimitive();
-   }
+    public static boolean jsonObjectHasNamedField(JsonObject jsonObject, String str) {
+        return jsonObject != null && jsonObject.get(str) != null;
+    }
 
-   public static boolean hasField(JsonObject jsonObject, String str) {
-      return jsonObject == null ? false : jsonObject.get(str) != null;
-   }
+    public static String getJsonElementStringValue(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonPrimitive()) {
+            return jsonElement.getAsString();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a string, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static String getString(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonPrimitive()) {
-         return jsonElement.getAsString();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a string, was " + toString(jsonElement));
-      }
-   }
+    public static String getJsonObjectStringFieldValue(JsonObject jsonObject, String str) {
+        if (jsonObject.has(str)) {
+            return getJsonElementStringValue(jsonObject.get(str), str);
+        } else {
+            throw new JsonSyntaxException("Missing " + str + ", expected to find a string");
+        }
+    }
 
-   public static String getString(JsonObject jsonObject, String str) {
-      if (jsonObject.has(str)) {
-         return getString(jsonObject.get(str), str);
-      } else {
-         throw new JsonSyntaxException("Missing " + str + ", expected to find a string");
-      }
-   }
+    public static String getJsonObjectStringFieldValueOrDefault(JsonObject jsonObject, String str, String str2) {
+        return jsonObject.has(str) ? getJsonElementStringValue(jsonObject.get(str), str) : str2;
+    }
 
-   public static String getString(JsonObject jsonObject, String str, String str2) {
-      return jsonObject.has(str) ? getString(jsonObject.get(str), str) : str2;
-   }
+    public static boolean getJsonElementBooleanValue(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonPrimitive()) {
+            return jsonElement.getAsBoolean();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a Boolean, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static boolean getBoolean(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonPrimitive()) {
-         return jsonElement.getAsBoolean();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a Boolean, was " + toString(jsonElement));
-      }
-   }
+    public static boolean getJsonObjectBooleanFieldValue(JsonObject jsonObject, String str) {
+        if (jsonObject.has(str)) {
+            return getJsonElementBooleanValue(jsonObject.get(str), str);
+        } else {
+            throw new JsonSyntaxException("Missing " + str + ", expected to find a Boolean");
+        }
+    }
 
-   public static boolean getBoolean(JsonObject jsonObject, String str) {
-      if (jsonObject.has(str)) {
-         return getBoolean(jsonObject.get(str), str);
-      } else {
-         throw new JsonSyntaxException("Missing " + str + ", expected to find a Boolean");
-      }
-   }
+    public static boolean getJsonObjectBooleanFieldValueOrDefault(JsonObject jsonObject, String str, boolean flag) {
+        return jsonObject.has(str) ? getJsonElementBooleanValue(jsonObject.get(str), str) : flag;
+    }
 
-   public static boolean getBoolean(JsonObject jsonObject, String str, boolean flag) {
-      return jsonObject.has(str) ? getBoolean(jsonObject.get(str), str) : flag;
-   }
+    public static float getJsonElementFloatValue(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonPrimitive() && jsonElement.getAsJsonPrimitive().isNumber()) {
+            return jsonElement.getAsFloat();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a Float, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static float getFloat(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonPrimitive() && jsonElement.getAsJsonPrimitive().isNumber()) {
-         return jsonElement.getAsFloat();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a Float, was " + toString(jsonElement));
-      }
-   }
+    public static float getJsonObjectFloatFieldValue(JsonObject jsonObject, String str) {
+        if (jsonObject.has(str)) {
+            return getJsonElementFloatValue(jsonObject.get(str), str);
+        } else {
+            throw new JsonSyntaxException("Missing " + str + ", expected to find a Float");
+        }
+    }
 
-   public static float getFloat(JsonObject jsonObject, String str) {
-      if (jsonObject.has(str)) {
-         return getFloat(jsonObject.get(str), str);
-      } else {
-         throw new JsonSyntaxException("Missing " + str + ", expected to find a Float");
-      }
-   }
+    public static float getJsonObjectFloatFieldValueOrDefault(JsonObject jsonObject, String str, float f) {
+        return jsonObject.has(str) ? getJsonElementFloatValue(jsonObject.get(str), str) : f;
+    }
 
-   public static float getFloat(JsonObject jsonObject, String str, float f) {
-      return jsonObject.has(str) ? getFloat(jsonObject.get(str), str) : f;
-   }
+    public static int getJsonElementIntegerValue(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonPrimitive() && jsonElement.getAsJsonPrimitive().isNumber()) {
+            return jsonElement.getAsInt();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a Int, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static int getInt(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonPrimitive() && jsonElement.getAsJsonPrimitive().isNumber()) {
-         return jsonElement.getAsInt();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a Int, was " + toString(jsonElement));
-      }
-   }
+    public static int getJsonObjectIntegerFieldValue(JsonObject jsonObject, String str) {
+        if (jsonObject.has(str)) {
+            return getJsonElementIntegerValue(jsonObject.get(str), str);
+        } else {
+            throw new JsonSyntaxException("Missing " + str + ", expected to find a Int");
+        }
+    }
 
-   public static int getInt(JsonObject jsonObject, String str) {
-      if (jsonObject.has(str)) {
-         return getInt(jsonObject.get(str), str);
-      } else {
-         throw new JsonSyntaxException("Missing " + str + ", expected to find a Int");
-      }
-   }
+    public static int getJsonObjectIntegerFieldValueOrDefault(JsonObject jsonObject, String str, int n) {
+        return jsonObject.has(str) ? getJsonElementIntegerValue(jsonObject.get(str), str) : n;
+    }
 
-   public static int getInt(JsonObject jsonObject, String str, int n) {
-      return jsonObject.has(str) ? getInt(jsonObject.get(str), str) : n;
-   }
+    public static JsonObject getElementAsJsonObject(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonObject()) {
+            return jsonElement.getAsJsonObject();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a JsonObject, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static JsonObject getJsonObject(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonObject()) {
-         return jsonElement.getAsJsonObject();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a JsonObject, was " + toString(jsonElement));
-      }
-   }
+    public static JsonObject getJsonObject(JsonObject base, String key) {
+        if (base.has(key)) {
+            return getElementAsJsonObject(base.get(key), key);
+        } else {
+            throw new JsonSyntaxException("Missing " + key + ", expected to find a JsonObject");
+        }
+    }
 
-   public static JsonObject getJsonObject(JsonObject base, String key) {
-      if (base.has(key)) {
-         return getJsonObject(base.get(key), key);
-      } else {
-         throw new JsonSyntaxException("Missing " + key + ", expected to find a JsonObject");
-      }
-   }
+    public static JsonObject getJsonObjectFieldOrDefault(JsonObject jsonObject, String str, JsonObject jsonObject2) {
+        return jsonObject.has(str) ? getElementAsJsonObject(jsonObject.get(str), str) : jsonObject2;
+    }
 
-   public static JsonObject getJsonObject(JsonObject jsonObject, String str, JsonObject jsonObject2) {
-      return jsonObject.has(str) ? getJsonObject(jsonObject.get(str), str) : jsonObject2;
-   }
+    public static JsonArray getJsonElementAsJsonArray(JsonElement jsonElement, String str) {
+        if (jsonElement.isJsonArray()) {
+            return jsonElement.getAsJsonArray();
+        } else {
+            throw new JsonSyntaxException("Expected " + str + " to be a JsonArray, was " + getJsonElementTypeDescription(jsonElement));
+        }
+    }
 
-   public static JsonArray getJsonArray(JsonElement jsonElement, String str) {
-      if (jsonElement.isJsonArray()) {
-         return jsonElement.getAsJsonArray();
-      } else {
-         throw new JsonSyntaxException("Expected " + str + " to be a JsonArray, was " + toString(jsonElement));
-      }
-   }
+    public static JsonArray getJsonObjectJsonArrayField(JsonObject jsonObject, String str) {
+        if (jsonObject.has(str)) {
+            return getJsonElementAsJsonArray(jsonObject.get(str), str);
+        } else {
+            throw new JsonSyntaxException("Missing " + str + ", expected to find a JsonArray");
+        }
+    }
 
-   public static JsonArray getJsonArray(JsonObject jsonObject, String str) {
-      if (jsonObject.has(str)) {
-         return getJsonArray(jsonObject.get(str), str);
-      } else {
-         throw new JsonSyntaxException("Missing " + str + ", expected to find a JsonArray");
-      }
-   }
+    public static JsonArray getJsonObjectJsonArrayFieldOrDefault(JsonObject jsonObject, String str, JsonArray jsonArray) {
+        return jsonObject.has(str) ? getJsonElementAsJsonArray(jsonObject.get(str), str) : jsonArray;
+    }
 
-   public static JsonArray getJsonArray(JsonObject jsonObject, String str, JsonArray jsonArray) {
-      return jsonObject.has(str) ? getJsonArray(jsonObject.get(str), str) : jsonArray;
-   }
+    public static String getJsonElementTypeDescription(JsonElement jsonElement) {
+        String abbreviateMiddle = org.apache.commons.lang3.StringUtils.abbreviateMiddle(String.valueOf(jsonElement), "...", 10);
+        if (jsonElement == null) {
+            return "null (missing)";
+        }
 
-   public static String toString(JsonElement jsonElement) {
-      String abbreviateMiddle = org.apache.commons.lang3.StringUtils.abbreviateMiddle(String.valueOf(jsonElement), "...", 10);
-      if (jsonElement == null) {
-         return "null (missing)";
-      }
+        if (jsonElement.isJsonNull()) {
+            return "null (json)";
+        }
 
-      if (jsonElement.isJsonNull()) {
-         return "null (json)";
-      }
+        if (jsonElement.isJsonArray()) {
+            return "an array (" + abbreviateMiddle + ")";
+        }
 
-      if (jsonElement.isJsonArray()) {
-         return "an array (" + abbreviateMiddle + ")";
-      }
+        if (jsonElement.isJsonObject()) {
+            return "an object (" + abbreviateMiddle + ")";
+        }
 
-      if (jsonElement.isJsonObject()) {
-         return "an object (" + abbreviateMiddle + ")";
-      }
+        if (jsonElement.isJsonPrimitive()) {
+            JsonPrimitive asJsonPrimitive = jsonElement.getAsJsonPrimitive();
+            if (asJsonPrimitive.isNumber()) {
+                return "a number (" + abbreviateMiddle + ")";
+            }
 
-      if (jsonElement.isJsonPrimitive()) {
-         JsonPrimitive asJsonPrimitive = jsonElement.getAsJsonPrimitive();
-         if (asJsonPrimitive.isNumber()) {
-            return "a number (" + abbreviateMiddle + ")";
-         }
+            if (asJsonPrimitive.isBoolean()) {
+                return "a boolean (" + abbreviateMiddle + ")";
+            }
+        }
 
-         if (asJsonPrimitive.isBoolean()) {
-            return "a boolean (" + abbreviateMiddle + ")";
-         }
-      }
-
-      return abbreviateMiddle;
-   }
+        return abbreviateMiddle;
+    }
 }

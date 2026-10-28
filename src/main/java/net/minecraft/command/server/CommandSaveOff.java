@@ -7,35 +7,35 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.WorldServer;
 
 public class CommandSaveOff extends CommandBase {
-   @Override
-   public String getCommandName() {
-      return "save-off";
-   }
+    @Override
+    public String getCommandName() {
+        return "save-off";
+    }
 
-   @Override
-   public String getCommandUsage(ICommandSender sender) {
-      return "commands.save-off.usage";
-   }
+    @Override
+    public String getCommandUsage(ICommandSender sender) {
+        return "commands.save-off.usage";
+    }
 
-   @Override
-   public void processCommand(ICommandSender sender, String[] args) throws CommandException {
-      MinecraftServer server = MinecraftServer.getServer();
-      boolean flag = false;
+    @Override
+    public void processCommand(ICommandSender sender, String[] args) {
+        MinecraftServer server = MinecraftServer.getServer();
+        boolean flag = false;
 
-      for (int i = 0; i < server.worldServers.length; i++) {
-         if (server.worldServers[i] != null) {
-            WorldServer worldServer = server.worldServers[i];
-            if (!worldServer.disableLevelSaving) {
-               worldServer.disableLevelSaving = true;
-               flag = true;
+        for (int i = 0; i < server.worldServers.length; i++) {
+            if (server.worldServers[i] != null) {
+                WorldServer worldServer = server.worldServers[i];
+                if (!worldServer.disableLevelSaving) {
+                    worldServer.disableLevelSaving = true;
+                    flag = true;
+                }
             }
-         }
-      }
+        }
 
-      if (flag) {
-         notifyOperators(sender, this, "commands.save.disabled");
-      } else {
-         throw new CommandException("commands.save-off.alreadyOff");
-      }
-   }
+        if (flag) {
+            notifyOperators(sender, this, "commands.save.disabled");
+        } else {
+            throw new CommandException("commands.save-off.alreadyOff");
+        }
+    }
 }

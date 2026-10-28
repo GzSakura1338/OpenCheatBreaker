@@ -4,75 +4,76 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenHellLava extends WorldGenerator {
-   public Block block;
-   public boolean denySurfaceSpawn;
+    public Block block;
+    public boolean denySurfaceSpawn;
 
-   public WorldGenHellLava(Block block, boolean flag) {
-      this.block = block;
-      this.denySurfaceSpawn = flag;
-   }
+    public WorldGenHellLava(Block block, boolean flag) {
+        this.block = block;
+        this.denySurfaceSpawn = flag;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      if (worldIn.getBlockState(position.up()).getBlock() != Blocks.netherrack) {
-         return false;
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        if (world.getBlock(n, n2 + 1, n3) != Blocks.netherrack) {
+            return false;
+        }
 
-      if (worldIn.getBlockState(position).getBlock().getMaterial() != Material.air && worldIn.getBlockState(position).getBlock() != Blocks.netherrack) {
-         return false;
-      }
+        if (world.getBlock(n, n2, n3).getMaterial() != Material.air && world.getBlock(n, n2, n3) != Blocks.netherrack) {
+            return false;
+        }
 
-      int n = 0;
-      if (worldIn.getBlockState(position.west()).getBlock() == Blocks.netherrack) {
-         n++;
-      }
+        int n4 = 0;
+        if (world.getBlock(n - 1, n2, n3) == Blocks.netherrack) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.east()).getBlock() == Blocks.netherrack) {
-         n++;
-      }
+        if (world.getBlock(n + 1, n2, n3) == Blocks.netherrack) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.north()).getBlock() == Blocks.netherrack) {
-         n++;
-      }
+        if (world.getBlock(n, n2, n3 - 1) == Blocks.netherrack) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.south()).getBlock() == Blocks.netherrack) {
-         n++;
-      }
+        if (world.getBlock(n, n2, n3 + 1) == Blocks.netherrack) {
+            n4++;
+        }
 
-      if (worldIn.getBlockState(position.down()).getBlock() == Blocks.netherrack) {
-         n++;
-      }
+        if (world.getBlock(n, n2 - 1, n3) == Blocks.netherrack) {
+            n4++;
+        }
 
-      int n2 = 0;
-      if (worldIn.isAirBlock(position.west())) {
-         n2++;
-      }
+        int n5 = 0;
+        if (world.isAirBlock(n - 1, n2, n3)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.east())) {
-         n2++;
-      }
+        if (world.isAirBlock(n + 1, n2, n3)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.north())) {
-         n2++;
-      }
+        if (world.isAirBlock(n, n2, n3 - 1)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.south())) {
-         n2++;
-      }
+        if (world.isAirBlock(n, n2, n3 + 1)) {
+            n5++;
+        }
 
-      if (worldIn.isAirBlock(position.down())) {
-         n2++;
-      }
+        if (world.isAirBlock(n, n2 - 1, n3)) {
+            n5++;
+        }
 
-      if (!this.denySurfaceSpawn && n == 4 && n2 == 1 || n == 5) {
-         worldIn.setBlockState(position, this.block.getDefaultState(), 2);
-         worldIn.forceBlockUpdateTick(this.block, position, rand);
-      }
+        if (!this.denySurfaceSpawn && n4 == 4 && n5 == 1 || n4 == 5) {
+            world.setBlock(n, n2, n3, this.block, 0, 2);
+            world.scheduledUpdatesAreImmediate = true;
+            this.block.updateTick(world, n, n2, n3, random);
+            world.scheduledUpdatesAreImmediate = false;
+        }
 
-      return true;
-   }
+        return true;
+    }
 }

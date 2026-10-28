@@ -4,31 +4,31 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum CosmeticType {
-   WINGS("dragon_wings"),
-   CAPE("cape"),
-   HAT("hat"),
-   EMOTE("emote"),
-   ICON("icon"),
-   SUBICON("subicon");
+    WINGS("dragon_wings"),
+    CAPE("cape"),
+    HAT("hat"),
+    EMOTE("emote"),
+    ICON("icon"),
+    SUBICON("subicon");
 
-   public String text;
-   public static Map<String, CosmeticType> stringToCosmeticTypeMap = new HashMap<>();
+    public static Map<String, CosmeticType> stringToCosmeticTypeMap = new HashMap<>();
+    public String id;
 
-   public static CosmeticType get(String str) {
-      return stringToCosmeticTypeMap.get(str);
-   }
+    static {
+        for (CosmeticType cosmeticType : values()) {
+            stringToCosmeticTypeMap.put(cosmeticType.id, cosmeticType);
+        }
+    }
 
-   public String getText() {
-      return this.text;
-   }
+    CosmeticType(String str) {
+        this.id = str;
+    }
 
-   CosmeticType(String str) {
-      this.text = str;
-   }
+    public static CosmeticType get(String str) {
+        return stringToCosmeticTypeMap.get(str);
+    }
 
-   static {
-      for (CosmeticType cosmeticType : values()) {
-         stringToCosmeticTypeMap.put(cosmeticType.text, cosmeticType);
-      }
-   }
+    public String getId() {
+        return this.id;
+    }
 }

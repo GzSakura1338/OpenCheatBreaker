@@ -3,55 +3,47 @@ package net.minecraft.world.gen.feature;
 import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 
 public class WorldGenShrub extends WorldGenTrees {
-   public IBlockState woodMetadata;
-   public IBlockState leavesMetadata;
+    public int intValue;
+    public int intValue2;
 
-   public WorldGenShrub(IBlockState blockState, IBlockState blockState2) {
-      super(false);
-      this.woodMetadata = blockState;
-      this.leavesMetadata = blockState2;
-   }
+    public WorldGenShrub(int n, int n2) {
+        super(false);
+        this.intValue = n;
+        this.intValue2 = n2;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      Block block;
-      while (
-         ((block = worldIn.getBlockState(position).getBlock()).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && position.getY() > 0
-      ) {
-         position = position.down();
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        Block block;
+        while (((block = world.getBlock(n, n2, n3)).getMaterial() == Material.air || block.getMaterial() == Material.leaves) && n2 > 0) {
+            n2--;
+        }
 
-      Block block2 = worldIn.getBlockState(position).getBlock();
-      if (block2 == Blocks.dirt || block2 == Blocks.grass) {
-         position = position.up();
-         this.setBlockAndNotifyAdequately(worldIn, position, this.woodMetadata);
+        Block block2 = world.getBlock(n, n2, n3);
+        if (block2 == Blocks.dirt || block2 == Blocks.grass) {
+            this.setBlockAndNotifyAdequately(world, n, ++n2, n3, Blocks.log, this.intValue);
 
-         for (int i = position.getY(); i <= position.getY() + 2; i++) {
-            int n = i - position.getY();
-            int n2 = 2 - n;
+            for (int i = n2; i <= n2 + 2; i++) {
+                int n4 = i - n2;
+                int n5 = 2 - n4;
 
-            for (int j = position.getX() - n2; j <= position.getX() + n2; j++) {
-               int n3 = j - position.getX();
+                for (int j = n - n5; j <= n + n5; j++) {
+                    int n6 = j - n;
 
-               for (int k = position.getZ() - n2; k <= position.getZ() + n2; k++) {
-                  int n4 = k - position.getZ();
-                  if (Math.abs(n3) != n2 || Math.abs(n4) != n2 || rand.nextInt(2) != 0) {
-                     BlockPos blockPos = new BlockPos(j, i, k);
-                     if (!worldIn.getBlockState(blockPos).getBlock().isFullBlock()) {
-                        this.setBlockAndNotifyAdequately(worldIn, blockPos, this.leavesMetadata);
-                     }
-                  }
-               }
+                    for (int k = n3 - n5; k <= n3 + n5; k++) {
+                        int n7 = k - n3;
+                        if ((Math.abs(n6) != n5 || Math.abs(n7) != n5 || random.nextInt(2) != 0) && !world.getBlock(j, i, k).isFullBlock()) {
+                            this.setBlockAndNotifyAdequately(world, j, i, k, Blocks.leaves, this.intValue2);
+                        }
+                    }
+                }
             }
-         }
-      }
+        }
 
-      return true;
-   }
+        return true;
+    }
 }

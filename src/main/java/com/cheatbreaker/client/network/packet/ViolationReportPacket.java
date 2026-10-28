@@ -6,39 +6,39 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.ServerPacketHandler;
 
 public class ViolationReportPacket extends AbstractPacket {
-   public int code;
-   public String details;
+    public int code;
+    public String details;
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleViolationReport(this);
-   }
+    public ViolationReportPacket(int n, String str) {
+        this.code = n;
+        this.details = str;
+    }
 
-   public int getCode() {
-      return this.code;
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.code = packetBuffer.getByteBuf().readInt();
+        this.details = packetBuffer.readString();
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.code = packetBuffer.getByteBuf().readInt();
-      this.details = packetBuffer.readString();
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleViolationReport(this);
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.getByteBuf().writeInt(this.code);
-      packetBuffer.writeString(this.details);
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.getByteBuf().writeInt(this.code);
+        packetBuffer.writeString(this.details);
+    }
 
-   public ViolationReportPacket(int n, String str) {
-      this.code = n;
-      this.details = str;
-   }
+    public int getCode() {
+        return this.code;
+    }
 
-   public String getDetails() {
-      return this.details;
-   }
+    public ViolationReportPacket() {
+    }
 
-   public ViolationReportPacket() {
-   }
+    public String getDetails() {
+        return this.details;
+    }
 }

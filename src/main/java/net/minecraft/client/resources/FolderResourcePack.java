@@ -12,24 +12,23 @@ import java.util.Set;
 import net.minecraft.client.resources.AbstractResourcePack;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 
-public class FolderResourcePack
-extends AbstractResourcePack {
-    public FolderResourcePack(File resourcePackFileIn) {
-        super(resourcePackFileIn);
+public class FolderResourcePack extends AbstractResourcePack {
+    public FolderResourcePack(File file) {
+        super(file);
     }
 
     @Override
-    public InputStream getInputStreamByName(String name) throws IOException {
-        return new BufferedInputStream(new FileInputStream(new File(this.resourcePackFile, name)));
+    public InputStream getInputStreamByName(String string) throws IOException {
+        return new BufferedInputStream(new FileInputStream(new File(this.resourcePackFile, string)));
     }
 
     @Override
-    public boolean hasResourceName(String name) {
-        return new File(this.resourcePackFile, name).isFile();
+    public boolean hasResourceName(String string) {
+        return new File(this.resourcePackFile, string).isFile();
     }
 
     @Override
-    public Set<String> getResourceDomains() {
+    public Set getResourceDomains() {
         HashSet<String> hashSet = Sets.newHashSet();
         File file = new File(this.resourcePackFile, "assets/");
         if (file.isDirectory()) {

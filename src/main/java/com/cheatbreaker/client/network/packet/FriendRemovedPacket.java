@@ -5,31 +5,31 @@ import com.cheatbreaker.client.network.PacketBuffer;
 import com.cheatbreaker.client.network.PacketHandler;
 
 public class FriendRemovedPacket extends AbstractPacket {
-   public String playerId;
+    public String playerId;
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.playerId = packetBuffer.readString();
-   }
+    public FriendRemovedPacket(String str) {
+        this.playerId = str;
+    }
 
-   public FriendRemovedPacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.playerId = packetBuffer.readString();
+    }
 
-   public String getPlayerId() {
-      return this.playerId;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        packetHandler.handleFriendRemoved(this);
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeString(this.playerId);
-   }
+    public FriendRemovedPacket() {
+    }
 
-   public FriendRemovedPacket(String str) {
-      this.playerId = str;
-   }
+    public String getPlayerId() {
+        return this.playerId;
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      packetHandler.handleFriendRemoved(this);
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeString(this.playerId);
+    }
 }

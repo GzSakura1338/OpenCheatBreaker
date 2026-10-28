@@ -1,8 +1,8 @@
 package com.cheatbreaker.client.friend;
 
 public enum OwnOnlineStatus {
-   ONLINE,
-   AWAY,
-   BUSY,
-   HIDDEN;
+    ONLINE,
+    AWAY,
+    BUSY,
+    HIDDEN;
 }

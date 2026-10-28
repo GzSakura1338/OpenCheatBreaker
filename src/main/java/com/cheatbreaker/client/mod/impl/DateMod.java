@@ -7,41 +7,48 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DateMod extends AbstractBackgroundHudMod {
-   public SimpleDateFormat simpleDateFormat;
-   public Setting dateFormat;
+    public Setting dateFormat;
+    public SimpleDateFormat simpleDateFormat;
 
-   public void run() {
-      try {
-         this.simpleDateFormat = new SimpleDateFormat(this.dateFormat.getStringValue());
-      } catch (IllegalArgumentException e) {
-         this.dateFormat.changeValue("MM/dd/yy");
-      }
-   }
+    @Override
+    public String getDynamicText() {
+        return this.simpleDateFormat.format(new Date());
+    }
 
-   @Override
-   public String getDynamicText() {
-      return this.simpleDateFormat.format(new Date());
-   }
+    @Override
+    public String getLabelText() {
+        return "Date";
+    }
 
-   @Override
-   public void onEnable() {
-      super.onEnable();
-      this.run();
-   }
+    public void updateDateFormat() {
+        try {
+            this.simpleDateFormat = new SimpleDateFormat(this.dateFormat.getStringValue());
+        } catch (IllegalArgumentException e) {
+            this.dateFormat.changeValue("MM/dd/yy");
+        }
+    }
 
-   public DateMod() {
-      super("Date");
-      this.setDescription("Displays the current date.");
-      this.handleString("[9/6/2018]");
-   }
+    @Override
+    public void onEnable() throws java.io.IOException {
+        super.onEnable();
+        this.updateDateFormat();
+    }
 
-   @Override
-   public void createFormatOptions() {
-      this.dateFormat = new FormatSetting(this, "Date Format").changeValue("MM/dd/yy").setOnUpdate(obj -> this.run()).withHierarchyParents(this.formatOptions);
-   }
+    @Override
+    public void createFormatOptions() {
+        this.dateFormat = new FormatSetting(this, "Date Format")
+            .changeValue("MM/dd/yy")
+            .setOnUpdate(this::lambda$createFormatOptions$0)
+            .withHierarchyParents(this.formatOptions);
+    }
 
-   @Override
-   public String getLabelText() {
-      return "Date";
-   }
+    public void lambda$createFormatOptions$0(Object obj) {
+        this.updateDateFormat();
+    }
+
+    public DateMod() throws java.io.IOException {
+        super("Date");
+        this.setDescription("Displays the current date.");
+        this.setLabel("[9/6/2018]");
+    }
 }

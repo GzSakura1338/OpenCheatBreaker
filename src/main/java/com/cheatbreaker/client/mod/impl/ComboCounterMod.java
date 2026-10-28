@@ -10,69 +10,69 @@ import net.minecraft.network.play.client.C02PacketUseEntity;
 import net.minecraft.network.play.client.C02PacketUseEntity.Action;
 
 public class ComboCounterMod extends AbstractCombatValueHudMod {
-   public List<Long> longValueList = new ArrayList<>();
-   public int intValue = -1;
-   public int intValue2;
-   public long longValue2;
+    public List<Long> longValueList = new ArrayList<>();
+    public long lastHitMillis;
+    public int attackedEntityId = -1;
+    public int lastHitEntityId;
 
-   public void onPacketEvent(PacketEvent packetEvent) {
-      if (packetEvent.getPacket() instanceof C02PacketUseEntity) {
-         Entity entityFromWorld = ((C02PacketUseEntity)packetEvent.getPacket()).getEntityFromWorld(this.mc.theWorld);
-         if (entityFromWorld != null && ((C02PacketUseEntity)packetEvent.getPacket()).getAction() == Action.ATTACK) {
-            this.intValue = entityFromWorld.getEntityId();
-            this.longValue = System.currentTimeMillis();
-         }
-      }
-   }
+    @Override
+    public String getLabelText() {
+        return "Combo";
+    }
 
-   @Override
-   public Number getNumericValue() {
-      return this.longValueList.size();
-   }
-
-   public ComboCounterMod() {
-      super("Combo Counter");
-      this.setDescription("Displays how many times you hit someone in a row within 2 seconds.");
-      this.setAuthors("Erouax");
-      this.handleString("[6 Combo]");
-      this.addEventHandler(EntityS19PacketEntityStatusEvent.class, this::onEntityS19PacketEntityStatusEvent);
-      this.addEventHandler(PacketEvent.class, this::onPacketEvent);
-   }
-
-   public void onEntityS19PacketEntityStatusEvent(EntityS19PacketEntityStatusEvent entityS19PacketEntityStatusEvent) {
-      if (entityS19PacketEntityStatusEvent.getS19PacketEntityStatus().getOpCode() == 2) {
-         if (this.intValue == entityS19PacketEntityStatusEvent.getEntity().getEntityId()) {
-            this.intValue = -1;
-            if (this.intValue2 != entityS19PacketEntityStatusEvent.getEntity().getEntityId()) {
-               this.longValueList.clear();
+    public void onPacketEvent(PacketEvent packetEvent) {
+        if (packetEvent.getPacket() instanceof C02PacketUseEntity) {
+            Entity entityFromWorld = ((C02PacketUseEntity)packetEvent.getPacket()).getEntityFromWorld(this.mc.theWorld);
+            if (entityFromWorld != null && ((C02PacketUseEntity)packetEvent.getPacket()).getAction() == Action.ATTACK) {
+                this.attackedEntityId = entityFromWorld.getEntityId();
+                this.lastAttackMillis = System.currentTimeMillis();
             }
+        }
+    }
 
-            this.longValueList.add(System.currentTimeMillis());
-            this.longValue2 = System.currentTimeMillis();
-            this.intValue2 = entityS19PacketEntityStatusEvent.getEntity().getEntityId();
-         } else if (entityS19PacketEntityStatusEvent.getEntity().getEntityId() == this.mc.thePlayer.getEntityId()) {
-            this.longValueList.clear();
-         }
-      }
-   }
+    @Override
+    public String getStaticText() {
+        return "6";
+    }
 
-   @Override
-   public void reset() {
-      this.longValueList.clear();
-   }
+    public void onEntityS19PacketEntityStatusEvent(EntityS19PacketEntityStatusEvent entityS19PacketEntityStatusEvent) {
+        if (entityS19PacketEntityStatusEvent.getS19PacketEntityStatus().getStatus() == 2) {
+            if (this.attackedEntityId == entityS19PacketEntityStatusEvent.getEntity().getEntityId()) {
+                this.attackedEntityId = -1;
+                if (this.lastHitEntityId != entityS19PacketEntityStatusEvent.getEntity().getEntityId()) {
+                    this.longValueList.clear();
+                }
 
-   @Override
-   public String constantText() {
-      return "No %LABEL%";
-   }
+                this.longValueList.add(System.currentTimeMillis());
+                this.lastHitMillis = System.currentTimeMillis();
+                this.lastHitEntityId = entityS19PacketEntityStatusEvent.getEntity().getEntityId();
+            } else if (entityS19PacketEntityStatusEvent.getEntity().getEntityId() == this.mc.thePlayer.getEntityId()) {
+                this.longValueList.clear();
+            }
+        }
+    }
 
-   @Override
-   public String getLabelText() {
-      return "Combo";
-   }
+    public ComboCounterMod() throws java.io.IOException {
+        super("Combo Counter");
+        this.setDescription("Displays how many times you hit someone in a row within 2 seconds.");
+        this.setAuthors("Erouax");
+        this.setLabel("[6 Combo]");
+        this.addEventHandler(EntityS19PacketEntityStatusEvent.class, this::onEntityS19PacketEntityStatusEvent);
+        this.addEventHandler(PacketEvent.class, this::onPacketEvent);
+    }
 
-   @Override
-   public String getStaticText() {
-      return "6";
-   }
+    @Override
+    public void reset() {
+        this.longValueList.clear();
+    }
+
+    @Override
+    public Number getNumericValue() {
+        return this.longValueList.size();
+    }
+
+    @Override
+    public String constantText() {
+        return "No %LABEL%";
+    }
 }

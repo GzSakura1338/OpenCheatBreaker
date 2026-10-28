@@ -1,10 +1,7 @@
 package net.minecraft.block;
 
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
@@ -13,148 +10,129 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public class BlockJukebox extends BlockContainer {
-   public static PropertyBool HAS_RECORD = PropertyBool.create("has_record");
+    public IIcon iIcon2;
 
-   public BlockJukebox() {
-      super(Material.wood, MapColor.dirtColor);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(HAS_RECORD, false));
-      this.setCreativeTab(CreativeTabs.tabDecorations);
-   }
+    public BlockJukebox() {
+        super(Material.wood);
+        this.setCreativeTab(CreativeTabs.tabDecorations);
+    }
 
-   @Override
-   public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (state.getValue(HAS_RECORD)) {
-         this.dropRecord(worldIn, pos, state);
-         state = state.withProperty(HAS_RECORD, false);
-         worldIn.setBlockState(pos, state, 2);
-         return true;
-      } else {
-         return false;
-      }
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return side == 1 ? this.iIcon2 : this.blockIcon;
+    }
 
-   public void insertRecord(World worldIn, BlockPos pos, IBlockState state, ItemStack recordStack) {
-      if (!worldIn.isRemote) {
-         TileEntity tileEntity = worldIn.getTileEntity(pos);
-         if (tileEntity instanceof BlockJukebox.TileEntityJukebox) {
-            ((BlockJukebox.TileEntityJukebox)tileEntity).setRecord(new ItemStack(recordStack.getItem(), 1, recordStack.getMetadata()));
-            worldIn.setBlockState(pos, state.withProperty(HAS_RECORD, true), 2);
-         }
-      }
-   }
+    @Override
+    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
+        if (worldIn.getBlockMetadata(x, y, z) == 0) {
+            return false;
+        }
 
-   public void dropRecord(World worldIn, BlockPos pos, IBlockState state) {
-      if (!worldIn.isRemote) {
-         TileEntity tileEntity = worldIn.getTileEntity(pos);
-         if (tileEntity instanceof BlockJukebox.TileEntityJukebox) {
-            BlockJukebox.TileEntityJukebox tileEntityJukebox = (BlockJukebox.TileEntityJukebox)tileEntity;
-            ItemStack record2 = tileEntityJukebox.getRecord();
-            if (record2 != null) {
-               worldIn.playAuxSFX(1005, pos, 0);
-               worldIn.playRecord(pos, (String)null);
-               tileEntityJukebox.setRecord((ItemStack)null);
-               float f = 0.7F;
-               double d = worldIn.rand.nextFloat() * f + (1.0F - f) * 0.5;
-               double d2 = worldIn.rand.nextFloat() * f + (1.0F - f) * 0.2 + 0.6;
-               double d3 = worldIn.rand.nextFloat() * f + (1.0F - f) * 0.5;
-               ItemStack itemStack = record2.copy();
-               EntityItem entityItem = new EntityItem(worldIn, pos.getX() + d, pos.getY() + d2, pos.getZ() + d3, itemStack);
-               entityItem.setDefaultPickupDelay();
-               worldIn.spawnEntityInWorld(entityItem);
+        this.handleWorld(worldIn, x, y, z);
+        return true;
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3, ItemStack itemStack) {
+        if (!world.isRemote) {
+            BlockJukebox.TileEntityJukebox tileEntity = (BlockJukebox.TileEntityJukebox)world.getTileEntity(n, n2, n3);
+            if (tileEntity != null) {
+                tileEntity.handleItemStack(itemStack.copy());
+                world.setBlockMetadataWithNotify(n, n2, n3, 1, 2);
             }
-         }
-      }
-   }
+        }
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      this.dropRecord(worldIn, pos, state);
-      super.breakBlock(worldIn, pos, state);
-   }
+    public void handleWorld(World world, int n, int n2, int n3) {
+        if (!world.isRemote) {
+            BlockJukebox.TileEntityJukebox tileEntity = (BlockJukebox.TileEntityJukebox)world.getTileEntity(n, n2, n3);
+            if (tileEntity != null) {
+                ItemStack itemStack = tileEntity.getItemStack();
+                if (itemStack != null) {
+                    world.playAuxSFX(1005, n, n2, n3, 0);
+                    world.playRecord(null, n, n2, n3);
+                    tileEntity.handleItemStack(null);
+                    world.setBlockMetadataWithNotify(n, n2, n3, 0, 2);
+                    float f = 0.7F;
+                    double d = world.rand.nextFloat() * f + (1.0F - f) * 0.5;
+                    double d2 = world.rand.nextFloat() * f + (1.0F - f) * 0.2 + 0.6;
+                    double d3 = world.rand.nextFloat() * f + (1.0F - f) * 0.5;
+                    ItemStack itemStack2 = itemStack.copy();
+                    EntityItem entityItem = new EntityItem(world, n + d, n2 + d2, n3 + d3, itemStack2);
+                    entityItem.delayBeforeCanPickup = 10;
+                    world.spawnEntityInWorld(entityItem);
+                }
+            }
+        }
+    }
 
-   @Override
-   public void dropBlockAsItemWithChance(World worldIn, BlockPos pos, IBlockState state, float chance, int fortune) {
-      if (!worldIn.isRemote) {
-         super.dropBlockAsItemWithChance(worldIn, pos, state, chance, 0);
-      }
-   }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        this.handleWorld(worldIn, x, y, z);
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+    }
 
-   @Override
-   public TileEntity createNewTileEntity(World worldIn, int meta) {
-      return new BlockJukebox.TileEntityJukebox();
-   }
+    @Override
+    public void dropBlockAsItemWithChance(World worldIn, int x, int y, int z, int meta, float chance, int fortune) {
+        if (!worldIn.isRemote) {
+            super.dropBlockAsItemWithChance(worldIn, x, y, z, meta, chance, 0);
+        }
+    }
 
-   @Override
-   public boolean hasComparatorInputOverride() {
-      return true;
-   }
+    @Override
+    public TileEntity createNewTileEntity(World worldIn, int meta) {
+        return new BlockJukebox.TileEntityJukebox();
+    }
 
-   @Override
-   public int getComparatorInputOverride(World worldIn, BlockPos pos) {
-      TileEntity tileEntity = worldIn.getTileEntity(pos);
-      if (tileEntity instanceof BlockJukebox.TileEntityJukebox) {
-         ItemStack record2 = ((BlockJukebox.TileEntityJukebox)tileEntity).getRecord();
-         if (record2 != null) {
-            return Item.getIdFromItem(record2.getItem()) + 1 - Item.getIdFromItem(Items.record_13);
-         }
-      }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.blockIcon = reg.registerIcon(this.getTextureName() + "_side");
+        this.iIcon2 = reg.registerIcon(this.getTextureName() + "_top");
+    }
 
-      return 0;
-   }
+    @Override
+    public boolean hasComparatorInputOverride() {
+        return true;
+    }
 
-   @Override
-   public int getRenderType() {
-      return 3;
-   }
+    @Override
+    public int getComparatorInputOverride(World worldIn, int x, int y, int z, int side) {
+        ItemStack itemStack = ((BlockJukebox.TileEntityJukebox)worldIn.getTileEntity(x, y, z)).getItemStack();
+        return itemStack == null ? 0 : Item.getIdFromItem(itemStack.getItem()) + 1 - Item.getIdFromItem(Items.record_13);
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(HAS_RECORD, meta > 0);
-   }
+    public static class TileEntityJukebox extends TileEntity {
+        public ItemStack itemStack;
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(HAS_RECORD) ? 1 : 0;
-   }
+        @Override
+        public void readFromNBT(NBTTagCompound compound) {
+            super.readFromNBT(compound);
+            if (compound.hasKey("RecordItem", 10)) {
+                this.handleItemStack(ItemStack.loadItemStackFromNBT(compound.getCompoundTag("RecordItem")));
+            } else if (compound.getInteger("Record") > 0) {
+                this.handleItemStack(new ItemStack(Item.getItemById(compound.getInteger("Record")), 1, 0));
+            }
+        }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, HAS_RECORD);
-   }
+        @Override
+        public void writeToNBT(NBTTagCompound compound) {
+            super.writeToNBT(compound);
+            if (this.getItemStack() != null) {
+                compound.setTag("RecordItem", this.getItemStack().writeToNBT(new NBTTagCompound()));
+                compound.setInteger("Record", Item.getIdFromItem(this.getItemStack().getItem()));
+            }
+        }
 
-   public static class TileEntityJukebox extends TileEntity {
-      public ItemStack record;
+        public ItemStack getItemStack() {
+            return this.itemStack;
+        }
 
-      @Override
-      public void readFromNBT(NBTTagCompound compound) {
-         super.readFromNBT(compound);
-         if (compound.hasKey("RecordItem", 10)) {
-            this.setRecord(ItemStack.loadItemStackFromNBT(compound.getCompoundTag("RecordItem")));
-         } else if (compound.getInteger("Record") > 0) {
-            this.setRecord(new ItemStack(Item.getItemById(compound.getInteger("Record")), 1, 0));
-         }
-      }
-
-      @Override
-      public void writeToNBT(NBTTagCompound compound) {
-         super.writeToNBT(compound);
-         if (this.getRecord() != null) {
-            compound.setTag("RecordItem", this.getRecord().writeToNBT(new NBTTagCompound()));
-         }
-      }
-
-      public ItemStack getRecord() {
-         return this.record;
-      }
-
-      public void setRecord(ItemStack recordStack) {
-         this.record = recordStack;
-         this.markDirty();
-      }
-   }
+        public void handleItemStack(ItemStack itemStack) {
+            this.itemStack = itemStack;
+            this.markDirty();
+        }
+    }
 }

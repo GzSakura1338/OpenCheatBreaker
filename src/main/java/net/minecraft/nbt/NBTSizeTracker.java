@@ -1,22 +1,24 @@
 package net.minecraft.nbt;
 
 public class NBTSizeTracker {
-   public static NBTSizeTracker INFINITE = new NBTSizeTracker(0L) {
-      @Override
-      public void read(long bits) {
-      }
-   };
-   public long max;
-   public long read;
+    public static NBTSizeTracker INFINITE = new NBTSizeTracker(0L) {
+        @Override
+        public void addSpaceRead(long size) {
+        }
+    };
+    public long spaceAllocated;
+    public long spaceRead;
 
-   public NBTSizeTracker(long max) {
-      this.max = max;
-   }
+    public NBTSizeTracker(long size) {
+        this.spaceAllocated = size;
+    }
 
-   public void read(long bits) {
-      this.read += bits / 8L;
-      if (this.read > this.max) {
-         throw new RuntimeException("Tried to read NBT tag that was too big; tried to allocate: " + this.read + "bytes where max allowed: " + this.max);
-      }
-   }
+    public void addSpaceRead(long size) {
+        this.spaceRead += size / 8L;
+        if (this.spaceRead > this.spaceAllocated) {
+            throw new RuntimeException(
+                "Tried to read NBT tag that was too big; tried to allocate: " + this.spaceRead + "bytes where max allowed: " + this.spaceAllocated
+            );
+        }
+    }
 }

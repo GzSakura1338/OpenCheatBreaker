@@ -1,6 +1,5 @@
 package net.minecraft.network.play.server;
 
-import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,96 +7,103 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 
-public class S20PacketEntityProperties implements Packet<INetHandlerPlayClient> {
-   public List<S20PacketEntityProperties.Snapshot> entries = Lists.newArrayList();
-   public int entityId;
+public class S20PacketEntityProperties extends Packet {
+    public List entries = new ArrayList();
+    public int entityId;
 
-   public S20PacketEntityProperties() {
-   }
+    public S20PacketEntityProperties() {
+    }
 
-   public S20PacketEntityProperties(int entityIdIn, Collection<IAttributeInstance> collection) {
-      this.entityId = entityIdIn;
+    public S20PacketEntityProperties(int n, Collection collection) {
+        this.entityId = n;
 
-      for (IAttributeInstance attributeInstance : collection) {
-         this.entries.add(new S20PacketEntityProperties.Snapshot(attributeInstance.getAttribute().getAttributeUnlocalizedName(), attributeInstance.getBaseValue(), attributeInstance.getCollection()));
-      }
-   }
+        for (IAttributeInstance attributeInstance : (Iterable<IAttributeInstance>)collection) {
+            this.entries.add(new S20PacketEntityProperties.Snapshot(attributeInstance.getAttribute().getAttributeUnlocalizedName(), attributeInstance.getBaseValue(), attributeInstance.createHashSet()));
+        }
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.entityId = buf.readVarIntFromBuffer();
-      int readInt = buf.readInt();
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.entityId = data.readInt();
+        int readInt = data.readInt();
 
-      for (int i = 0; i < readInt; i++) {
-         String readStringFromBuffer = buf.readStringFromBuffer(64);
-         double readDouble = buf.readDouble();
-         ArrayList newArrayList = Lists.newArrayList();
-         int readVarIntFromBuffer = buf.readVarIntFromBuffer();
+        for (int i = 0; i < readInt; i++) {
+            String readStringFromBuffer = data.readStringFromBuffer(64);
+            double readDouble = data.readDouble();
+            ArrayList list = new ArrayList();
+            short readShort = data.readShort();
 
-         for (int j = 0; j < readVarIntFromBuffer; j++) {
-            UUID readUuid = buf.readUuid();
-            newArrayList.add(new AttributeModifier(readUuid, "Unknown synced attribute modifier", buf.readDouble(), buf.readByte()));
-         }
+            for (int j = 0; j < readShort; j++) {
+                UUID uuid = new UUID(data.readLong(), data.readLong());
+                list.add(new AttributeModifier(uuid, "Unknown synced attribute modifier", data.readDouble(), data.readByte()));
+            }
 
-         this.entries.add(new S20PacketEntityProperties.Snapshot(readStringFromBuffer, readDouble, newArrayList));
-      }
-   }
+            this.entries.add(new S20PacketEntityProperties.Snapshot(readStringFromBuffer, readDouble, list));
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeVarIntToBuffer(this.entityId);
-      buf.writeInt(this.entries.size());
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.entityId);
+        data.writeInt(this.entries.size());
 
-      for (S20PacketEntityProperties.Snapshot snapshot : this.entries) {
-         buf.writeString(snapshot.getId());
-         buf.writeDouble(snapshot.getBaseValue());
-         buf.writeVarIntToBuffer(snapshot.getModifiers().size());
+        for (S20PacketEntityProperties.Snapshot snapshot : (Iterable<S20PacketEntityProperties.Snapshot>)this.entries) {
+            data.writeStringToBuffer(snapshot.getText());
+            data.writeDouble(snapshot.getDoubleValue());
+            data.writeShort(snapshot.getList().size());
 
-         for (AttributeModifier attributeModifier : snapshot.getModifiers()) {
-            buf.writeUuid(attributeModifier.getID());
-            buf.writeDouble(attributeModifier.getAmount());
-            buf.writeByte(attributeModifier.getOperation());
-         }
-      }
-   }
+            for (AttributeModifier attributeModifier : (Iterable<AttributeModifier>)snapshot.getList()) {
+                data.writeLong(attributeModifier.getID().getMostSignificantBits());
+                data.writeLong(attributeModifier.getID().getLeastSignificantBits());
+                data.writeDouble(attributeModifier.getAmount());
+                data.writeByte(attributeModifier.getOperation());
+            }
+        }
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleEntityProperties(this);
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleEntityProperties(this);
+    }
 
-   public int getEntityId() {
-      return this.entityId;
-   }
+    public int getEntityId() {
+        return this.entityId;
+    }
 
-   public List<S20PacketEntityProperties.Snapshot> getEntries() {
-      return this.entries;
-   }
+    public List getEntries() {
+        return this.entries;
+    }
 
-   public class Snapshot {
-      public String id;
-      public double baseValue;
-      public Collection<AttributeModifier> modifiers;
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 
-      public Snapshot(String str, double d, Collection<AttributeModifier> collection) {
-         this.id = str;
-         this.baseValue = d;
-         this.modifiers = collection;
-      }
+    public class Snapshot {
+        public String text;
+        public double doubleValue;
+        public Collection list;
 
-      public String getId() {
-         return this.id;
-      }
+        public Snapshot(String str, double d, Collection collection) {
+            this.text = str;
+            this.doubleValue = d;
+            this.list = collection;
+        }
 
-      public double getBaseValue() {
-         return this.baseValue;
-      }
+        public String getText() {
+            return this.text;
+        }
 
-      public Collection<AttributeModifier> getModifiers() {
-         return this.modifiers;
-      }
-   }
+        public double getDoubleValue() {
+            return this.doubleValue;
+        }
+
+        public Collection getList() {
+            return this.list;
+        }
+    }
 }

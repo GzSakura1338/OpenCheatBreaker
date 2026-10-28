@@ -1,13 +1,13 @@
 package com.cheatbreaker.client.event;
 
 public class CancellableEvent extends Event {
-   public boolean flag = false;
+    public boolean cancelled = false;
 
-   public void setFlag(boolean flag) {
-      this.flag = flag;
-   }
+    public void setCancelled(boolean flag) {
+        this.cancelled = flag;
+    }
 
-   public boolean isFlag() {
-      return this.flag;
-   }
+    public boolean isCancelled() {
+        return this.cancelled;
+    }
 }

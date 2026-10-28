@@ -1,126 +1,86 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.server.CommandBlockLogic;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityCommandBlock;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class BlockCommandBlock extends BlockContainer {
-   public static PropertyBool TRIGGERED = PropertyBool.create("triggered");
+    public BlockCommandBlock() {
+        super(Material.iron);
+    }
 
-   public BlockCommandBlock() {
-      super(Material.iron, MapColor.adobeColor);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(TRIGGERED, false));
-   }
+    @Override
+    public TileEntity createNewTileEntity(World worldIn, int meta) {
+        return new TileEntityCommandBlock();
+    }
 
-   @Override
-   public TileEntity createNewTileEntity(World worldIn, int meta) {
-      return new TileEntityCommandBlock();
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!worldIn.isRemote) {
+            boolean isBlockIndirectlyGettingPowered = worldIn.isBlockIndirectlyGettingPowered(x, y, z);
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            boolean flag = (blockMetadata & 1) != 0;
+            if (isBlockIndirectlyGettingPowered && !flag) {
+                worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata | 1, 4);
+                worldIn.scheduleBlockUpdate(x, y, z, this, this.tickRate(worldIn));
+            } else if (!isBlockIndirectlyGettingPowered && flag) {
+                worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata & -2, 4);
+            }
+        }
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!worldIn.isRemote) {
-         boolean isBlockPowered = worldIn.isBlockPowered(pos);
-         boolean value = state.getValue(TRIGGERED);
-         if (isBlockPowered && !value) {
-            worldIn.setBlockState(pos, state.withProperty(TRIGGERED, true), 4);
-            worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-         } else if (!isBlockPowered && value) {
-            worldIn.setBlockState(pos, state.withProperty(TRIGGERED, false), 4);
-         }
-      }
-   }
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        TileEntity tileEntity = worldIn.getTileEntity(x, y, z);
+        if (tileEntity != null && tileEntity instanceof TileEntityCommandBlock) {
+            CommandBlockLogic commandExecutor = ((TileEntityCommandBlock)tileEntity).getCommandExecutor();
+            commandExecutor.execute(worldIn);
+            worldIn.updateNeighborsAboutBlockChange(x, y, z, this);
+        }
+    }
 
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      TileEntity tileEntity = worldIn.getTileEntity(pos);
-      if (tileEntity instanceof TileEntityCommandBlock) {
-         ((TileEntityCommandBlock)tileEntity).getCommandBlockLogic().trigger(worldIn);
-         worldIn.updateComparatorOutputLevel(pos, this);
-      }
-   }
+    @Override
+    public int tickRate(World worldIn) {
+        return 1;
+    }
 
-   @Override
-   public int tickRate(World worldIn) {
-      return 1;
-   }
+    @Override
+    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) throws java.io.IOException {
+        TileEntityCommandBlock tileEntity = (TileEntityCommandBlock)worldIn.getTileEntity(x, y, z);
+        if (tileEntity != null) {
+            player.displayGUIEditSign(tileEntity);
+        }
 
-   @Override
-   public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumFacing side, float hitX, float hitY, float hitZ) {
-      TileEntity tileEntity = worldIn.getTileEntity(pos);
-      return tileEntity instanceof TileEntityCommandBlock ? ((TileEntityCommandBlock)tileEntity).getCommandBlockLogic().tryOpenEditCommandBlock(playerIn) : false;
-   }
+        return true;
+    }
 
-   @Override
-   public boolean hasComparatorInputOverride() {
-      return true;
-   }
+    @Override
+    public boolean hasComparatorInputOverride() {
+        return true;
+    }
 
-   @Override
-   public int getComparatorInputOverride(World worldIn, BlockPos pos) {
-      TileEntity tileEntity = worldIn.getTileEntity(pos);
-      return tileEntity instanceof TileEntityCommandBlock ? ((TileEntityCommandBlock)tileEntity).getCommandBlockLogic().getSuccessCount() : 0;
-   }
+    @Override
+    public int getComparatorInputOverride(World worldIn, int x, int y, int z, int side) {
+        TileEntity tileEntity = worldIn.getTileEntity(x, y, z);
+        return tileEntity != null && tileEntity instanceof TileEntityCommandBlock ? ((TileEntityCommandBlock)tileEntity).getCommandExecutor().getSuccessCount() : 0;
+    }
 
-   @Override
-   public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
-      TileEntity tileEntity = worldIn.getTileEntity(pos);
-      if (tileEntity instanceof TileEntityCommandBlock) {
-         CommandBlockLogic commandBlockLogic = ((TileEntityCommandBlock)tileEntity).getCommandBlockLogic();
-         if (stack.hasDisplayName()) {
-            commandBlockLogic.setName(stack.getDisplayName());
-         }
+    @Override
+    public void onBlockPlacedBy(World worldIn, int x, int y, int z, EntityLivingBase placer, ItemStack itemIn) {
+        TileEntityCommandBlock tileEntity = (TileEntityCommandBlock)worldIn.getTileEntity(x, y, z);
+        if (itemIn.hasDisplayName()) {
+            tileEntity.getCommandExecutor().setName(itemIn.getDisplayName());
+        }
+    }
 
-         if (!worldIn.isRemote) {
-            commandBlockLogic.setTrackOutput(worldIn.getGameRules().getBoolean("sendCommandFeedback"));
-         }
-      }
-   }
-
-   @Override
-   public int quantityDropped(Random random) {
-      return 0;
-   }
-
-   @Override
-   public int getRenderType() {
-      return 3;
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(TRIGGERED, (meta & 1) > 0);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      if (state.getValue(TRIGGERED)) {
-         n |= 1;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, TRIGGERED);
-   }
-
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      return this.getDefaultState().withProperty(TRIGGERED, false);
-   }
+    @Override
+    public int quantityDropped(Random random) {
+        return 0;
+    }
 }

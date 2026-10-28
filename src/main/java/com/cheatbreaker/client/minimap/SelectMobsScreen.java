@@ -5,127 +5,127 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 
 public class SelectMobsScreen extends AbstractMinimapScreen {
-   public String text = "Select Mobs";
-   public MobListSlot mobListSlot;
-   public String text2 = null;
-   public String text3 = null;
-   public GuiScreen guiScreen;
-   public RadarSettings radarSettings;
-   public GuiButton optionsMinimapMobsEnable;
-   public GuiButton optionsMinimapMobsDisable;
+    public GuiButton optionsMinimapMobsEnable;
+    public String title = "Select Mobs";
+    public String selectedMob = null;
+    public String tooltip = null;
+    public GuiButton optionsMinimapMobsDisable;
+    public GuiScreen guiScreen;
+    public MobListSlot mobListSlot;
+    public RadarSettings radarSettings;
 
-   @Override
-   public void actionPerformed(GuiButton guiButton) {
-      if (guiButton.enabled) {
-         if (guiButton.id == -1) {
-            this.handleString(this.text2, true);
-         }
+    @Override
+    public void drawScreen(int n, int n2, float f) throws java.io.IOException {
+        super.drawMinimapBackground();
+        this.tooltip = null;
+        this.mobListSlot.drawScreen(n, n2, f);
+        this.drawCenteredString(this.getFontRendererObj(), this.title, this.getWidth() / 2, 20, 16777215);
+        boolean flag = this.selectedMob != null;
+        this.optionsMinimapMobsEnable.enabled = flag && !this.isMobSelected(this.selectedMob);
+        this.optionsMinimapMobsDisable.enabled = flag && this.isMobSelected(this.selectedMob);
+        super.drawScreen(n, n2, f);
+        if (this.tooltip != null) {
+            this.drawTooltip(this.tooltip, n, n2);
+        }
+    }
 
-         if (guiButton.id == -2) {
-            this.handleString(this.text2, false);
-         }
+    public void setSelectedMob(String str) {
+        this.selectedMob = str;
+    }
 
-         if (guiButton.id == 65336) {
-            this.getMc().displayGuiScreen(this.guiScreen);
-         }
-      }
-   }
+    public void toggleSelected() {
+        MobType findMobType = MobType.findMobType(this.selectedMob);
+        if (findMobType != null) {
+            this.setMobSelected(this.selectedMob, !findMobType.selected);
+        } else {
+            CustomMob findCustomMob = CustomMobs.findCustomMob(this.selectedMob);
+            if (findCustomMob != null) {
+                this.setMobSelected(this.selectedMob, !findCustomMob.enabled);
+            }
+        }
+    }
 
-   @Override
-   public void initGui() {
-      boolean flag = false;
-      this.text = Translations.translate("options.minimap.mobs.title");
-      this.mobListSlot = new MobListSlot(this);
-      this.mobListSlot.registerScrollButtons(7, 8);
-      this.getButtonList()
-         .add(
-            this.optionsMinimapMobsEnable = new GuiButton(
-               -1, this.getWidth() / 2 - 154, this.getHeight() - 28, 100, 20, Translations.translate("options.minimap.mobs.enable")
-            )
-         );
-      this.getButtonList()
-         .add(
-            this.optionsMinimapMobsDisable = new GuiButton(
-               -2, this.getWidth() / 2 - 50, this.getHeight() - 28, 100, 20, Translations.translate("options.minimap.mobs.disable")
-            )
-         );
-      this.getButtonList().add(new GuiButton(65336, this.getWidth() / 2 + 4 + 50, this.getHeight() - 28, 100, 20, Translations.translate("gui.done")));
-      boolean flag2 = this.text2 != null;
-      this.optionsMinimapMobsEnable.enabled = flag2;
-      this.optionsMinimapMobsDisable.enabled = flag2;
-   }
+    public static String setTooltip(SelectMobsScreen selectMobsScreen, String str) {
+        return selectMobsScreen.tooltip = str;
+    }
 
-   public static String formatText(SelectMobsScreen selectMobsScreen, String str) {
-      return selectMobsScreen.text3 = str;
-   }
+    public void drawTooltip(String str, int n, int n2) {
+        if (str != null) {
+            int n3 = n + 12;
+            int n4 = n2 - 12;
+            int stringWidth = this.getFontRendererObj().getStringWidth(str);
+            drawVerticalGradient(n3 - 3, n4 - 3, n3 + stringWidth + 3, n4 + 8 + 3, -1073741824, -1073741824);
+            this.getFontRendererObj().drawShadowedString(str, n3, n4, -1);
+        }
+    }
 
-   @Override
-   public void drawScreen(int n, int n2, float f) {
-      super.run8();
-      this.text3 = null;
-      this.mobListSlot.drawScreen(n, n2, f);
-      this.drawCenteredString(this.getFontRendererObj(), this.text, this.getWidth() / 2, 20, 16777215);
-      boolean flag = this.text2 != null;
-      this.optionsMinimapMobsEnable.enabled = flag && !this.checkString(this.text2);
-      this.optionsMinimapMobsDisable.enabled = flag && this.checkString(this.text2);
-      super.drawScreen(n, n2, f);
-      if (this.text3 != null) {
-         this.handleString(this.text3, n, n2);
-      }
-   }
+    public void setMobSelected(String str, boolean flag) {
+        for (MobType mobType : MobType.values()) {
+            if (mobType.mobName.equals(str)) {
+                mobType.selected = flag;
+            }
+        }
 
-   public void handleString(String str, int n, int n2) {
-      if (str != null) {
-         int n3 = n + 12;
-         int n4 = n2 - 12;
-         int stringWidth = this.getFontRendererObj().getStringWidth(str);
-         this.drawGradientRect(n3 - 3, n4 - 3, n3 + stringWidth + 3, n4 + 8 + 3, -1073741824, -1073741824);
-         this.getFontRendererObj().drawStringWithShadow(str, n3, n4, -1);
-      }
-   }
+        for (CustomMob customMob : CustomMobs.customMobList) {
+            if (customMob.name.equals(str)) {
+                customMob.enabled = flag;
+            }
+        }
+    }
 
-   public SelectMobsScreen(GuiScreen guiScreen, RadarSettings radarSettings) {
-      this.guiScreen = guiScreen;
-      this.radarSettings = radarSettings;
-   }
+    @Override
+    public void initGui() {
+        boolean flag = false;
+        this.title = Translations.translate("options.minimap.mobs.title");
+        this.mobListSlot = new MobListSlot(this);
+        this.mobListSlot.registerScrollButtons(7, 8);
+        this.getButtonList()
+            .add(
+                this.optionsMinimapMobsEnable = new GuiButton(
+                    -1, this.getWidth() / 2 - 154, this.getHeight() - 28, 100, 20, Translations.translate("options.minimap.mobs.enable")
+                )
+            );
+        this.getButtonList()
+            .add(
+                this.optionsMinimapMobsDisable = new GuiButton(
+                    -2, this.getWidth() / 2 - 50, this.getHeight() - 28, 100, 20, Translations.translate("options.minimap.mobs.disable")
+                )
+            );
+        this.getButtonList().add(new GuiButton(65336, this.getWidth() / 2 + 4 + 50, this.getHeight() - 28, 100, 20, Translations.translate("gui.done")));
+        boolean flag2 = this.selectedMob != null;
+        this.optionsMinimapMobsEnable.enabled = flag2;
+        this.optionsMinimapMobsDisable.enabled = flag2;
+    }
 
-   public void run9() {
-      MobType findMobType = MobType.findMobType(this.text2);
-      if (findMobType != null) {
-         this.handleString(this.text2, !findMobType.flag4);
-      } else {
-         CustomMob findCustomMob = CustomMobs.findCustomMob(this.text2);
-         if (findCustomMob != null) {
-            this.handleString(this.text2, !findCustomMob.enabled);
-         }
-      }
-   }
+    public SelectMobsScreen(GuiScreen guiScreen, RadarSettings radarSettings) {
+        this.guiScreen = guiScreen;
+        this.radarSettings = radarSettings;
+    }
 
-   public void handleString(String str, boolean flag) {
-      for (MobType mobType : MobType.values()) {
-         if (mobType.text.equals(str)) {
-            mobType.flag4 = flag;
-         }
-      }
+    @Override
+    public void actionPerformed(GuiButton guiButton) throws java.io.IOException {
+        if (guiButton.enabled) {
+            if (guiButton.id == -1) {
+                this.setMobSelected(this.selectedMob, true);
+            }
 
-      for (CustomMob customMob : CustomMobs.customMobList) {
-         if (customMob.name.equals(str)) {
-            customMob.enabled = flag;
-         }
-      }
-   }
+            if (guiButton.id == -2) {
+                this.setMobSelected(this.selectedMob, false);
+            }
 
-   public void setText2(String str) {
-      this.text2 = str;
-   }
+            if (guiButton.id == 65336) {
+                this.getMc().displayGuiScreen(this.guiScreen);
+            }
+        }
+    }
 
-   public boolean checkString(String str) {
-      MobType findMobType = MobType.findMobType(this.text2);
-      if (findMobType != null) {
-         return findMobType.flag4;
-      }
+    public boolean isMobSelected(String str) {
+        MobType findMobType = MobType.findMobType(this.selectedMob);
+        if (findMobType != null) {
+            return findMobType.selected;
+        }
 
-      CustomMob findCustomMob = CustomMobs.findCustomMob(this.text2);
-      return findCustomMob != null ? findCustomMob.enabled : false;
-   }
+        CustomMob findCustomMob = CustomMobs.findCustomMob(this.selectedMob);
+        return findCustomMob != null ? findCustomMob.enabled : false;
+    }
 }

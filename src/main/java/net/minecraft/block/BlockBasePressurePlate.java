@@ -1,186 +1,175 @@
 package net.minecraft.block;
 
 import java.util.Random;
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public abstract class BlockBasePressurePlate extends Block {
-   public BlockBasePressurePlate(Material materialIn) {
-      this(materialIn, materialIn.getMaterialMapColor());
-   }
+    public String name;
 
-   public BlockBasePressurePlate(Material material, MapColor mapColor) {
-      super(material, mapColor);
-      this.setCreativeTab(CreativeTabs.tabRedstone);
-      this.setTickRandomly(true);
-   }
+    public BlockBasePressurePlate(String name, Material materialIn) {
+        super(materialIn);
+        this.name = name;
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+        this.setTickRandomly(true);
+        this.setBlockBoundsFromMeta(this.getMetaFromPower(15));
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      this.setBlockBoundsBasedOnState0(worldIn.getBlockState(pos));
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        this.setBlockBoundsFromMeta(worldIn.getBlockMetadata(x, y, z));
+    }
 
-   public void setBlockBoundsBasedOnState0(IBlockState state) {
-      boolean flag = this.getRedstoneStrength(state) > 0;
-      float f = 0.0625F;
-      if (flag) {
-         this.setBlockBounds(0.0625F, 0.0F, 0.0625F, 0.9375F, 0.03125F, 0.9375F);
-      } else {
-         this.setBlockBounds(0.0625F, 0.0F, 0.0625F, 0.9375F, 0.0625F, 0.9375F);
-      }
-   }
+    public void setBlockBoundsFromMeta(int meta) {
+        boolean flag = this.getPowerFromMeta(meta) > 0;
+        float f = 0.0625F;
+        if (flag) {
+            this.setBlockBounds(f, 0.0F, f, 1.0F - f, 0.03125F, 1.0F - f);
+        } else {
+            this.setBlockBounds(f, 0.0F, f, 1.0F - f, 0.0625F, 1.0F - f);
+        }
+    }
 
-   @Override
-   public int tickRate(World worldIn) {
-      return 20;
-   }
+    @Override
+    public int tickRate(World worldIn) {
+        return 20;
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-      return true;
-   }
+    @Override
+    public boolean isPassable(IBlockAccess worldIn, int x, int y, int z) {
+        return true;
+    }
 
-   @Override
-   public boolean canSpawnInBlock() {
-      return true;
-   }
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z) || BlockFence.isFence(worldIn.getBlock(x, y - 1, z));
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      return this.canBePlacedOn(worldIn, pos.down());
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        boolean flag = !World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z) && !BlockFence.isFence(worldIn.getBlock(x, y - 1, z));
+        if (flag) {
+            this.dropBlockAsItem(worldIn, x, y, z, worldIn.getBlockMetadata(x, y, z), 0);
+            worldIn.setBlockToAir(x, y, z);
+        }
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!this.canBePlacedOn(worldIn, pos.down())) {
-         this.dropBlockAsItem(worldIn, pos, state, 0);
-         worldIn.setBlockToAir(pos);
-      }
-   }
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        if (!worldIn.isRemote) {
+            int powerFromMeta = this.getPowerFromMeta(worldIn.getBlockMetadata(x, y, z));
+            if (powerFromMeta > 0) {
+                this.setStateIfMobInteractsWithPlate(worldIn, x, y, z, powerFromMeta);
+            }
+        }
+    }
 
-   public boolean canBePlacedOn(World worldIn, BlockPos pos) {
-      return World.doesBlockHaveSolidTopSurface(worldIn, pos) || worldIn.getBlockState(pos).getBlock() instanceof BlockFence;
-   }
+    @Override
+    public void onEntityCollidedWithBlock(World worldIn, int x, int y, int z, Entity entityIn) {
+        if (!worldIn.isRemote) {
+            int powerFromMeta = this.getPowerFromMeta(worldIn.getBlockMetadata(x, y, z));
+            if (powerFromMeta == 0) {
+                this.setStateIfMobInteractsWithPlate(worldIn, x, y, z, powerFromMeta);
+            }
+        }
+    }
 
-   @Override
-   public void randomTick(World worldIn, BlockPos pos, IBlockState state, Random random) {
-   }
+    public void setStateIfMobInteractsWithPlate(World worldIn, int x, int y, int z, int power) {
+        int plateState = this.getPlateState(worldIn, x, y, z);
+        boolean flag = power > 0;
+        boolean flag2 = plateState > 0;
+        if (power != plateState) {
+            worldIn.setBlockMetadataWithNotify(x, y, z, this.getMetaFromPower(plateState), 2);
+            this.updateNeighbors(worldIn, x, y, z);
+            worldIn.markBlockRangeForRenderUpdate(x, y, z, x, y, z);
+        }
 
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      if (!worldIn.isRemote) {
-         int redstoneStrength = this.getRedstoneStrength(state);
-         if (redstoneStrength > 0) {
-            this.updateState(worldIn, pos, state, redstoneStrength);
-         }
-      }
-   }
+        if (!flag2 && flag) {
+            worldIn.playSoundEffect(x + 0.5, y + 0.1, z + 0.5, "random.click", 0.3F, 0.5F);
+        } else if (flag2 && !flag) {
+            worldIn.playSoundEffect(x + 0.5, y + 0.1, z + 0.5, "random.click", 0.3F, 0.6F);
+        }
 
-   @Override
-   public void onEntityCollidedWithBlock(World worldIn, BlockPos pos, IBlockState state, Entity entityIn) {
-      if (!worldIn.isRemote) {
-         int redstoneStrength = this.getRedstoneStrength(state);
-         if (redstoneStrength == 0) {
-            this.updateState(worldIn, pos, state, redstoneStrength);
-         }
-      }
-   }
+        if (flag2) {
+            worldIn.scheduleBlockUpdate(x, y, z, this, this.tickRate(worldIn));
+        }
+    }
 
-   public void updateState(World worldIn, BlockPos pos, IBlockState state, int oldRedstoneStrength) {
-      int computeRedstoneStrength = this.computeRedstoneStrength(worldIn, pos);
-      boolean flag = oldRedstoneStrength > 0;
-      boolean flag2 = computeRedstoneStrength > 0;
-      if (oldRedstoneStrength != computeRedstoneStrength) {
-         state = this.setRedstoneStrength(state, computeRedstoneStrength);
-         worldIn.setBlockState(pos, state, 2);
-         this.updateNeighbors(worldIn, pos);
-         worldIn.markBlockRangeForRenderUpdate(pos, pos);
-      }
+    public AxisAlignedBB getSensitiveAABB(int x, int y, int z) {
+        float f = 0.125F;
+        return AxisAlignedBB.getBoundingBox(x + f, y, z + f, x + 1 - f, y + 0.25, z + 1 - f);
+    }
 
-      if (!flag2 && flag) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.click", 0.3F, 0.5F);
-      } else if (flag2 && !flag) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.click", 0.3F, 0.6F);
-      }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        if (this.getPowerFromMeta(meta) > 0) {
+            this.updateNeighbors(worldIn, x, y, z);
+        }
 
-      if (flag2) {
-         worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-      }
-   }
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+    }
 
-   public AxisAlignedBB getSensitiveAABB(BlockPos pos) {
-      float f = 0.125F;
-      return new AxisAlignedBB(pos.getX() + 0.125F, pos.getY(), pos.getZ() + 0.125F, pos.getX() + 1 - 0.125F, pos.getY() + 0.25, pos.getZ() + 1 - 0.125F);
-   }
+    public void updateNeighbors(World worldIn, int x, int y, int z) {
+        worldIn.notifyBlocksOfNeighborChange(x, y, z, this);
+        worldIn.notifyBlocksOfNeighborChange(x, y - 1, z, this);
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      if (this.getRedstoneStrength(state) > 0) {
-         this.updateNeighbors(worldIn, pos);
-      }
+    @Override
+    public int isProvidingWeakPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        return this.getPowerFromMeta(worldIn.getBlockMetadata(x, y, z));
+    }
 
-      super.breakBlock(worldIn, pos, state);
-   }
+    @Override
+    public int isProvidingStrongPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        return side == 1 ? this.getPowerFromMeta(worldIn.getBlockMetadata(x, y, z)) : 0;
+    }
 
-   public void updateNeighbors(World worldIn, BlockPos pos) {
-      worldIn.notifyNeighborsOfStateChange(pos, this);
-      worldIn.notifyNeighborsOfStateChange(pos.down(), this);
-   }
+    @Override
+    public boolean canProvidePower() {
+        return true;
+    }
 
-   @Override
-   public int getWeakPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      return this.getRedstoneStrength(state);
-   }
+    @Override
+    public void setBlockBoundsForItemRender() {
+        float f = 0.5F;
+        float f2 = 0.125F;
+        float f3 = 0.5F;
+        this.setBlockBounds(0.5F - f, 0.5F - f2, 0.5F - f3, 0.5F + f, 0.5F + f2, 0.5F + f3);
+    }
 
-   @Override
-   public int getStrongPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      return side == EnumFacing.UP ? this.getRedstoneStrength(state) : 0;
-   }
+    @Override
+    public int getMobilityFlag() {
+        return 1;
+    }
 
-   @Override
-   public boolean canProvidePower() {
-      return true;
-   }
+    public abstract int getPlateState(World world, int n, int n2, int n3);
 
-   @Override
-   public void setBlockBoundsForItemRender() {
-      float f = 0.5F;
-      float f2 = 0.125F;
-      float f3 = 0.5F;
-      this.setBlockBounds(0.0F, 0.375F, 0.0F, 1.0F, 0.625F, 1.0F);
-   }
+    public abstract int getPowerFromMeta(int n);
 
-   @Override
-   public int getMobilityFlag() {
-      return 1;
-   }
+    public abstract int getMetaFromPower(int n);
 
-   public abstract int computeRedstoneStrength(World world, BlockPos blockPos);
-
-   public abstract int getRedstoneStrength(IBlockState blockState);
-
-   public abstract IBlockState setRedstoneStrength(IBlockState blockState, int n);
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.blockIcon = reg.registerIcon(this.name);
+    }
 }

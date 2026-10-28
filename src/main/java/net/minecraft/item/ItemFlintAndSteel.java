@@ -4,30 +4,51 @@ import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class ItemFlintAndSteel extends Item {
-   public ItemFlintAndSteel() {
-      this.maxStackSize = 1;
-      this.setMaxDamage(64);
-      this.setCreativeTab(CreativeTabs.tabTools);
-   }
+    public ItemFlintAndSteel() {
+        this.maxStackSize = 1;
+        this.setMaxDurability(64);
+        this.setCreativeTab(CreativeTabs.tabTools);
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      pos = pos.offset(side);
-      if (!playerIn.canPlayerEdit(pos, side, stack)) {
-         return false;
-      }
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (n4 == 0) {
+            n2--;
+        }
 
-      if (worldIn.getBlockState(pos).getBlock().getMaterial() == Material.air) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, "fire.ignite", 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
-         worldIn.setBlockState(pos, Blocks.fire.getDefaultState());
-      }
+        if (n4 == 1) {
+            n2++;
+        }
 
-      stack.damageItem(1, playerIn);
-      return true;
-   }
+        if (n4 == 2) {
+            n3--;
+        }
+
+        if (n4 == 3) {
+            n3++;
+        }
+
+        if (n4 == 4) {
+            n--;
+        }
+
+        if (n4 == 5) {
+            n++;
+        }
+
+        if (!entityPlayer.canPlayerEdit(n, n2, n3, n4, itemStack)) {
+            return false;
+        }
+
+        if (world.getBlock(n, n2, n3).getMaterial() == Material.air) {
+            world.playSoundEffect(n + 0.5, n2 + 0.5, n3 + 0.5, "fire.ignite", 1.0F, itemRand.nextFloat() * 0.4F + 0.8F);
+            world.setBlock(n, n2, n3, Blocks.fire);
+        }
+
+        itemStack.damageItem(1, entityPlayer);
+        return true;
+    }
 }

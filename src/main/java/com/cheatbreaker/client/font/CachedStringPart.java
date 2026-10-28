@@ -6,29 +6,29 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 public class CachedStringPart {
-   public static TextureManager textureManager = Minecraft.getMinecraft().renderEngine;
-   public int intValue;
-   public ResourceLocation resourceLocation;
+    public static TextureManager textureManager = Minecraft.getMinecraft().renderEngine;
+    public int displayList;
+    public ResourceLocation resourceLocation;
 
-   public void render() {
-      if (this.resourceLocation == null) {
-         GL11.glDisable(3553);
-      } else {
-         textureManager.bindTexture(this.resourceLocation);
-      }
+    public CachedStringPart(int n, ResourceLocation resourceLocation) {
+        this.displayList = n;
+        this.resourceLocation = resourceLocation;
+    }
 
-      GL11.glCallList(this.intValue);
-      if (this.resourceLocation == null) {
-         GL11.glEnable(3553);
-      }
-   }
+    public void glDeleteLists() {
+        GL11.glDeleteLists(this.displayList, 1);
+    }
 
-   public CachedStringPart(int n, ResourceLocation resourceLocation) {
-      this.intValue = n;
-      this.resourceLocation = resourceLocation;
-   }
+    public void render() {
+        if (this.resourceLocation == null) {
+            GL11.glDisable(3553);
+        } else {
+            textureManager.bindTexture(this.resourceLocation);
+        }
 
-   public void glDeleteLists() {
-      GL11.glDeleteLists(this.intValue, 1);
-   }
+        GL11.glCallList(this.displayList);
+        if (this.resourceLocation == null) {
+            GL11.glEnable(3553);
+        }
+    }
 }

@@ -5,31 +5,31 @@ import java.util.HashMap;
 import java.util.Set;
 
 public interface IColorManager {
-   int UNKNOWN_BLOCK_COLOR = -65025;
+    int UNKNOWN_BLOCK_COLOR = -65025;
 
-   Set<Integer> getBiomeTintedBlocks();
+    int colorMultiplier(int n, int n2);
 
-   BufferedImage getBlockIconImage(int n, int n2);
+    boolean getResourcePackChanged();
 
-   int colorAdder(int n, int n2);
+    int getBlockColorWithDefaultTint(int n, int n2, int n3);
 
-   int colorMultiplier(int n, int n2);
+    Set<Integer> getBiomeTintedBlocks();
 
-   int getBlockColor(int n, int n2, int n3);
+    int getMapImageTextureId();
 
-   boolean isOptifineInstalled();
+    BufferedImage getColorPicker();
 
-   int getBlockColorWithDefaultTint(int n, int n2, int n3);
+    int getAirColor();
 
-   int getMapImageTextureId();
+    int colorAdder(int n, int n2);
 
-   int getAirColor();
+    int getBlockColor(int n, int n2, int n3);
 
-   boolean getResourcePackChanged();
+    HashMap<String, Integer[]> getBiomeColormaps();
 
-   HashMap<String, Integer[]> getBiomeColormaps();
+    BufferedImage getBlockIconImage(int n, int n2);
 
-   BufferedImage getColorPicker();
+    void setSkyColor(int n);
 
-   void setSkyColor(int n);
+    boolean isOptifineInstalled();
 }

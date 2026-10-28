@@ -1,6 +1,5 @@
 package net.minecraft.util;
 
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
 import com.google.gson.TypeAdapterFactory;
@@ -13,39 +12,39 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class EnumTypeAdapterFactory implements TypeAdapterFactory {
-   public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> typeToken) {
-      Class rawType = typeToken.getRawType();
-      if (!rawType.isEnum()) {
-         return null;
-      }
+    public TypeAdapter create(Gson gson, TypeToken typeToken) {
+        Class rawType = typeToken.getRawType();
+        if (!rawType.isEnum()) {
+            return null;
+        }
 
-      final HashMap newHashMap = Maps.newHashMap();
+        final HashMap map = new HashMap();
 
-      for (Object obj : rawType.getEnumConstants()) {
-         newHashMap.put(this.getKey(obj), obj);
-      }
+        for (Object obj : rawType.getEnumConstants()) {
+            map.put(this.getKey(obj), obj);
+        }
 
-      return new TypeAdapter<T>() {
-         public void write(JsonWriter jsonWriter, T value) throws IOException {
-            if (value == null) {
-               jsonWriter.nullValue();
-            } else {
-               jsonWriter.value(EnumTypeAdapterFactory.this.getKey(value));
+        return new TypeAdapter() {
+            public void write(JsonWriter jsonWriter, Object obj) throws IOException {
+                if (obj == null) {
+                    jsonWriter.nullValue();
+                } else {
+                    jsonWriter.value(EnumTypeAdapterFactory.this.getKey(obj));
+                }
             }
-         }
 
-         public T read(JsonReader jsonReader) throws IOException {
-            if (jsonReader.peek() == JsonToken.NULL) {
-               jsonReader.nextNull();
-               return null;
-            } else {
-               return (T)newHashMap.get(jsonReader.nextString());
+            public Object read(JsonReader jsonReader) throws IOException {
+                if (jsonReader.peek() == JsonToken.NULL) {
+                    jsonReader.nextNull();
+                    return null;
+                } else {
+                    return map.get(jsonReader.nextString());
+                }
             }
-         }
-      };
-   }
+        };
+    }
 
-   public String getKey(Object obj) {
-      return obj instanceof Enum ? ((Enum)obj).name().toLowerCase(Locale.US) : obj.toString().toLowerCase(Locale.US);
-   }
+    public String getKey(Object obj) {
+        return obj instanceof Enum ? ((Enum)obj).name().toLowerCase(Locale.US) : obj.toString().toLowerCase(Locale.US);
+    }
 }

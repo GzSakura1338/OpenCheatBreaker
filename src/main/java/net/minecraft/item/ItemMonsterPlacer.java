@@ -1,166 +1,161 @@
 package net.minecraft.item;
 
 import java.util.List;
-import net.minecraft.block.BlockFence;
+import net.minecraft.block.Block;
 import net.minecraft.block.BlockLiquid;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityList.EntityEggInfo;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IEntityLivingData;
+import net.minecraft.entity.EntityList.EntityEggInfo;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.stats.StatList;
-import net.minecraft.tileentity.MobSpawnerBaseLogic;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.tileentity.TileEntityMobSpawner;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Facing;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.MovingObjectPosition;
-import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.util.StatCollector;
+import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
 
 public class ItemMonsterPlacer extends Item {
-   public ItemMonsterPlacer() {
-      this.setHasSubtypes(true);
-      this.setCreativeTab(CreativeTabs.tabMisc);
-   }
+    public IIcon theIcon;
 
-   @Override
-   public String getItemStackDisplayName(ItemStack stack) {
-      String trim = ("" + StatCollector.translateToLocal(this.getUnlocalizedName() + ".name")).trim();
-      String stringFromID = EntityList.getStringFromID(stack.getMetadata());
-      if (stringFromID != null) {
-         trim = trim + " " + StatCollector.translateToLocal("entity." + stringFromID + ".name");
-      }
+    public ItemMonsterPlacer() {
+        this.setHasSubtypes(true);
+        this.setCreativeTab(CreativeTabs.tabMisc);
+    }
 
-      return trim;
-   }
+    @Override
+    public String getItemStackDisplayName(ItemStack itemStack) {
+        String trim = ("" + StatCollector.translateToLocal(this.getUnlocalizedName() + ".name")).trim();
+        String stringFromID = EntityList.getStringFromID(itemStack.getMetadata());
+        if (stringFromID != null) {
+            trim = trim + " " + StatCollector.translateToLocal("entity." + stringFromID + ".name");
+        }
 
-   @Override
-   public int getColorFromItemStack(ItemStack stack, int renderPass) {
-      EntityEggInfo entityEggInfo = EntityList.entityEggs.get(stack.getMetadata());
-      return entityEggInfo != null ? (renderPass == 0 ? entityEggInfo.primaryColor : entityEggInfo.secondaryColor) : 16777215;
-   }
+        return trim;
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (worldIn.isRemote) {
-         return true;
-      }
+    @Override
+    public int getColorFromItemStack(ItemStack itemStack, int n) {
+        EntityEggInfo entityEggInfo = (EntityEggInfo)EntityList.entityEggs.get(itemStack.getMetadata());
+        return entityEggInfo != null ? (n == 0 ? entityEggInfo.primaryColor : entityEggInfo.secondaryColor) : 16777215;
+    }
 
-      if (!playerIn.canPlayerEdit(pos.offset(side), side, stack)) {
-         return false;
-      }
+    @Override
+    public boolean requiresMultipleRenderPasses() {
+        return true;
+    }
 
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() == Blocks.mob_spawner) {
-         TileEntity tileEntity = worldIn.getTileEntity(pos);
-         if (tileEntity instanceof TileEntityMobSpawner) {
-            MobSpawnerBaseLogic spawnerBaseLogic = ((TileEntityMobSpawner)tileEntity).getSpawnerBaseLogic();
-            spawnerBaseLogic.setEntityName(EntityList.getStringFromID(stack.getMetadata()));
-            tileEntity.markDirty();
-            worldIn.markBlockForUpdate(pos);
-            if (!playerIn.capabilities.isCreativeMode) {
-               stack.stackSize--;
-            }
+    @Override
+    public IIcon getIconFromDamageForRenderPass(int n, int n2) {
+        return n2 > 0 ? this.theIcon : super.getIconFromDamageForRenderPass(n, n2);
+    }
 
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (world.isRemote) {
             return true;
-         }
-      }
+        }
 
-      pos = pos.offset(side);
-      double d = 0.0;
-      if (side == EnumFacing.UP && blockState instanceof BlockFence) {
-         d = 0.5;
-      }
+        Block block = world.getBlock(n, n2, n3);
+        n += Facing.offsetsXForSide[n4];
+        n2 += Facing.offsetsYForSide[n4];
+        n3 += Facing.offsetsZForSide[n4];
+        double d = 0.0;
+        if (n4 == 1 && block.getRenderType() == 11) {
+            d = 0.5;
+        }
 
-      Entity spawnCreature2 = spawnCreature(worldIn, stack.getMetadata(), pos.getX() + 0.5, pos.getY() + d, pos.getZ() + 0.5);
-      if (spawnCreature2 != null) {
-         if (spawnCreature2 instanceof EntityLivingBase && stack.hasDisplayName()) {
-            spawnCreature2.setCustomNameTag(stack.getDisplayName());
-         }
-
-         if (!playerIn.capabilities.isCreativeMode) {
-            stack.stackSize--;
-         }
-      }
-
-      return true;
-   }
-
-   @Override
-   public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
-      if (worldIn.isRemote) {
-         return itemStackIn;
-      }
-
-      MovingObjectPosition movingObjectPositionFromPlayer = this.getMovingObjectPositionFromPlayer(worldIn, playerIn, true);
-      if (movingObjectPositionFromPlayer == null) {
-         return itemStackIn;
-      }
-
-      if (movingObjectPositionFromPlayer.typeOfHit == MovingObjectType.BLOCK) {
-         BlockPos blockPos = movingObjectPositionFromPlayer.getBlockPos();
-         if (!worldIn.isBlockModifiable(playerIn, blockPos)) {
-            return itemStackIn;
-         }
-
-         if (!playerIn.canPlayerEdit(blockPos, movingObjectPositionFromPlayer.sideHit, itemStackIn)) {
-            return itemStackIn;
-         }
-
-         if (worldIn.getBlockState(blockPos).getBlock() instanceof BlockLiquid) {
-            Entity spawnCreature2 = spawnCreature(worldIn, itemStackIn.getMetadata(), blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5);
-            if (spawnCreature2 != null) {
-               if (spawnCreature2 instanceof EntityLivingBase && itemStackIn.hasDisplayName()) {
-                  ((EntityLiving)spawnCreature2).setCustomNameTag(itemStackIn.getDisplayName());
-               }
-
-               if (!playerIn.capabilities.isCreativeMode) {
-                  itemStackIn.stackSize--;
-               }
-
-               playerIn.triggerAchievement(StatList.objectUseStats[Item.getIdFromItem(this)]);
+        Entity spawnCreature2 = spawnCreature(world, itemStack.getMetadata(), n + 0.5, n2 + d, n3 + 0.5);
+        if (spawnCreature2 != null) {
+            if (spawnCreature2 instanceof EntityLivingBase && itemStack.hasDisplayName()) {
+                ((EntityLiving)spawnCreature2).setCustomNameTag(itemStack.getDisplayName());
             }
-         }
-      }
 
-      return itemStackIn;
-   }
+            if (!entityPlayer.capabilities.isCreativeMode) {
+                itemStack.stackSize--;
+            }
+        }
 
-   public static Entity spawnCreature(World worldIn, int entityID, double x, double y, double z) {
-      if (!EntityList.entityEggs.containsKey(entityID)) {
-         return null;
-      }
+        return true;
+    }
 
-      Entity entity = null;
+    @Override
+    public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer player) {
+        if (worldIn.isRemote) {
+            return itemStackIn;
+        }
 
-      for (int i = 0; i < 1; i++) {
-         entity = EntityList.createEntityByID(entityID, worldIn);
-         if (entity instanceof EntityLivingBase) {
-            EntityLiving entityLiving = (EntityLiving)entity;
-            entity.setLocationAndAngles(x, y, z, MathHelper.wrapAngleTo180_float(worldIn.rand.nextFloat() * 360.0F), 0.0F);
-            entityLiving.rotationYawHead = entityLiving.rotationYaw;
-            entityLiving.renderYawOffset = entityLiving.rotationYaw;
-            entityLiving.onInitialSpawn(worldIn.getDifficultyForLocation(new BlockPos(entityLiving)), (IEntityLivingData)null);
-            worldIn.spawnEntityInWorld(entity);
-            entityLiving.playLivingSound();
-         }
-      }
+        MovingObjectPosition movingObjectPositionFromPlayer = this.getMovingObjectPositionFromPlayer(worldIn, player, true);
+        if (movingObjectPositionFromPlayer == null) {
+            return itemStackIn;
+        }
 
-      return entity;
-   }
+        if (movingObjectPositionFromPlayer.typeOfHit == MovingObjectType.BLOCK) {
+            int blockX = movingObjectPositionFromPlayer.blockX;
+            int blockY = movingObjectPositionFromPlayer.blockY;
+            int blockZ = movingObjectPositionFromPlayer.blockZ;
+            if (!worldIn.canMineBlock(player, blockX, blockY, blockZ)) {
+                return itemStackIn;
+            }
 
-   @Override
-   public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems) {
-      for (EntityEggInfo entityEggInfo : EntityList.entityEggs.values()) {
-         subItems.add(new ItemStack(itemIn, 1, entityEggInfo.spawnedID));
-      }
-   }
+            if (!player.canPlayerEdit(blockX, blockY, blockZ, movingObjectPositionFromPlayer.sideHit, itemStackIn)) {
+                return itemStackIn;
+            }
+
+            if (worldIn.getBlock(blockX, blockY, blockZ) instanceof BlockLiquid) {
+                Entity spawnCreature2 = spawnCreature(worldIn, itemStackIn.getMetadata(), blockX, blockY, blockZ);
+                if (spawnCreature2 != null) {
+                    if (spawnCreature2 instanceof EntityLivingBase && itemStackIn.hasDisplayName()) {
+                        ((EntityLiving)spawnCreature2).setCustomNameTag(itemStackIn.getDisplayName());
+                    }
+
+                    if (!player.capabilities.isCreativeMode) {
+                        itemStackIn.stackSize--;
+                    }
+                }
+            }
+        }
+
+        return itemStackIn;
+    }
+
+    public static Entity spawnCreature(World world, int n, double d, double d2, double d3) {
+        if (!EntityList.entityEggs.containsKey(n)) {
+            return null;
+        }
+
+        Entity entity = null;
+
+        for (int i = 0; i < 1; i++) {
+            entity = EntityList.createEntityByID(n, world);
+            if (entity != null && entity instanceof EntityLivingBase) {
+                EntityLiving entityLiving = (EntityLiving)entity;
+                entity.setLocationAndAngles(d, d2, d3, MathHelper.wrapAngleTo180_float(world.rand.nextFloat() * 360.0F), 0.0F);
+                entityLiving.rotationYawHead = entityLiving.rotationYaw;
+                entityLiving.renderYawOffset = entityLiving.rotationYaw;
+                entityLiving.onSpawnWithEgg(null);
+                world.spawnEntityInWorld(entity);
+                entityLiving.playLivingSound();
+            }
+        }
+
+        return entity;
+    }
+
+    @Override
+    public void getSubItems(Item item, CreativeTabs creativeTabs, List list) {
+        for (EntityEggInfo entityEggInfo : (Iterable<EntityEggInfo>)EntityList.entityEggs.values()) {
+            list.add(new ItemStack(item, 1, entityEggInfo.spawnedID));
+        }
+    }
+
+    @Override
+    public void registerIcons(IIconRegister register) {
+        super.registerIcons(register);
+        this.theIcon = register.registerIcon(this.getIconString() + "_overlay");
+    }
 }

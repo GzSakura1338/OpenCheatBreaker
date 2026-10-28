@@ -4,19 +4,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.world.chunk.Chunk;
 
 public interface IMap {
-   float getPercentX();
+    void setPermissions(boolean flag, boolean flag2);
 
-   String getCurrentWorldName();
+    void chunkCalc(Chunk chunk);
 
-   float getPercentY();
+    float getPercentX();
 
-   void onTickInGame(Minecraft mc);
+    void drawMinimap(Minecraft mc);
 
-   void setPermissions(boolean flag, boolean flag2);
+    void forceFullRender(boolean flag);
 
-   void drawMinimap(Minecraft mc);
+    float getPercentY();
 
-   void forceFullRender(boolean flag);
+    void onTickInGame(Minecraft mc) throws java.io.IOException;
 
-   void chunkCalc(Chunk chunk);
+    String getCurrentWorldName();
 }

@@ -1,58 +1,40 @@
 package net.minecraft.client.gui.inventory;
 
-import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.ContainerFurnace;
-import net.minecraft.inventory.IInventory;
 import net.minecraft.tileentity.TileEntityFurnace;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
 public class GuiFurnace extends GuiContainer {
-   public static ResourceLocation furnaceGuiTextures = new ResourceLocation("textures/gui/container/furnace.png");
-   public InventoryPlayer playerInventory;
-   public IInventory tileFurnace;
+    public static ResourceLocation furnaceGuiTextures = new ResourceLocation("textures/gui/container/furnace.png");
+    public TileEntityFurnace tileFurnace;
 
-   public GuiFurnace(InventoryPlayer playerInv, IInventory furnaceInv) {
-      super(new ContainerFurnace(playerInv, furnaceInv));
-      this.playerInventory = playerInv;
-      this.tileFurnace = furnaceInv;
-   }
+    public GuiFurnace(InventoryPlayer inventoryPlayer, TileEntityFurnace tileEntityFurnace) {
+        super(new ContainerFurnace(inventoryPlayer, tileEntityFurnace));
+        this.tileFurnace = tileEntityFurnace;
+    }
 
-   @Override
-   public void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
-      String unformattedText = this.tileFurnace.getDisplayName().getUnformattedText();
-      this.fontRendererObj.drawString(unformattedText, this.xSize / 2 - this.fontRendererObj.getStringWidth(unformattedText) / 2, 6.0F, 4210752);
-      this.fontRendererObj.drawString(this.playerInventory.getDisplayName().getUnformattedText(), 8.0F, this.ySize - 96 + 2, 4210752);
-   }
+    @Override
+    public void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+        String str = this.tileFurnace.isCustomInventoryName() ? this.tileFurnace.getInventoryName() : I18n.format(this.tileFurnace.getInventoryName());
+        this.fontRendererObj.drawString(str, this.xSize / 2 - this.fontRendererObj.getStringWidth(str) / 2, 6, 4210752);
+        this.fontRendererObj.drawString(I18n.format("container.inventory"), 8, this.ySize - 96 + 2, 4210752);
+    }
 
-   @Override
-   public void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
-      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-      this.mc.getTextureManager().bindTexture(furnaceGuiTextures);
-      int n = (this.width - this.xSize) / 2;
-      int n2 = (this.height - this.ySize) / 2;
-      this.drawTexturedModalRect(n, n2, 0, 0, this.xSize, this.ySize);
-      if (TileEntityFurnace.isBurning(this.tileFurnace)) {
-         int burnLeftScaled = this.getBurnLeftScaled(13);
-         this.drawTexturedModalRect(n + 56, n2 + 36 + 12 - burnLeftScaled, 176, 12 - burnLeftScaled, 14, burnLeftScaled + 1);
-      }
-
-      int cookProgressScaled = this.getCookProgressScaled(24);
-      this.drawTexturedModalRect(n + 79, n2 + 34, 176, 14, cookProgressScaled + 1, 16);
-   }
-
-   public int getCookProgressScaled(int pixels) {
-      int field = this.tileFurnace.getField(2);
-      int fieldRef2 = this.tileFurnace.getField(3);
-      return fieldRef2 != 0 && field != 0 ? field * pixels / fieldRef2 : 0;
-   }
-
-   public int getBurnLeftScaled(int pixels) {
-      int field = this.tileFurnace.getField(1);
-      if (field == 0) {
-         field = 200;
-      }
-
-      return this.tileFurnace.getField(0) * pixels / field;
-   }
+    @Override
+    public void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        this.mc.getTextureManager().bindTexture(furnaceGuiTextures);
+        int n = (this.width - this.xSize) / 2;
+        int n2 = (this.height - this.ySize) / 2;
+        drawTexturedRect(n, n2, 0.0F, 0.0F, this.xSize, this.ySize);
+        if (this.tileFurnace.isBurning()) {
+            int burnTimeRemainingScaled = this.tileFurnace.getBurnTimeRemainingScaled(13);
+            drawTexturedRect(n + 56, n2 + 36 + 12 - burnTimeRemainingScaled, 176.0F, 12 - burnTimeRemainingScaled, 14, burnTimeRemainingScaled + 1);
+            burnTimeRemainingScaled = this.tileFurnace.getCookProgressScaled(24);
+            drawTexturedRect(n + 79, n2 + 34, 176.0F, 14.0F, burnTimeRemainingScaled + 1, 16);
+        }
+    }
 }

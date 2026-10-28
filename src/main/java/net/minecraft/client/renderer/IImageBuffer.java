@@ -3,7 +3,7 @@ package net.minecraft.client.renderer;
 import java.awt.image.BufferedImage;
 
 public interface IImageBuffer {
-   BufferedImage parseUserSkin(BufferedImage bufferedImage);
+    BufferedImage parseUserSkin(BufferedImage bufferedImage);
 
-   void skinAvailable();
+    void run();
 }

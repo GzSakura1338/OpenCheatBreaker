@@ -3,35 +3,34 @@ package net.minecraft.enchantment;
 import java.util.Random;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 
 public class EnchantmentDurability extends Enchantment {
-   public EnchantmentDurability(int enchID, ResourceLocation enchName, int enchWeight) {
-      super(enchID, enchName, enchWeight, EnumEnchantmentType.BREAKABLE);
-      this.setName("durability");
-   }
+    public EnchantmentDurability(int n, int n2) {
+        super(n, n2, EnumEnchantmentType.breakable);
+        this.setName("durability");
+    }
 
-   @Override
-   public int getMinEnchantability(int enchantmentLevel) {
-      return 5 + (enchantmentLevel - 1) * 8;
-   }
+    @Override
+    public int getMinEnchantability(int n) {
+        return 5 + (n - 1) * 8;
+    }
 
-   @Override
-   public int getMaxEnchantability(int enchantmentLevel) {
-      return super.getMinEnchantability(enchantmentLevel) + 50;
-   }
+    @Override
+    public int getMaxEnchantability(int n) {
+        return super.getMinEnchantability(n) + 50;
+    }
 
-   @Override
-   public int getMaxLevel() {
-      return 3;
-   }
+    @Override
+    public int getMaxLevel() {
+        return 3;
+    }
 
-   @Override
-   public boolean canApply(ItemStack stack) {
-      return stack.isItemStackDamageable() ? true : super.canApply(stack);
-   }
+    @Override
+    public boolean canApply(ItemStack itemStack) {
+        return itemStack.isItemStackDamageable() || super.canApply(itemStack);
+    }
 
-   public static boolean negateDamage(ItemStack itemStack, int n, Random random) {
-      return itemStack.getItem() instanceof ItemArmor && random.nextFloat() < 0.6F ? false : random.nextInt(n + 1) > 0;
-   }
+    public static boolean negateDamage(ItemStack itemStack, int n, Random random) {
+        return (!(itemStack.getItem() instanceof ItemArmor) || !(random.nextFloat() < 0.6F)) && random.nextInt(n + 1) > 0;
+    }
 }

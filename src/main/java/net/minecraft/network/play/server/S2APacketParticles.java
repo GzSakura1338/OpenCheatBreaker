@@ -1,141 +1,105 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.EnumParticleTypes;
 
-public class S2APacketParticles implements Packet<INetHandlerPlayClient> {
-   public EnumParticleTypes particleType;
-   public boolean longDistance;
-   public float xCoord;
-   public float yCoord;
-   public float zCoord;
-   public float xOffset;
-   public float yOffset;
-   public float zOffset;
-   public float particleSpeed;
-   public int particleCount;
-   public int[] particleArguments;
+public class S2APacketParticles extends Packet {
+    public String text;
+    public float x;
+    public float y;
+    public float z;
+    public float offsetX;
+    public float offsetY;
+    public float offsetZ;
+    public float speed;
+    public int count;
 
-   public S2APacketParticles() {
-   }
+    public S2APacketParticles() {
+    }
 
-   public S2APacketParticles(
-      EnumParticleTypes particleTypeIn,
-      boolean longDistanceIn,
-      float x,
-      float y,
-      float z,
-      float xOffsetIn,
-      float yOffset,
-      float zOffset,
-      float particleSpeedIn,
-      int particleCountIn,
-      int... particleArgumentsIn
-   ) {
-      this.particleType = particleTypeIn;
-      this.longDistance = longDistanceIn;
-      this.xCoord = x;
-      this.yCoord = y;
-      this.zCoord = z;
-      this.xOffset = xOffsetIn;
-      this.yOffset = yOffset;
-      this.zOffset = zOffset;
-      this.particleSpeed = particleSpeedIn;
-      this.particleCount = particleCountIn;
-      this.particleArguments = particleArgumentsIn;
-   }
+    public S2APacketParticles(String str, float f, float f2, float f3, float f4, float f5, float f6, float f7, int n) {
+        this.text = str;
+        this.x = f;
+        this.y = f2;
+        this.z = f3;
+        this.offsetX = f4;
+        this.offsetY = f5;
+        this.offsetZ = f6;
+        this.speed = f7;
+        this.count = n;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.particleType = EnumParticleTypes.getParticleFromId(buf.readInt());
-      if (this.particleType == null) {
-         this.particleType = EnumParticleTypes.BARRIER;
-      }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.text = data.readStringFromBuffer(64);
+        this.x = data.readFloat();
+        this.y = data.readFloat();
+        this.z = data.readFloat();
+        this.offsetX = data.readFloat();
+        this.offsetY = data.readFloat();
+        this.offsetZ = data.readFloat();
+        this.speed = data.readFloat();
+        this.count = data.readInt();
+    }
 
-      this.longDistance = buf.readBoolean();
-      this.xCoord = buf.readFloat();
-      this.yCoord = buf.readFloat();
-      this.zCoord = buf.readFloat();
-      this.xOffset = buf.readFloat();
-      this.yOffset = buf.readFloat();
-      this.zOffset = buf.readFloat();
-      this.particleSpeed = buf.readFloat();
-      this.particleCount = buf.readInt();
-      int argumentCount = this.particleType.getArgumentCount();
-      this.particleArguments = new int[argumentCount];
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeStringToBuffer(this.text);
+        data.writeFloat(this.x);
+        data.writeFloat(this.y);
+        data.writeFloat(this.z);
+        data.writeFloat(this.offsetX);
+        data.writeFloat(this.offsetY);
+        data.writeFloat(this.offsetZ);
+        data.writeFloat(this.speed);
+        data.writeInt(this.count);
+    }
 
-      for (int i = 0; i < argumentCount; i++) {
-         this.particleArguments[i] = buf.readVarIntFromBuffer();
-      }
-   }
+    public String getText() {
+        return this.text;
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeInt(this.particleType.getParticleID());
-      buf.writeBoolean(this.longDistance);
-      buf.writeFloat(this.xCoord);
-      buf.writeFloat(this.yCoord);
-      buf.writeFloat(this.zCoord);
-      buf.writeFloat(this.xOffset);
-      buf.writeFloat(this.yOffset);
-      buf.writeFloat(this.zOffset);
-      buf.writeFloat(this.particleSpeed);
-      buf.writeInt(this.particleCount);
-      int argumentCount = this.particleType.getArgumentCount();
+    public double getX() {
+        return this.x;
+    }
 
-      for (int i = 0; i < argumentCount; i++) {
-         buf.writeVarIntToBuffer(this.particleArguments[i]);
-      }
-   }
+    public double getY() {
+        return this.y;
+    }
 
-   public EnumParticleTypes getParticleType() {
-      return this.particleType;
-   }
+    public double getZ() {
+        return this.z;
+    }
 
-   public boolean isLongDistance() {
-      return this.longDistance;
-   }
+    public float getOffsetX() {
+        return this.offsetX;
+    }
 
-   public double getXCoordinate() {
-      return this.xCoord;
-   }
+    public float getOffsetY() {
+        return this.offsetY;
+    }
 
-   public double getYCoordinate() {
-      return this.yCoord;
-   }
+    public float getOffsetZ() {
+        return this.offsetZ;
+    }
 
-   public double getZCoordinate() {
-      return this.zCoord;
-   }
+    public float getSpeed() {
+        return this.speed;
+    }
 
-   public float getXOffset() {
-      return this.xOffset;
-   }
+    public int getCount() {
+        return this.count;
+    }
 
-   public float getYOffset() {
-      return this.yOffset;
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleParticles(this);
+    }
 
-   public float getZOffset() {
-      return this.zOffset;
-   }
-
-   public float getParticleSpeed() {
-      return this.particleSpeed;
-   }
-
-   public int getParticleCount() {
-      return this.particleCount;
-   }
-
-   public int[] getParticleArgs() {
-      return this.particleArguments;
-   }
-
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleParticles(this);
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

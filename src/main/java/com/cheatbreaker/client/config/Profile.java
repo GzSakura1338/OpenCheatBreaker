@@ -1,24 +1,24 @@
 package com.cheatbreaker.client.config;
 
 public class Profile {
-   public int intValue = 0;
-   public String text;
-   public boolean flag;
+    public int intValue = 0;
+    public String name;
+    public boolean isDefault;
 
-   public Profile(String str, boolean flag) {
-      this.text = str;
-      this.flag = flag;
-   }
+    public void setName(String str) {
+        this.name = str;
+    }
 
-   public String getText() {
-      return this.text;
-   }
+    public Profile(String str, boolean flag) {
+        this.name = str;
+        this.isDefault = flag;
+    }
 
-   public boolean isFlag() {
-      return this.flag;
-   }
+    public String getName() {
+        return this.name;
+    }
 
-   public void setText(String str) {
-      this.text = str;
-   }
+    public boolean isDefault() {
+        return this.isDefault;
+    }
 }

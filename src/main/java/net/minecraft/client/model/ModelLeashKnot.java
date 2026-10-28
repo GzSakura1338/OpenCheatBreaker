@@ -3,32 +3,30 @@ package net.minecraft.client.model;
 import net.minecraft.entity.Entity;
 
 public class ModelLeashKnot extends ModelBase {
-   public ModelRenderer modelRenderer;
+    public ModelRenderer modelRenderer;
 
-   public ModelLeashKnot() {
-      this(0, 0, 32, 32);
-   }
+    public ModelLeashKnot() {
+        this(0, 0, 32, 32);
+    }
 
-   public ModelLeashKnot(int n, int n2, int n3, int n4) {
-      this.textureWidth = n3;
-      this.textureHeight = n4;
-      this.modelRenderer = new ModelRenderer(this, n, n2);
-      this.modelRenderer.addBox(-3.0F, -6.0F, -3.0F, 6, 8, 6, 0.0F);
-      this.modelRenderer.setRotationPoint(0.0F, 0.0F, 0.0F);
-   }
+    public ModelLeashKnot(int n, int n2, int n3, int n4) {
+        this.textureWidth = n3;
+        this.textureHeight = n4;
+        this.modelRenderer = new ModelRenderer(this, n, n2);
+        this.modelRenderer.addBox(-3.0F, -6.0F, -3.0F, 6, 8, 6, 0.0F);
+        this.modelRenderer.setRotationPoint(0.0F, 0.0F, 0.0F);
+    }
 
-   @Override
-   public void render(Entity entityIn, float f, float f2, float f3, float f4, float f5, float scale) {
-      this.setRotationAngles(f, f2, f3, f4, f5, scale, entityIn);
-      this.modelRenderer.render(scale);
-   }
+    @Override
+    public void render(Entity entity, float f, float f2, float f3, float f4, float f5, float f6) {
+        this.setRotationAngles(f, f2, f3, f4, f5, f6, entity);
+        this.modelRenderer.render(f6);
+    }
 
-   @Override
-   public void setRotationAngles(
-      float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, Entity entityIn
-   ) {
-      super.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scaleFactor, entityIn);
-      this.modelRenderer.rotateAngleY = netHeadYaw / (180.0F / (float)Math.PI);
-      this.modelRenderer.rotateAngleX = headPitch / (180.0F / (float)Math.PI);
-   }
+    @Override
+    public void setRotationAngles(float f, float f2, float f3, float f4, float f5, float f6, Entity entity) {
+        super.setRotationAngles(f, f2, f3, f4, f5, f6, entity);
+        this.modelRenderer.rotateAngleY = f4 / (180.0F / (float)Math.PI);
+        this.modelRenderer.rotateAngleX = f5 / (180.0F / (float)Math.PI);
+    }
 }

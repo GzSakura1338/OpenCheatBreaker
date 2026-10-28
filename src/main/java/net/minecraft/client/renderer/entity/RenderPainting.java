@@ -1,128 +1,134 @@
 package net.minecraft.client.renderer.entity;
 
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.item.EntityPainting.EnumArt;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 
-public class RenderPainting extends Render<EntityPainting> {
-   public static ResourceLocation KRISTOFFER_PAINTING_TEXTURE = new ResourceLocation("textures/painting/paintings_kristoffer_zetterstrand.png");
+public class RenderPainting extends Render {
+    public static ResourceLocation resourceLocation = new ResourceLocation("textures/painting/paintings_kristoffer_zetterstrand.png");
 
-   public RenderPainting(RenderManager renderManagerIn) {
-      super(renderManagerIn);
-   }
+    public void doRender(EntityPainting entityPainting, double d, double d2, double d3, float f, float f2) {
+        GL11.glPushMatrix();
+        GL11.glTranslated(d, d2, d3);
+        GL11.glRotatef(f, 0.0F, 1.0F, 0.0F);
+        GL11.glEnable(32826);
+        this.bindEntityTexture(entityPainting);
+        EnumArt art = entityPainting.art;
+        float f3 = 0.0625F;
+        GL11.glScalef(f3, f3, f3);
+        this.handleEntityPainting(entityPainting, art.sizeX, art.sizeY, art.offsetX, art.offsetY);
+        GL11.glDisable(32826);
+        GL11.glPopMatrix();
+    }
 
-   public void doRender(EntityPainting entity, double x, double y, double z, float entityYaw, float partialTicks) {
-      GlStateManager.pushMatrix();
-      GlStateManager.translate(x, y, z);
-      GlStateManager.rotate(180.0F - entityYaw, 0.0F, 1.0F, 0.0F);
-      GlStateManager.enableRescaleNormal();
-      this.bindEntityTexture(entity);
-      EnumArt art = entity.art;
-      float f = 0.0625F;
-      GlStateManager.scale(f, f, f);
-      this.renderPainting(entity, art.sizeX, art.sizeY, art.offsetX, art.offsetY);
-      GlStateManager.disableRescaleNormal();
-      GlStateManager.popMatrix();
-      super.doRender(entity, x, y, z, entityYaw, partialTicks);
-   }
+    public ResourceLocation getEntityTexture(EntityPainting entityPainting) {
+        return resourceLocation;
+    }
 
-   public ResourceLocation getEntityTexture(EntityPainting entity) {
-      return KRISTOFFER_PAINTING_TEXTURE;
-   }
+    public void handleEntityPainting(EntityPainting entityPainting, int n, int n2, int n3, int n4) {
+        float f = -n / 2.0F;
+        float f2 = -n2 / 2.0F;
+        float f3 = 0.5F;
+        float f4 = 0.75F;
+        float f5 = 0.8125F;
+        float f6 = 0.0F;
+        float f7 = 0.0625F;
+        float f8 = 0.75F;
+        float f9 = 0.8125F;
+        float f10 = 0.001953125F;
+        float f11 = 0.001953125F;
+        float f12 = 0.7519531F;
+        float f13 = 0.7519531F;
+        float f14 = 0.0F;
+        float f15 = 0.0625F;
 
-   public void renderPainting(EntityPainting painting, int width, int height, int textureU, int textureV) {
-      float f = -width / 2.0F;
-      float f2 = -height / 2.0F;
-      float f3 = 0.5F;
-      float f4 = 0.75F;
-      float f5 = 0.8125F;
-      float f6 = 0.0F;
-      float f7 = 0.0625F;
-      float f8 = 0.75F;
-      float f9 = 0.8125F;
-      float f10 = 0.001953125F;
-      float f11 = 0.001953125F;
-      float f12 = 0.7519531F;
-      float f13 = 0.7519531F;
-      float f14 = 0.0F;
-      float f15 = 0.0625F;
+        for (int i = 0; i < n / 16; i++) {
+            for (int j = 0; j < n2 / 16; j++) {
+                float f16 = f + (i + 1) * 16;
+                float f17 = f + i * 16;
+                float f18 = f2 + (j + 1) * 16;
+                float f19 = f2 + j * 16;
+                this.handleEntityPainting(entityPainting, (f16 + f17) / 2.0F, (f18 + f19) / 2.0F);
+                float f20 = (n3 + n - i * 16) / 256.0F;
+                float f21 = (n3 + n - (i + 1) * 16) / 256.0F;
+                float f22 = (n4 + n2 - j * 16) / 256.0F;
+                float f23 = (n4 + n2 - (j + 1) * 16) / 256.0F;
+                Tessellator instance = Tessellator.instance;
+                instance.startDrawingQuads();
+                instance.setNormal(0.0F, 0.0F, -1.0F);
+                instance.addVertexWithUV(f16, f19, -f3, f21, f22);
+                instance.addVertexWithUV(f17, f19, -f3, f20, f22);
+                instance.addVertexWithUV(f17, f18, -f3, f20, f23);
+                instance.addVertexWithUV(f16, f18, -f3, f21, f23);
+                instance.setNormal(0.0F, 0.0F, 1.0F);
+                instance.addVertexWithUV(f16, f18, f3, f4, f6);
+                instance.addVertexWithUV(f17, f18, f3, f5, f6);
+                instance.addVertexWithUV(f17, f19, f3, f5, f7);
+                instance.addVertexWithUV(f16, f19, f3, f4, f7);
+                instance.setNormal(0.0F, 1.0F, 0.0F);
+                instance.addVertexWithUV(f16, f18, -f3, f8, f10);
+                instance.addVertexWithUV(f17, f18, -f3, f9, f10);
+                instance.addVertexWithUV(f17, f18, f3, f9, f11);
+                instance.addVertexWithUV(f16, f18, f3, f8, f11);
+                instance.setNormal(0.0F, -1.0F, 0.0F);
+                instance.addVertexWithUV(f16, f19, f3, f8, f10);
+                instance.addVertexWithUV(f17, f19, f3, f9, f10);
+                instance.addVertexWithUV(f17, f19, -f3, f9, f11);
+                instance.addVertexWithUV(f16, f19, -f3, f8, f11);
+                instance.setNormal(-1.0F, 0.0F, 0.0F);
+                instance.addVertexWithUV(f16, f18, f3, f13, f14);
+                instance.addVertexWithUV(f16, f19, f3, f13, f15);
+                instance.addVertexWithUV(f16, f19, -f3, f12, f15);
+                instance.addVertexWithUV(f16, f18, -f3, f12, f14);
+                instance.setNormal(1.0F, 0.0F, 0.0F);
+                instance.addVertexWithUV(f17, f18, -f3, f13, f14);
+                instance.addVertexWithUV(f17, f19, -f3, f13, f15);
+                instance.addVertexWithUV(f17, f19, f3, f12, f15);
+                instance.addVertexWithUV(f17, f18, f3, f12, f14);
+                instance.draw();
+            }
+        }
+    }
 
-      for (int i = 0; i < width / 16; i++) {
-         for (int j = 0; j < height / 16; j++) {
-            float f16 = f + (i + 1) * 16;
-            float f17 = f + i * 16;
-            float f18 = f2 + (j + 1) * 16;
-            float f19 = f2 + j * 16;
-            this.setLightmap(painting, (f16 + f17) / 2.0F, (f18 + f19) / 2.0F);
-            float f20 = (textureU + width - i * 16) / 256.0F;
-            float f21 = (textureU + width - (i + 1) * 16) / 256.0F;
-            float f22 = (textureV + height - j * 16) / 256.0F;
-            float f23 = (textureV + height - (j + 1) * 16) / 256.0F;
-            Tessellator instance = Tessellator.getInstance();
-            WorldRenderer worldRenderer = instance.getWorldRenderer();
-            worldRenderer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
-            worldRenderer.pos(f16, f19, -f3).tex(f21, f22).normal(0.0F, 0.0F, -1.0F).endVertex();
-            worldRenderer.pos(f17, f19, -f3).tex(f20, f22).normal(0.0F, 0.0F, -1.0F).endVertex();
-            worldRenderer.pos(f17, f18, -f3).tex(f20, f23).normal(0.0F, 0.0F, -1.0F).endVertex();
-            worldRenderer.pos(f16, f18, -f3).tex(f21, f23).normal(0.0F, 0.0F, -1.0F).endVertex();
-            worldRenderer.pos(f16, f18, f3).tex(f4, f6).normal(0.0F, 0.0F, 1.0F).endVertex();
-            worldRenderer.pos(f17, f18, f3).tex(f5, f6).normal(0.0F, 0.0F, 1.0F).endVertex();
-            worldRenderer.pos(f17, f19, f3).tex(f5, f7).normal(0.0F, 0.0F, 1.0F).endVertex();
-            worldRenderer.pos(f16, f19, f3).tex(f4, f7).normal(0.0F, 0.0F, 1.0F).endVertex();
-            worldRenderer.pos(f16, f18, -f3).tex(f8, f10).normal(0.0F, 1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f18, -f3).tex(f9, f10).normal(0.0F, 1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f18, f3).tex(f9, f11).normal(0.0F, 1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f18, f3).tex(f8, f11).normal(0.0F, 1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f19, f3).tex(f8, f10).normal(0.0F, -1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f19, f3).tex(f9, f10).normal(0.0F, -1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f19, -f3).tex(f9, f11).normal(0.0F, -1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f19, -f3).tex(f8, f11).normal(0.0F, -1.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f18, f3).tex(f13, f14).normal(-1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f19, f3).tex(f13, f15).normal(-1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f19, -f3).tex(f12, f15).normal(-1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f16, f18, -f3).tex(f12, f14).normal(-1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f18, -f3).tex(f13, f14).normal(1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f19, -f3).tex(f13, f15).normal(1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f19, f3).tex(f12, f15).normal(1.0F, 0.0F, 0.0F).endVertex();
-            worldRenderer.pos(f17, f18, f3).tex(f12, f14).normal(1.0F, 0.0F, 0.0F).endVertex();
-            instance.draw();
-         }
-      }
-   }
+    public void handleEntityPainting(EntityPainting entityPainting, float f, float f2) {
+        int n = MathHelper.floor_double(entityPainting.posX);
+        int n2 = MathHelper.floor_double(entityPainting.posY + f2 / 16.0F);
+        int n3 = MathHelper.floor_double(entityPainting.posZ);
+        if (entityPainting.hangingDirection == 2) {
+            n = MathHelper.floor_double(entityPainting.posX + f / 16.0F);
+        }
 
-   public void setLightmap(EntityPainting painting, float f, float f2) {
-      int n = MathHelper.floor_double(painting.posX);
-      int n2 = MathHelper.floor_double(painting.posY + f2 / 16.0F);
-      int n3 = MathHelper.floor_double(painting.posZ);
-      EnumFacing facingDirection = painting.facingDirection;
-      if (facingDirection == EnumFacing.NORTH) {
-         n = MathHelper.floor_double(painting.posX + f / 16.0F);
-      }
+        if (entityPainting.hangingDirection == 1) {
+            n3 = MathHelper.floor_double(entityPainting.posZ - f / 16.0F);
+        }
 
-      if (facingDirection == EnumFacing.WEST) {
-         n3 = MathHelper.floor_double(painting.posZ - f / 16.0F);
-      }
+        if (entityPainting.hangingDirection == 0) {
+            n = MathHelper.floor_double(entityPainting.posX - f / 16.0F);
+        }
 
-      if (facingDirection == EnumFacing.SOUTH) {
-         n = MathHelper.floor_double(painting.posX - f / 16.0F);
-      }
+        if (entityPainting.hangingDirection == 3) {
+            n3 = MathHelper.floor_double(entityPainting.posZ + f / 16.0F);
+        }
 
-      if (facingDirection == EnumFacing.EAST) {
-         n3 = MathHelper.floor_double(painting.posZ + f / 16.0F);
-      }
+        int lightBrightnessForSkyBlocks = this.renderManager.worldObj.getLightBrightnessForSkyBlocks(n, n2, n3, 0);
+        int n4 = lightBrightnessForSkyBlocks % 65536;
+        int n5 = lightBrightnessForSkyBlocks / 65536;
+        OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, n4, n5);
+        GL11.glColor3f(1.0F, 1.0F, 1.0F);
+    }
 
-      int combinedLight = this.renderManager.worldObj.getCombinedLight(new BlockPos(n, n2, n3), 0);
-      int n4 = combinedLight % 65536;
-      int n5 = combinedLight / 65536;
-      OpenGlHelper.setLightmapTextureCoords(OpenGlHelper.lightmapTexUnit, n4, n5);
-      GlStateManager.color(1.0F, 1.0F, 1.0F);
-   }
+    @Override
+    public ResourceLocation getEntityTexture(Entity entity) {
+        return this.getEntityTexture((EntityPainting)entity);
+    }
+
+    @Override
+    public void doRender(Entity entity, double d, double d2, double d3, float f, float f2) {
+        this.doRender((EntityPainting)entity, d, d2, d3, f, f2);
+    }
 }

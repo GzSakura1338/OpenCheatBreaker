@@ -6,31 +6,31 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.ServerPacketHandler;
 
 public class ChallengeResponsePacket extends AbstractPacket {
-   public byte[] encryptedToken;
+    public byte[] encryptedToken;
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleChallengeResponse(this);
-   }
+    public ChallengeResponsePacket(byte[] bytes) {
+        this.encryptedToken = bytes;
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      this.writeByteArray(packetBuffer, this.encryptedToken);
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleChallengeResponse(this);
+    }
 
-   public ChallengeResponsePacket(byte[] bytes) {
-      this.encryptedToken = bytes;
-   }
+    public ChallengeResponsePacket() {
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.encryptedToken = this.readByteArray(packetBuffer);
-   }
+    public byte[] getEncryptedToken() {
+        return this.encryptedToken;
+    }
 
-   public byte[] getEncryptedToken() {
-      return this.encryptedToken;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        this.writeByteArray(packetBuffer, this.encryptedToken);
+    }
 
-   public ChallengeResponsePacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.encryptedToken = this.readByteArray(packetBuffer);
+    }
 }

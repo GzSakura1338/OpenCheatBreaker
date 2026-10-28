@@ -6,31 +6,31 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.ServerPacketHandler;
 
 public class RequestPlayerCosmeticsPacket extends AbstractPacket {
-   public String playerId;
+    public String playerId;
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeString(this.playerId);
-   }
+    public String getPlayerId() {
+        return this.playerId;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.playerId = packetBuffer.readString();
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeString(this.playerId);
+    }
 
-   public String getPlayerId() {
-      return this.playerId;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleRequestPlayerCosmetics(this);
+    }
 
-   public RequestPlayerCosmeticsPacket() {
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.playerId = packetBuffer.readString();
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleRequestPlayerCosmetics(this);
-   }
+    public RequestPlayerCosmeticsPacket() {
+    }
 
-   public RequestPlayerCosmeticsPacket(String str) {
-      this.playerId = str;
-   }
+    public RequestPlayerCosmeticsPacket(String str) {
+        this.playerId = str;
+    }
 }

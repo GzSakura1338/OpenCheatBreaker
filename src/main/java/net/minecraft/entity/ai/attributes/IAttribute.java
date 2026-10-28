@@ -1,13 +1,11 @@
 package net.minecraft.entity.ai.attributes;
 
 public interface IAttribute {
-   String getAttributeUnlocalizedName();
+    String getAttributeUnlocalizedName();
 
-   double clampValue(double d);
+    double clampValue(double d);
 
-   double getDefaultValue();
+    double getDefaultValue();
 
-   boolean getShouldWatch();
-
-   IAttribute getParent();
+    boolean getShouldWatch();
 }

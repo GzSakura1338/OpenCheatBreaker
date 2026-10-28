@@ -1,252 +1,222 @@
 package net.minecraft.block;
 
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
-import net.minecraft.util.EnumWorldBlockLayer;
-import net.minecraft.util.IStringSerializable;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.Vec3;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockTrapDoor extends Block {
-   public static PropertyDirection FACING = PropertyDirection.create("facing", Plane.HORIZONTAL);
-   public static PropertyBool OPEN = PropertyBool.create("open");
-   public static PropertyEnum<BlockTrapDoor.DoorHalf> HALF = PropertyEnum.create("half", BlockTrapDoor.DoorHalf.class);
+    public BlockTrapDoor(Material material) {
+        super(material);
+        float f = 0.5F;
+        float f2 = 1.0F;
+        this.setBlockBounds(0.5F - f, 0.0F, 0.5F - f, 0.5F + f, f2, 0.5F + f);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+    }
 
-   public BlockTrapDoor(Material materialIn) {
-      super(materialIn);
-      this.setDefaultState(
-         this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(OPEN, false).withProperty(HALF, BlockTrapDoor.DoorHalf.BOTTOM)
-      );
-      float f = 0.5F;
-      float f2 = 1.0F;
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
-      this.setCreativeTab(CreativeTabs.tabRedstone);
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public boolean isPassable(IBlockAccess worldIn, int x, int y, int z) {
+        return !isTrapdoorOpen(worldIn.getBlockMetadata(x, y, z));
+    }
 
-   @Override
-   public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-      return !worldIn.getBlockState(pos).getValue(OPEN);
-   }
+    @Override
+    public int getRenderType() {
+        return 0;
+    }
 
-   @Override
-   public AxisAlignedBB getSelectedBoundingBox(World worldIn, BlockPos pos) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.getSelectedBoundingBox(worldIn, pos);
-   }
+    @Override
+    public AxisAlignedBB getSelectedBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.getSelectedBoundingBoxFromPool(worldIn, x, y, z);
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.getCollisionBoundingBox(worldIn, pos, state);
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.getCollisionBoundingBoxFromPool(worldIn, x, y, z);
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      this.setBounds(worldIn.getBlockState(pos));
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        this.process(worldIn.getBlockMetadata(x, y, z));
+    }
 
-   @Override
-   public void setBlockBoundsForItemRender() {
-      float f = 0.1875F;
-      this.setBlockBounds(0.0F, 0.40625F, 0.0F, 1.0F, 0.59375F, 1.0F);
-   }
+    @Override
+    public void setBlockBoundsForItemRender() {
+        float f = 0.1875F;
+        this.setBlockBounds(0.0F, 0.5F - f / 2.0F, 0.0F, 1.0F, 0.5F + f / 2.0F, 1.0F);
+    }
 
-   public void setBounds(IBlockState state) {
-      if (state.getBlock() == this) {
-         boolean flag = state.getValue(HALF) == BlockTrapDoor.DoorHalf.TOP;
-         Boolean value = state.getValue(OPEN);
-         EnumFacing value2 = state.getValue(FACING);
-         float f = 0.1875F;
-         if (flag) {
-            this.setBlockBounds(0.0F, 0.8125F, 0.0F, 1.0F, 1.0F, 1.0F);
-         } else {
-            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.1875F, 1.0F);
-         }
+    public void process(int n) {
+        float f = 0.1875F;
+        if ((n & 8) != 0) {
+            this.setBlockBounds(0.0F, 1.0F - f, 0.0F, 1.0F, 1.0F, 1.0F);
+        } else {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, f, 1.0F);
+        }
 
-         if (value) {
-            if (value2 == EnumFacing.NORTH) {
-               this.setBlockBounds(0.0F, 0.0F, 0.8125F, 1.0F, 1.0F, 1.0F);
+        if (isTrapdoorOpen(n)) {
+            if ((n & 3) == 0) {
+                this.setBlockBounds(0.0F, 0.0F, 1.0F - f, 1.0F, 1.0F, 1.0F);
             }
 
-            if (value2 == EnumFacing.SOUTH) {
-               this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, 0.1875F);
+            if ((n & 3) == 1) {
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 1.0F, f);
             }
 
-            if (value2 == EnumFacing.WEST) {
-               this.setBlockBounds(0.8125F, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
+            if ((n & 3) == 2) {
+                this.setBlockBounds(1.0F - f, 0.0F, 0.0F, 1.0F, 1.0F, 1.0F);
             }
 
-            if (value2 == EnumFacing.EAST) {
-               this.setBlockBounds(0.0F, 0.0F, 0.0F, 0.1875F, 1.0F, 1.0F);
+            if ((n & 3) == 3) {
+                this.setBlockBounds(0.0F, 0.0F, 0.0F, f, 1.0F, 1.0F);
             }
-         }
-      }
-   }
+        }
+    }
 
-   @Override
-   public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (this.blockMaterial == Material.iron) {
-         return true;
-      }
+    @Override
+    public void onBlockClicked(World worldIn, int x, int y, int z, EntityPlayer player) {
+    }
 
-      state = state.cycleProperty(OPEN);
-      worldIn.setBlockState(pos, state, 2);
-      worldIn.playAuxSFXAtEntity(playerIn, state.getValue(OPEN) ? 1003 : 1006, pos, 0);
-      return true;
-   }
+    @Override
+    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
+        if (this.blockMaterial == Material.iron) {
+            return true;
+        }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!worldIn.isRemote) {
-         BlockPos offset = pos.offset(state.getValue(FACING).getOpposite());
-         if (!isValidSupportBlock(worldIn.getBlockState(offset).getBlock())) {
-            worldIn.setBlockToAir(pos);
-            this.dropBlockAsItem(worldIn, pos, state, 0);
-         } else {
-            boolean isBlockPowered = worldIn.isBlockPowered(pos);
-            if (isBlockPowered || neighborBlock.canProvidePower()) {
-               boolean value = state.getValue(OPEN);
-               if (value != isBlockPowered) {
-                  worldIn.setBlockState(pos, state.withProperty(OPEN, isBlockPowered), 2);
-                  worldIn.playAuxSFXAtEntity((EntityPlayer)null, isBlockPowered ? 1003 : 1006, pos, 0);
-               }
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata ^ 4, 2);
+        worldIn.playAuxSFXAtEntity(player, 1003, x, y, z, 0);
+        return true;
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3, boolean flag) {
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        boolean flag2 = (blockMetadata & 4) > 0;
+        if (flag2 != flag) {
+            world.setBlockMetadataWithNotify(n, n2, n3, blockMetadata ^ 4, 2);
+            world.playAuxSFXAtEntity(null, 1003, n, n2, n3, 0);
+        }
+    }
+
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!worldIn.isRemote) {
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            int n = x;
+            int n2 = z;
+            if ((blockMetadata & 3) == 0) {
+                n2 = z + 1;
             }
-         }
-      }
-   }
 
-   @Override
-   public MovingObjectPosition collisionRayTrace(World worldIn, BlockPos pos, Vec3 start, Vec3 end) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.collisionRayTrace(worldIn, pos, start, end);
-   }
+            if ((blockMetadata & 3) == 1) {
+                n2--;
+            }
 
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      IBlockState defaultState = this.getDefaultState();
-      if (facing.getAxis().isHorizontal()) {
-         defaultState = defaultState.withProperty(FACING, facing).withProperty(OPEN, false);
-         defaultState = defaultState.withProperty(HALF, hitY > 0.5F ? BlockTrapDoor.DoorHalf.TOP : BlockTrapDoor.DoorHalf.BOTTOM);
-      }
+            if ((blockMetadata & 3) == 2) {
+                n = x + 1;
+            }
 
-      return defaultState;
-   }
+            if ((blockMetadata & 3) == 3) {
+                n--;
+            }
 
-   @Override
-   public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side) {
-      return !side.getAxis().isVertical() && isValidSupportBlock(worldIn.getBlockState(pos.offset(side.getOpposite())).getBlock());
-   }
+            if (!isValidSupportBlock(worldIn.getBlock(n, y, n2))) {
+                worldIn.setBlockToAir(x, y, z);
+                this.dropBlockAsItem(worldIn, x, y, z, blockMetadata, 0);
+            }
 
-   public static EnumFacing getFacing(int meta) {
-      switch (meta & 3) {
-         case 0:
-            return EnumFacing.NORTH;
-         case 1:
-            return EnumFacing.SOUTH;
-         case 2:
-            return EnumFacing.WEST;
-         case 3:
-         default:
-            return EnumFacing.EAST;
-      }
-   }
+            boolean isBlockIndirectlyGettingPowered = worldIn.isBlockIndirectlyGettingPowered(x, y, z);
+            if (isBlockIndirectlyGettingPowered || neighbor.canProvidePower()) {
+                this.handleWorld(worldIn, x, y, z, isBlockIndirectlyGettingPowered);
+            }
+        }
+    }
 
-   public static int getMetaForFacing(EnumFacing facing) {
-      switch (facing) {
-         case NORTH:
-            return 0;
-         case SOUTH:
-            return 1;
-         case WEST:
-            return 2;
-         case EAST:
-         default:
-            return 3;
-      }
-   }
+    @Override
+    public MovingObjectPosition collisionRayTrace(World worldIn, int x, int y, int z, Vec3 startVec, Vec3 endVec) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.collisionRayTrace(worldIn, x, y, z, startVec, endVec);
+    }
 
-   public static boolean isValidSupportBlock(Block blockIn) {
-      return blockIn.blockMaterial.isOpaque() && blockIn.isFullCube()
-         || blockIn == Blocks.glowstone
-         || blockIn instanceof BlockSlab
-         || blockIn instanceof BlockStairs;
-   }
+    @Override
+    public int onBlockPlaced(World worldIn, int x, int y, int z, int side, float subX, float subY, float subZ, int meta) {
+        int n = 0;
+        if (side == 2) {
+            n = 0;
+        }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.CUTOUT;
-   }
+        if (side == 3) {
+            n = 1;
+        }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(FACING, getFacing(meta))
-         .withProperty(OPEN, (meta & 4) != 0)
-         .withProperty(HALF, (meta & 8) == 0 ? BlockTrapDoor.DoorHalf.BOTTOM : BlockTrapDoor.DoorHalf.TOP);
-   }
+        if (side == 4) {
+            n = 2;
+        }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= getMetaForFacing(state.getValue(FACING));
-      if (state.getValue(OPEN)) {
-         n |= 4;
-      }
+        if (side == 5) {
+            n = 3;
+        }
 
-      if (state.getValue(HALF) == BlockTrapDoor.DoorHalf.TOP) {
-         n |= 8;
-      }
+        if (side != 1 && side != 0 && subY > 0.5F) {
+            n |= 8;
+        }
 
-      return n;
-   }
+        return n;
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, OPEN, HALF);
-   }
+    @Override
+    public boolean canPlaceBlockOnSide(World worldIn, int x, int y, int z, int side) {
+        if (side == 0) {
+            return false;
+        }
 
-   public enum DoorHalf implements IStringSerializable {
-      TOP("top"),
-      BOTTOM("bottom");
+        if (side == 1) {
+            return false;
+        }
 
-      public String name;
+        if (side == 2) {
+            z++;
+        }
 
-      DoorHalf(String name) {
-         this.name = name;
-      }
+        if (side == 3) {
+            z--;
+        }
 
-      @Override
-      public String toString() {
-         return this.name;
-      }
+        if (side == 4) {
+            x++;
+        }
 
-      @Override
-      public String getName() {
-         return this.name;
-      }
-   }
+        if (side == 5) {
+            x--;
+        }
+
+        return isValidSupportBlock(worldIn.getBlock(x, y, z));
+    }
+
+    public static boolean isTrapdoorOpen(int n) {
+        return (n & 4) != 0;
+    }
+
+    public static boolean isValidSupportBlock(Block block) {
+        return block.blockMaterial.isOpaque() && block.renderAsNormalBlock()
+            || block == Blocks.glowstone
+            || block instanceof BlockSlab
+            || block instanceof BlockStairs;
+    }
 }

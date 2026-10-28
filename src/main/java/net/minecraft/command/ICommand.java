@@ -1,20 +1,19 @@
 package net.minecraft.command;
 
 import java.util.List;
-import net.minecraft.util.BlockPos;
 
-public interface ICommand extends Comparable<ICommand> {
-   String getCommandName();
+public interface ICommand extends Comparable {
+    String getCommandName();
 
-   String getCommandUsage(ICommandSender commandSender);
+    String getCommandUsage(ICommandSender commandSender);
 
-   List<String> getCommandAliases();
+    List getCommandAliases();
 
-   void processCommand(ICommandSender commandSender, String[] strs) throws CommandException;
+    void processCommand(ICommandSender commandSender, String[] strs) throws java.io.IOException;
 
-   boolean canCommandSenderUseCommand(ICommandSender commandSender);
+    boolean canCommandSenderUseCommand(ICommandSender commandSender);
 
-   List<String> addTabCompletionOptions(ICommandSender commandSender, String[] strs, BlockPos blockPos);
+    List addTabCompletionOptions(ICommandSender commandSender, String[] strs);
 
-   boolean isUsernameIndex(String[] strs, int n);
+    boolean isUsernameIndex(String[] strs, int n);
 }

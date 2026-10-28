@@ -11,118 +11,119 @@ import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
 public class ZansTeleportCommand extends CommandBase {
-   public IWaypointManager waypointManager;
+    public IWaypointManager waypointManager;
 
-   public ZansTeleportCommand(IWaypointManager waypointManager) {
-      this.waypointManager = waypointManager;
-   }
+    @Override
+    public void processCommand(ICommandSender commandSender, String[] strs) {
+        if (strs.length < 1) {
+            throw new WrongUsageException("/ztp [waypointName]");
+        }
 
-   public boolean checkWorld(World world, int n, int n2, int n3) {
-      Block block = world.getBlockState(new BlockPos(n, n2, n3)).getBlock();
-      return block.getMaterial() == Material.air ? !(block instanceof BlockFence) : block == null;
-   }
+        MinecraftServer server = MinecraftServer.getServer();
+        EntityPlayerMP entityPlayerMP = null;
+        if (entityPlayerMP == null) {
+            entityPlayerMP = getCommandSenderAsPlayer(commandSender);
+        }
 
-   @Override
-   public void processCommand(ICommandSender commandSender, String[] strs) throws WrongUsageException, PlayerNotFoundException, net.minecraft.command.NumberInvalidException {
-      if (strs.length < 1) {
-         throw new WrongUsageException("/ztp [waypointName]");
-      }
+        if (entityPlayerMP == null) {
+            throw new PlayerNotFoundException();
+        }
 
-      MinecraftServer server = MinecraftServer.getServer();
-      EntityPlayerMP entityPlayerMP = null;
-      if (entityPlayerMP == null) {
-         entityPlayerMP = getCommandSenderAsPlayer(commandSender);
-      }
+        String str = strs[0];
 
-      if (entityPlayerMP == null) {
-         throw new PlayerNotFoundException();
-      }
+        for (int i = 1; i < strs.length; i++) {
+            str = str + " ";
+            str = str + strs[i];
+        }
 
-      String str = strs[0];
+        ArrayList waypoints = this.waypointManager.getWaypoints();
+        Waypoint waypoint = null;
 
-      for (int i = 1; i < strs.length; i++) {
-         str = str + " ";
-         str = str + strs[i];
-      }
+        for (Waypoint waypoint2 : (Iterable<Waypoint>)waypoints) {
+            if (waypoint2.name.equalsIgnoreCase(str)) {
+                waypoint = waypoint2;
+            }
+        }
 
-      ArrayList waypoints = this.waypointManager.getWaypoints();
-      Waypoint waypoint = null;
+        boolean flag = entityPlayerMP.dimension == -1;
+        if (waypoint != null && entityPlayerMP.worldObj != null) {
+            int n = 30000000;
+            int parseIntBounded2 = parseIntBounded(commandSender, "" + waypoint.getX(), -n, n);
+            int parseIntBounded3 = parseIntBounded(commandSender, "" + waypoint.getZ(), -n, n);
+            int n2 = waypoint.getY();
+            if (!flag) {
+                if (waypoint.getY() == -1) {
+                    n2 = entityPlayerMP.worldObj.getHeightValue(parseIntBounded2, parseIntBounded3);
+                }
 
-      for (Waypoint waypoint2 : (Iterable<Waypoint>)waypoints) {
-         if (waypoint2.name.equalsIgnoreCase(str)) {
-            waypoint = waypoint2;
-         }
-      }
+                if (n2 == 0) {
+                    Chunk chunkFromBlockCoords = entityPlayerMP.worldObj.getChunkFromBlockCoords(parseIntBounded2, parseIntBounded3);
+                    n2 = entityPlayerMP.worldObj.getHeightValue(parseIntBounded2, parseIntBounded3);
+                }
+            } else {
+                Chunk chunkFromBlockCoords = entityPlayerMP.worldObj.getChunkFromBlockCoords(parseIntBounded2, parseIntBounded3);
+                entityPlayerMP.worldObj.getChunkProvider().loadChunk(parseIntBounded2, parseIntBounded3);
+                int n3 = -1;
 
-      boolean flag = entityPlayerMP.dimension == -1;
-      if (waypoint != null && entityPlayerMP.worldObj != null) {
-         int n = 30000000;
-         int parseInt2 = parseInt("" + waypoint.getX(), -n, n);
-         int parseInt3 = parseInt("" + waypoint.getZ(), -n, n);
-         int n2 = waypoint.getY();
-         if (!flag) {
-            if (waypoint.getY() == -1) {
-               n2 = entityPlayerMP.worldObj.getTopSolidOrLiquidBlock(new BlockPos(parseInt2, 0, parseInt3)).getY();
+                for (int i = 0; i < 127; i++) {
+                    if (n2 + i < 127
+                        && this.checkWorld(entityPlayerMP.worldObj, parseIntBounded2, n2 + i, parseIntBounded3)
+                        && this.checkWorld2(entityPlayerMP.worldObj, parseIntBounded2, n2 + i + 1, parseIntBounded3)
+                        && this.checkWorld2(entityPlayerMP.worldObj, parseIntBounded2, n2 + i + 2, parseIntBounded3)) {
+                        n3 = n2 + i + 1;
+                        i = 128;
+                    }
+
+                    if (n2 - i > 0
+                        && this.checkWorld(entityPlayerMP.worldObj, parseIntBounded2, n2 - i, parseIntBounded3)
+                        && this.checkWorld2(entityPlayerMP.worldObj, parseIntBounded2, n2 - i + 1, parseIntBounded3)
+                        && this.checkWorld2(entityPlayerMP.worldObj, parseIntBounded2, n2 - i + 2, parseIntBounded3)) {
+                        n3 = n2 - i + 1;
+                        i = 128;
+                    }
+                }
+
+                if (n3 == -1) {
+                    return;
+                }
+
+                n2 = n3;
             }
 
-            if (n2 == 0) {
-               Chunk chunkFromBlockCoords = entityPlayerMP.worldObj.getChunkFromBlockCoords(new BlockPos(parseInt2, 0, parseInt3));
-               n2 = entityPlayerMP.worldObj.getTopSolidOrLiquidBlock(new BlockPos(parseInt2, 0, parseInt3)).getY();
-            }
-         } else {
-            Chunk chunkFromBlockCoords = entityPlayerMP.worldObj.getChunkFromBlockCoords(new BlockPos(parseInt2, 0, parseInt3));
-            int n3 = -1;
+            entityPlayerMP.setPositionAndUpdate(parseIntBounded2 + 0.5F, n2, parseIntBounded3 + 0.5F);
+        }
+    }
 
-            for (int i = 0; i < 127; i++) {
-               if (n2 + i < 127
-                  && this.checkWorld2(entityPlayerMP.worldObj, parseInt2, n2 + i, parseInt3)
-                  && this.checkWorld(entityPlayerMP.worldObj, parseInt2, n2 + i + 1, parseInt3)
-                  && this.checkWorld(entityPlayerMP.worldObj, parseInt2, n2 + i + 2, parseInt3)) {
-                  n3 = n2 + i + 1;
-                  i = 128;
-               }
+    public boolean checkWorld(World world, int n, int n2, int n3) {
+        Block block = world.getBlock(n, n2, n3);
+        return block.getMaterial() == Material.air ? block instanceof BlockFence : block != null && block.getMaterial().isOpaque();
+    }
 
-               if (n2 - i > 0
-                  && this.checkWorld2(entityPlayerMP.worldObj, parseInt2, n2 - i, parseInt3)
-                  && this.checkWorld(entityPlayerMP.worldObj, parseInt2, n2 - i + 1, parseInt3)
-                  && this.checkWorld(entityPlayerMP.worldObj, parseInt2, n2 - i + 2, parseInt3)) {
-                  n3 = n2 - i + 1;
-                  i = 128;
-               }
-            }
+    public ZansTeleportCommand(IWaypointManager waypointManager) {
+        this.waypointManager = waypointManager;
+    }
 
-            if (n3 == -1) {
-               return;
-            }
+    @Override
+    public String getCommandName() {
+        return "ztp";
+    }
 
-            n2 = n3;
-         }
+    @Override
+    public String getCommandUsage(ICommandSender commandSender) {
+        return "/ztp [waypointName]";
+    }
 
-         entityPlayerMP.setPositionAndUpdate(parseInt2 + 0.5F, n2, parseInt3 + 0.5F);
-      }
-   }
+    @Override
+    public List addTabCompletionOptions(ICommandSender commandSender, String[] strs) {
+        return strs.length != 1 && strs.length != 2 ? null : getListOfStringsMatchingLastWord(strs, MinecraftServer.getServer().getAllUsernames());
+    }
 
-   public List findList(ICommandSender commandSender, String[] strs) {
-      return strs.length != 1 && strs.length != 2 ? null : getListOfStringsMatchingLastWord(strs, MinecraftServer.getServer().getAllUsernames());
-   }
-
-   public boolean checkWorld2(World world, int n, int n2, int n3) {
-      Block block = world.getBlockState(new BlockPos(n, n2, n3)).getBlock();
-      return block.getMaterial() == Material.air ? block instanceof BlockFence : block != null && block.getMaterial().isOpaque();
-   }
-
-   @Override
-   public String getCommandUsage(ICommandSender commandSender) {
-      return "/ztp [waypointName]";
-   }
-
-   @Override
-   public String getCommandName() {
-      return "ztp";
-   }
+    public boolean checkWorld2(World world, int n, int n2, int n3) {
+        Block block = world.getBlock(n, n2, n3);
+        return block.getMaterial() == Material.air ? !(block instanceof BlockFence) : block == null;
+    }
 }

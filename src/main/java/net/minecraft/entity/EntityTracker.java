@@ -1,15 +1,13 @@
 package net.minecraft.entity;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.entity.boss.EntityDragon;
 import net.minecraft.entity.boss.EntityWither;
-import net.minecraft.entity.item.EntityArmorStand;
 import net.minecraft.entity.item.EntityBoat;
 import net.minecraft.entity.item.EntityEnderCrystal;
 import net.minecraft.entity.item.EntityEnderEye;
@@ -41,196 +39,184 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class EntityTracker {
-   public static Logger logger = LogManager.getLogger();
-   public Set<EntityTrackerEntry> trackedEntities = Sets.newHashSet();
-   public IntHashMap<EntityTrackerEntry> trackedEntityHashTable = new IntHashMap<>();
-   public WorldServer theWorld;
-   public int maxTrackingDistanceThreshold;
+    public static Logger logger = LogManager.getLogger();
+    public Set trackedEntities = new HashSet();
+    public IntHashMap trackedEntityHashTable = new IntHashMap();
+    public WorldServer theWorld;
+    public int maxTrackingDistanceThreshold;
 
-   public EntityTracker(WorldServer theWorldIn) {
-      this.theWorld = theWorldIn;
-      this.maxTrackingDistanceThreshold = theWorldIn.getMinecraftServer().getConfigurationManager().getEntityViewDistance();
-   }
+    public EntityTracker(WorldServer worldServer) {
+        this.theWorld = worldServer;
+        this.maxTrackingDistanceThreshold = worldServer.getServer().getConfigurationManager().getEntityViewDistance();
+    }
 
-   public void trackEntity(Entity entityIn) {
-      if (entityIn instanceof EntityPlayerMP) {
-         this.trackEntity(entityIn, 512, 2);
-         EntityPlayerMP entityIn2 = (EntityPlayerMP)entityIn;
+    public void trackEntity(Entity entity) {
+        if (entity instanceof EntityPlayerMP) {
+            this.trackEntity(entity, 512, 2);
+            EntityPlayerMP entityPlayerMP = (EntityPlayerMP)entity;
 
-         for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-            if (entityTrackerEntry.trackedEntity != entityIn2) {
-               entityTrackerEntry.updatePlayerEntity(entityIn2);
+            for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+                if (entityTrackerEntry.trackedEntity != entityPlayerMP) {
+                    entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
+                }
             }
-         }
-      } else if (entityIn instanceof EntityFishHook) {
-         this.addEntityToTracker(entityIn, 64, 5, true);
-      } else if (entityIn instanceof EntityArrow) {
-         this.addEntityToTracker(entityIn, 64, 20, false);
-      } else if (entityIn instanceof EntitySmallFireball) {
-         this.addEntityToTracker(entityIn, 64, 10, false);
-      } else if (entityIn instanceof EntityFireball) {
-         this.addEntityToTracker(entityIn, 64, 10, false);
-      } else if (entityIn instanceof EntitySnowball) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityEnderPearl) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityEnderEye) {
-         this.addEntityToTracker(entityIn, 64, 4, true);
-      } else if (entityIn instanceof EntityEgg) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityPotion) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityExpBottle) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityFireworkRocket) {
-         this.addEntityToTracker(entityIn, 64, 10, true);
-      } else if (entityIn instanceof EntityItem) {
-         this.addEntityToTracker(entityIn, 64, 20, true);
-      } else if (entityIn instanceof EntityMinecart) {
-         this.addEntityToTracker(entityIn, 80, 3, true);
-      } else if (entityIn instanceof EntityBoat) {
-         this.addEntityToTracker(entityIn, 80, 3, true);
-      } else if (entityIn instanceof EntitySquid) {
-         this.addEntityToTracker(entityIn, 64, 3, true);
-      } else if (entityIn instanceof EntityWither) {
-         this.addEntityToTracker(entityIn, 80, 3, false);
-      } else if (entityIn instanceof EntityBat) {
-         this.addEntityToTracker(entityIn, 80, 3, false);
-      } else if (entityIn instanceof EntityDragon) {
-         this.addEntityToTracker(entityIn, 160, 3, true);
-      } else if (entityIn instanceof IAnimals) {
-         this.addEntityToTracker(entityIn, 80, 3, true);
-      } else if (entityIn instanceof EntityTNTPrimed) {
-         this.addEntityToTracker(entityIn, 160, 10, true);
-      } else if (entityIn instanceof EntityFallingBlock) {
-         this.addEntityToTracker(entityIn, 160, 20, true);
-      } else if (entityIn instanceof EntityHanging) {
-         this.addEntityToTracker(entityIn, 160, Integer.MAX_VALUE, false);
-      } else if (entityIn instanceof EntityArmorStand) {
-         this.addEntityToTracker(entityIn, 160, 3, true);
-      } else if (entityIn instanceof EntityXPOrb) {
-         this.addEntityToTracker(entityIn, 160, 20, true);
-      } else if (entityIn instanceof EntityEnderCrystal) {
-         this.addEntityToTracker(entityIn, 256, Integer.MAX_VALUE, false);
-      }
-   }
+        } else if (entity instanceof EntityFishHook) {
+            this.addEntityToTracker(entity, 64, 5, true);
+        } else if (entity instanceof EntityArrow) {
+            this.addEntityToTracker(entity, 64, 20, false);
+        } else if (entity instanceof EntitySmallFireball) {
+            this.addEntityToTracker(entity, 64, 10, false);
+        } else if (entity instanceof EntityFireball) {
+            this.addEntityToTracker(entity, 64, 10, false);
+        } else if (entity instanceof EntitySnowball) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityEnderPearl) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityEnderEye) {
+            this.addEntityToTracker(entity, 64, 4, true);
+        } else if (entity instanceof EntityEgg) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityPotion) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityExpBottle) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityFireworkRocket) {
+            this.addEntityToTracker(entity, 64, 10, true);
+        } else if (entity instanceof EntityItem) {
+            this.addEntityToTracker(entity, 64, 20, true);
+        } else if (entity instanceof EntityMinecart) {
+            this.addEntityToTracker(entity, 80, 3, true);
+        } else if (entity instanceof EntityBoat) {
+            this.addEntityToTracker(entity, 80, 3, true);
+        } else if (entity instanceof EntitySquid) {
+            this.addEntityToTracker(entity, 64, 3, true);
+        } else if (entity instanceof EntityWither) {
+            this.addEntityToTracker(entity, 80, 3, false);
+        } else if (entity instanceof EntityBat) {
+            this.addEntityToTracker(entity, 80, 3, false);
+        } else if (entity instanceof IAnimals) {
+            this.addEntityToTracker(entity, 80, 3, true);
+        } else if (entity instanceof EntityDragon) {
+            this.addEntityToTracker(entity, 160, 3, true);
+        } else if (entity instanceof EntityTNTPrimed) {
+            this.addEntityToTracker(entity, 160, 10, true);
+        } else if (entity instanceof EntityFallingBlock) {
+            this.addEntityToTracker(entity, 160, 20, true);
+        } else if (entity instanceof EntityHanging) {
+            this.addEntityToTracker(entity, 160, Integer.MAX_VALUE, false);
+        } else if (entity instanceof EntityXPOrb) {
+            this.addEntityToTracker(entity, 160, 20, true);
+        } else if (entity instanceof EntityEnderCrystal) {
+            this.addEntityToTracker(entity, 256, Integer.MAX_VALUE, false);
+        }
+    }
 
-   public void trackEntity(Entity entityIn, int trackingRange, int updateFrequency) {
-      this.addEntityToTracker(entityIn, trackingRange, updateFrequency, false);
-   }
+    public void trackEntity(Entity entity, int n, int n2) {
+        this.addEntityToTracker(entity, n, n2, false);
+    }
 
-   public void addEntityToTracker(Entity entityIn, int trackingRange, final int updateFrequency, boolean sendVelocityUpdates) {
-      if (trackingRange > this.maxTrackingDistanceThreshold) {
-         trackingRange = this.maxTrackingDistanceThreshold;
-      }
+    public void addEntityToTracker(Entity entity, int n, final int n2, boolean flag) {
+        if (n > this.maxTrackingDistanceThreshold) {
+            n = this.maxTrackingDistanceThreshold;
+        }
 
-      try {
-         if (this.trackedEntityHashTable.containsItem(entityIn.getEntityId())) {
-            throw new IllegalStateException("Entity is already tracked!");
-         }
-
-         EntityTrackerEntry entityTrackerEntry = new EntityTrackerEntry(entityIn, trackingRange, updateFrequency, sendVelocityUpdates);
-         this.trackedEntities.add(entityTrackerEntry);
-         this.trackedEntityHashTable.addKey(entityIn.getEntityId(), entityTrackerEntry);
-         entityTrackerEntry.updatePlayerEntities(this.theWorld.playerEntities);
-      } catch (Throwable e) {
-         CrashReport makeCrashReport = CrashReport.makeCrashReport(e, "Adding entity to track");
-         CrashReportCategory makeCategory = makeCrashReport.makeCategory("Entity To Track");
-         makeCategory.addCrashSection("Tracking range", trackingRange + " blocks");
-         makeCategory.addCrashSectionCallable("Update interval", new Callable<String>() {
-            public String call() throws Exception {
-               String str = "Once per " + updateFrequency + " ticks";
-               if (updateFrequency == Integer.MAX_VALUE) {
-                  str = "Maximum (" + str + ")";
-               }
-
-               return str;
+        try {
+            if (this.trackedEntityHashTable.containsItem(entity.getEntityId())) {
+                throw new IllegalStateException("Entity is already tracked!");
             }
-         });
-         entityIn.addEntityCrashInfo(makeCategory);
-         CrashReportCategory makeCategory2 = makeCrashReport.makeCategory("Entity That Is Already Tracked");
-         this.trackedEntityHashTable.lookup(entityIn.getEntityId()).trackedEntity.addEntityCrashInfo(makeCategory2);
 
-         try {
-            throw new ReportedException(makeCrashReport);
-         } catch (ReportedException e2) {
-            logger.error("\"Silently\" catching entity tracking error.", e2);
-         }
-      }
-   }
-
-   public void untrackEntity(Entity entityIn) {
-      if (entityIn instanceof EntityPlayerMP) {
-         EntityPlayerMP entityIn2 = (EntityPlayerMP)entityIn;
-
-         for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-            entityTrackerEntry.removeFromTrackedPlayers(entityIn2);
-         }
-      }
-
-      EntityTrackerEntry removeObject = this.trackedEntityHashTable.removeObject(entityIn.getEntityId());
-      if (removeObject != null) {
-         this.trackedEntities.remove(removeObject);
-         removeObject.sendDestroyEntityPacketToTrackedPlayers();
-      }
-   }
-
-   public void updateTrackedEntities() {
-      ArrayList newArrayList = Lists.newArrayList();
-
-      for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-         entityTrackerEntry.updatePlayerList(this.theWorld.playerEntities);
-         if (entityTrackerEntry.playerEntitiesUpdated && entityTrackerEntry.trackedEntity instanceof EntityPlayerMP) {
-            newArrayList.add((EntityPlayerMP)entityTrackerEntry.trackedEntity);
-         }
-      }
-
-      for (int i = 0; i < newArrayList.size(); i++) {
-         EntityPlayerMP entityPlayerMP = (EntityPlayerMP)newArrayList.get(i);
-
-         for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-            if (entityTrackerEntry.trackedEntity != entityPlayerMP) {
-               entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
-            }
-         }
-      }
-   }
-
-   public void handleEntityPlayerMP(EntityPlayerMP entityPlayerMP) {
-      for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-         if (entityTrackerEntry.trackedEntity == entityPlayerMP) {
+            EntityTrackerEntry entityTrackerEntry = new EntityTrackerEntry(entity, n, n2, flag);
+            this.trackedEntities.add(entityTrackerEntry);
+            this.trackedEntityHashTable.addKey(entity.getEntityId(), entityTrackerEntry);
             entityTrackerEntry.updatePlayerEntities(this.theWorld.playerEntities);
-         } else {
-            entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
-         }
-      }
-   }
+        } catch (Throwable e) {
+            CrashReport makeCrashReport = CrashReport.makeCrashReport(e, "Adding entity to track");
+            CrashReportCategory makeCategory = makeCrashReport.makeCategory("Entity To Track");
+            makeCategory.addCrashSection("Tracking range", n + " blocks");
+            makeCategory.addCrashSectionCallable("Update interval", new Callable() {
+                public String call() {
+                    String str = "Once per " + n2 + " ticks";
+                    if (n2 == Integer.MAX_VALUE) {
+                        str = "Maximum (" + str + ")";
+                    }
 
-   public void sendToAllTrackingEntity(Entity entityIn, Packet packet) {
-      EntityTrackerEntry lookup = this.trackedEntityHashTable.lookup(entityIn.getEntityId());
-      if (lookup != null) {
-         lookup.sendPacketToTrackedPlayers(packet);
-      }
-   }
+                    return str;
+                }
+            });
+            entity.addEntityCrashInfo(makeCategory);
+            CrashReportCategory makeCategory2 = makeCrashReport.makeCategory("Entity That Is Already Tracked");
+            ((EntityTrackerEntry)this.trackedEntityHashTable.lookup(entity.getEntityId())).trackedEntity.addEntityCrashInfo(makeCategory2);
 
-   public void sendToAllTrackingEntities(Entity entityIn, Packet packet) {
-      EntityTrackerEntry lookup = this.trackedEntityHashTable.lookup(entityIn.getEntityId());
-      if (lookup != null) {
-         lookup.handlePacket(packet);
-      }
-   }
+            try {
+                throw new ReportedException(makeCrashReport);
+            } catch (ReportedException e2) {
+                logger.error("\"Silently\" catching entity tracking error.", e2);
+            }
+        }
+    }
 
-   public void removePlayerFromTrackers(EntityPlayerMP entityPlayerMP) {
-      for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-         entityTrackerEntry.removeTrackedPlayerSymmetric(entityPlayerMP);
-      }
-   }
+    public void untrackEntity(Entity entity) {
+        if (entity instanceof EntityPlayerMP) {
+            EntityPlayerMP entityPlayerMP = (EntityPlayerMP)entity;
 
-   public void handleEntityPlayerMP(EntityPlayerMP entityPlayerMP, Chunk chunk) {
-      for (EntityTrackerEntry entityTrackerEntry : this.trackedEntities) {
-         if (entityTrackerEntry.trackedEntity != entityPlayerMP && entityTrackerEntry.trackedEntity.chunkCoordX == chunk.xPosition && entityTrackerEntry.trackedEntity.chunkCoordZ == chunk.zPosition) {
-            entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
-         }
-      }
-   }
+            for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+                entityTrackerEntry.removeFromTrackedPlayers(entityPlayerMP);
+            }
+        }
+
+        EntityTrackerEntry removeObject = (EntityTrackerEntry)this.trackedEntityHashTable.removeObject(entity.getEntityId());
+        if (removeObject != null) {
+            this.trackedEntities.remove(removeObject);
+            removeObject.sendDestroyEntityPacketToTrackedPlayers();
+        }
+    }
+
+    public void updateTrackedEntities() {
+        ArrayList list = new ArrayList();
+
+        for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+            entityTrackerEntry.updatePlayerList(this.theWorld.playerEntities);
+            if (entityTrackerEntry.playerEntitiesUpdated && entityTrackerEntry.trackedEntity instanceof EntityPlayerMP) {
+                list.add(entityTrackerEntry.trackedEntity);
+            }
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            EntityPlayerMP entityPlayerMP = (EntityPlayerMP)list.get(i);
+
+            for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+                if (entityTrackerEntry.trackedEntity != entityPlayerMP) {
+                    entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
+                }
+            }
+        }
+    }
+
+    public void sendToAllTrackingEntity(Entity entity, Packet packet) {
+        EntityTrackerEntry lookup = (EntityTrackerEntry)this.trackedEntityHashTable.lookup(entity.getEntityId());
+        if (lookup != null) {
+            lookup.handlePacket(packet);
+        }
+    }
+
+    public void sendToAllTrackingEntities(Entity entity, Packet packet) {
+        EntityTrackerEntry lookup = (EntityTrackerEntry)this.trackedEntityHashTable.lookup(entity.getEntityId());
+        if (lookup != null) {
+            lookup.handlePacket2(packet);
+        }
+    }
+
+    public void removePlayerFromTrackers(EntityPlayerMP entityPlayerMP) {
+        for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+            entityTrackerEntry.removeTrackedPlayerSymmetric(entityPlayerMP);
+        }
+    }
+
+    public void handleEntityPlayerMP(EntityPlayerMP entityPlayerMP, Chunk chunk) {
+        for (EntityTrackerEntry entityTrackerEntry : (Iterable<EntityTrackerEntry>)this.trackedEntities) {
+            if (entityTrackerEntry.trackedEntity != entityPlayerMP && entityTrackerEntry.trackedEntity.chunkCoordX == chunk.xPosition && entityTrackerEntry.trackedEntity.chunkCoordZ == chunk.zPosition) {
+                entityTrackerEntry.updatePlayerEntity(entityPlayerMP);
+            }
+        }
+    }
 }

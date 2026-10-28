@@ -5,48 +5,47 @@ import net.minecraft.entity.EntityHanging;
 import net.minecraft.entity.item.EntityItemFrame;
 import net.minecraft.entity.item.EntityPainting;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
 import net.minecraft.world.World;
 
 public class ItemHangingEntity extends Item {
-   public Class<? extends EntityHanging> hangingEntityClass;
+    public Class hangingEntityClass;
 
-   public ItemHangingEntity(Class<? extends EntityHanging> entityClass) {
-      this.hangingEntityClass = entityClass;
-      this.setCreativeTab(CreativeTabs.tabDecorations);
-   }
+    public ItemHangingEntity(Class clazz) {
+        this.hangingEntityClass = clazz;
+        this.setCreativeTab(CreativeTabs.tabDecorations);
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (side == EnumFacing.DOWN) {
-         return false;
-      }
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (n4 == 0) {
+            return false;
+        }
 
-      if (side == EnumFacing.UP) {
-         return false;
-      }
+        if (n4 == 1) {
+            return false;
+        }
 
-      BlockPos offset = pos.offset(side);
-      if (!playerIn.canPlayerEdit(offset, side, stack)) {
-         return false;
-      }
+        int n5 = Direction.facingToDirection[n4];
+        EntityHanging createHangingEntity = this.createHangingEntity(world, n, n2, n3, n5);
+        if (!entityPlayer.canPlayerEdit(n, n2, n3, n4, itemStack)) {
+            return false;
+        }
 
-      EntityHanging createEntity = this.createEntity(worldIn, offset, side);
-      if (createEntity != null && createEntity.onValidSurface()) {
-         if (!worldIn.isRemote) {
-            worldIn.spawnEntityInWorld(createEntity);
-         }
+        if (createHangingEntity != null && createHangingEntity.onValidSurface()) {
+            if (!world.isRemote) {
+                world.spawnEntityInWorld(createHangingEntity);
+            }
 
-         stack.stackSize--;
-      }
+            itemStack.stackSize--;
+        }
 
-      return true;
-   }
+        return true;
+    }
 
-   public EntityHanging createEntity(World worldIn, BlockPos pos, EnumFacing clickedSide) {
-      return this.hangingEntityClass == EntityPainting.class
-         ? new EntityPainting(worldIn, pos, clickedSide)
-         : (this.hangingEntityClass == EntityItemFrame.class ? new EntityItemFrame(worldIn, pos, clickedSide) : null);
-   }
+    public EntityHanging createHangingEntity(World world, int n, int n2, int n3, int n4) {
+        return this.hangingEntityClass == EntityPainting.class
+            ? new EntityPainting(world, n, n2, n3, n4)
+            : (this.hangingEntityClass == EntityItemFrame.class ? new EntityItemFrame(world, n, n2, n3, n4) : null);
+    }
 }

@@ -1,79 +1,64 @@
 package net.minecraft.block;
 
+import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyEnum;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
-import net.minecraft.util.IStringSerializable;
+import net.minecraft.item.Item;
+import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 
 public abstract class BlockLog extends BlockRotatedPillar {
-   public static PropertyEnum<BlockLog.EnumAxis> LOG_AXIS = PropertyEnum.create("axis", BlockLog.EnumAxis.class);
+    public IIcon[] iIconArray;
+    public IIcon[] iIconArray2;
 
-   public BlockLog() {
-      super(Material.wood);
-      this.setCreativeTab(CreativeTabs.tabBlock);
-      this.setHardness(2.0F);
-      this.setStepSound(soundTypeWood);
-   }
+    public BlockLog() {
+        super(Material.wood);
+        this.setCreativeTab(CreativeTabs.tabBlock);
+        this.setHardness(2.0F);
+        this.setStepSound(soundTypeWood);
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      byte b = 4;
-      int n = b + 1;
-      if (worldIn.isAreaLoaded(pos.add(-n, -n, -n), pos.add(n, n, n))) {
-         for (BlockPos blockPos : BlockPos.getAllInBox(pos.add(-b, -b, -b), pos.add(b, b, b))) {
-            IBlockState blockState = worldIn.getBlockState(blockPos);
-            if (blockState.getBlock().getMaterial() == Material.leaves && !blockState.getValue(BlockLeaves.CHECK_DECAY)) {
-               worldIn.setBlockState(blockPos, blockState.withProperty(BlockLeaves.CHECK_DECAY, true), 4);
+    public static int computeInt4(int n) {
+        return n & 3;
+    }
+
+    @Override
+    public int quantityDropped(Random random) {
+        return 1;
+    }
+
+    @Override
+    public Item getItemDropped(int meta, Random random, int fortune) {
+        return Item.getItemFromBlock(this);
+    }
+
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        byte b = 4;
+        int n = b + 1;
+        if (worldIn.checkChunksExist(x - n, y - n, z - n, x + n, y + n, z + n)) {
+            for (int i = -b; i <= b; i++) {
+                for (int j = -b; j <= b; j++) {
+                    for (int k = -b; k <= b; k++) {
+                        if (worldIn.getBlock(x + i, y + j, z + k).getMaterial() == Material.leaves) {
+                            int blockMetadata = worldIn.getBlockMetadata(x + i, y + j, z + k);
+                            if ((blockMetadata & 8) == 0) {
+                                worldIn.setBlockMetadataWithNotify(x + i, y + j, z + k, blockMetadata | 8, 4);
+                            }
+                        }
+                    }
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      return super.onBlockPlaced(worldIn, pos, facing, hitX, hitY, hitZ, meta, placer)
-         .withProperty(LOG_AXIS, BlockLog.EnumAxis.fromFacingAxis(facing.getAxis()));
-   }
+    @Override
+    public IIcon getSideIcon(int n) {
+        return this.iIconArray[n % this.iIconArray.length];
+    }
 
-   public enum EnumAxis implements IStringSerializable {
-      X("x"),
-      Y("y"),
-      Z("z"),
-      NONE("none");
-
-      public String name;
-
-      EnumAxis(String name) {
-         this.name = name;
-      }
-
-      @Override
-      public String toString() {
-         return this.name;
-      }
-
-      public static BlockLog.EnumAxis fromFacingAxis(Axis axis) {
-         switch (axis) {
-            case X:
-               return X;
-            case Y:
-               return Y;
-            case Z:
-               return Z;
-            default:
-               return NONE;
-         }
-      }
-
-      @Override
-      public String getName() {
-         return this.name;
-      }
-   }
+    @Override
+    public IIcon getTopIcon(int n) {
+        return this.iIconArray2[n % this.iIconArray2.length];
+    }
 }

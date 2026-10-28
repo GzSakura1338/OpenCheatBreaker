@@ -1,79 +1,90 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
-import net.minecraft.util.MathHelper;
 import org.apache.commons.lang3.Validate;
 
-public class S29PacketSoundEffect implements Packet<INetHandlerPlayClient> {
-   public int posY = Integer.MAX_VALUE;
-   public String soundName;
-   public int posX;
-   public int posZ;
-   public float soundVolume;
-   public int soundPitch;
+public class S29PacketSoundEffect extends Packet {
+    public int fixedY = Integer.MAX_VALUE;
+    public String name;
+    public int fixedX;
+    public int fixedZ;
+    public float volume;
+    public int pitch;
 
-   public S29PacketSoundEffect() {
-   }
+    public S29PacketSoundEffect() {
+    }
 
-   public S29PacketSoundEffect(String soundNameIn, double soundX, double soundY, double soundZ, float volume, float pitch) {
-      Validate.notNull(soundNameIn, "name", new Object[0]);
-      this.soundName = soundNameIn;
-      this.posX = (int)(soundX * 8.0);
-      this.posY = (int)(soundY * 8.0);
-      this.posZ = (int)(soundZ * 8.0);
-      this.soundVolume = volume;
-      this.soundPitch = (int)(pitch * 63.0F);
-      pitch = MathHelper.clamp_float(pitch, 0.0F, 255.0F);
-   }
+    public S29PacketSoundEffect(String str, double d, double d2, double d3, float f, float f2) {
+        Validate.notNull(str, "name", new Object[0]);
+        this.name = str;
+        this.fixedX = (int)(d * 8.0);
+        this.fixedY = (int)(d2 * 8.0);
+        this.fixedZ = (int)(d3 * 8.0);
+        this.volume = f;
+        this.pitch = (int)(f2 * 63.0F);
+        if (this.pitch < 0) {
+            this.pitch = 0;
+        }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.soundName = buf.readStringFromBuffer(256);
-      this.posX = buf.readInt();
-      this.posY = buf.readInt();
-      this.posZ = buf.readInt();
-      this.soundVolume = buf.readFloat();
-      this.soundPitch = buf.readUnsignedByte();
-   }
+        if (this.pitch > 255) {
+            this.pitch = 255;
+        }
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeString(this.soundName);
-      buf.writeInt(this.posX);
-      buf.writeInt(this.posY);
-      buf.writeInt(this.posZ);
-      buf.writeFloat(this.soundVolume);
-      buf.writeByte(this.soundPitch);
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.name = data.readStringFromBuffer(256);
+        this.fixedX = data.readInt();
+        this.fixedY = data.readInt();
+        this.fixedZ = data.readInt();
+        this.volume = data.readFloat();
+        this.pitch = data.readUnsignedByte();
+    }
 
-   public String getSoundName() {
-      return this.soundName;
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeStringToBuffer(this.name);
+        data.writeInt(this.fixedX);
+        data.writeInt(this.fixedY);
+        data.writeInt(this.fixedZ);
+        data.writeFloat(this.volume);
+        data.writeByte(this.pitch);
+    }
 
-   public double getX() {
-      return this.posX / 8.0F;
-   }
+    public String getSound() {
+        return this.name;
+    }
 
-   public double getY() {
-      return this.posY / 8.0F;
-   }
+    public double getX() {
+        return this.fixedX / 8.0F;
+    }
 
-   public double getZ() {
-      return this.posZ / 8.0F;
-   }
+    public double getY() {
+        return this.fixedY / 8.0F;
+    }
 
-   public float getVolume() {
-      return this.soundVolume;
-   }
+    public double getZ() {
+        return this.fixedZ / 8.0F;
+    }
 
-   public float getPitch() {
-      return this.soundPitch / 63.0F;
-   }
+    public float getVolume() {
+        return this.volume;
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleSoundEffect(this);
-   }
+    public float getPitch() {
+        return this.pitch / 63.0F;
+    }
+
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleSoundEffect(this);
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

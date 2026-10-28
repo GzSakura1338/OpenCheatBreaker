@@ -1,56 +1,52 @@
 package net.minecraft.item;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.stats.StatList;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.MovingObjectPosition.MovingObjectType;
 import net.minecraft.world.World;
 
 public class ItemLilyPad extends ItemColored {
-   public ItemLilyPad(Block block) {
-      super(block, false);
-   }
+    public ItemLilyPad(Block block) {
+        super(block, false);
+    }
 
-   @Override
-   public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
-      MovingObjectPosition movingObjectPositionFromPlayer = this.getMovingObjectPositionFromPlayer(worldIn, playerIn, true);
-      if (movingObjectPositionFromPlayer == null) {
-         return itemStackIn;
-      }
-
-      if (movingObjectPositionFromPlayer.typeOfHit == MovingObjectType.BLOCK) {
-         BlockPos blockPos = movingObjectPositionFromPlayer.getBlockPos();
-         if (!worldIn.isBlockModifiable(playerIn, blockPos)) {
+    @Override
+    public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer player) {
+        MovingObjectPosition movingObjectPositionFromPlayer = this.getMovingObjectPositionFromPlayer(worldIn, player, true);
+        if (movingObjectPositionFromPlayer == null) {
             return itemStackIn;
-         }
+        }
 
-         if (!playerIn.canPlayerEdit(blockPos.offset(movingObjectPositionFromPlayer.sideHit), movingObjectPositionFromPlayer.sideHit, itemStackIn)) {
-            return itemStackIn;
-         }
-
-         BlockPos up = blockPos.up();
-         IBlockState blockState = worldIn.getBlockState(blockPos);
-         if (blockState.getBlock().getMaterial() == Material.water && blockState.getValue(BlockLiquid.LEVEL) == 0 && worldIn.isAirBlock(up)) {
-            worldIn.setBlockState(up, Blocks.waterlily.getDefaultState());
-            if (!playerIn.capabilities.isCreativeMode) {
-               itemStackIn.stackSize--;
+        if (movingObjectPositionFromPlayer.typeOfHit == MovingObjectType.BLOCK) {
+            int blockX = movingObjectPositionFromPlayer.blockX;
+            int blockY = movingObjectPositionFromPlayer.blockY;
+            int blockZ = movingObjectPositionFromPlayer.blockZ;
+            if (!worldIn.canMineBlock(player, blockX, blockY, blockZ)) {
+                return itemStackIn;
             }
 
-            playerIn.triggerAchievement(StatList.objectUseStats[Item.getIdFromItem(this)]);
-         }
-      }
+            if (!player.canPlayerEdit(blockX, blockY, blockZ, movingObjectPositionFromPlayer.sideHit, itemStackIn)) {
+                return itemStackIn;
+            }
 
-      return itemStackIn;
-   }
+            if (worldIn.getBlock(blockX, blockY, blockZ).getMaterial() == Material.water
+                && worldIn.getBlockMetadata(blockX, blockY, blockZ) == 0
+                && worldIn.isAirBlock(blockX, blockY + 1, blockZ)) {
+                worldIn.setBlock(blockX, blockY + 1, blockZ, Blocks.waterlily);
+                if (!player.capabilities.isCreativeMode) {
+                    itemStackIn.stackSize--;
+                }
+            }
+        }
 
-   @Override
-   public int getColorFromItemStack(ItemStack stack, int renderPass) {
-      return Blocks.waterlily.getRenderColor(Blocks.waterlily.getStateFromMeta(stack.getMetadata()));
-   }
+        return itemStackIn;
+    }
+
+    @Override
+    public int getColorFromItemStack(ItemStack itemStack, int n) {
+        return Blocks.waterlily.getRenderColor(itemStack.getMetadata());
+    }
 }

@@ -3,17 +3,17 @@ package com.cheatbreaker.client.event;
 import net.minecraft.client.multiplayer.ServerData;
 
 public class ServerDataEvent2 extends SimpleEvent45 {
-   public ServerData serverData;
+    public ServerData serverData;
 
-   public ServerDataEvent2(ServerData serverData) {
-      this.serverData = serverData;
-   }
+    public void setServerData(ServerData serverData) {
+        this.serverData = serverData;
+    }
 
-   public ServerData getServerData() {
-      return this.serverData;
-   }
+    public ServerData getServerData() {
+        return this.serverData;
+    }
 
-   public void setServerData(ServerData serverData) {
-      this.serverData = serverData;
-   }
+    public ServerDataEvent2(ServerData serverData) {
+        this.serverData = serverData;
+    }
 }

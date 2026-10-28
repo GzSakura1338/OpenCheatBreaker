@@ -1,20 +1,20 @@
 package net.minecraft.client.audio;
 
-public class SoundEventAccessor implements ISoundEventAccessor<SoundPoolEntry> {
-   public SoundPoolEntry entry;
-   public int weight;
+public class SoundEventAccessor implements ISoundEventAccessor {
+    public SoundPoolEntry sound;
+    public int weight;
 
-   public SoundEventAccessor(SoundPoolEntry entry, int weight) {
-      this.entry = entry;
-      this.weight = weight;
-   }
+    public SoundEventAccessor(SoundPoolEntry soundPoolEntry, int n) {
+        this.sound = soundPoolEntry;
+        this.weight = n;
+    }
 
-   @Override
-   public int getWeight() {
-      return this.weight;
-   }
+    @Override
+    public int getWeight() {
+        return this.weight;
+    }
 
-   public SoundPoolEntry cloneEntry() {
-      return new SoundPoolEntry(this.entry);
-   }
+    public SoundPoolEntry getSound() {
+        return new SoundPoolEntry(this.sound);
+    }
 }

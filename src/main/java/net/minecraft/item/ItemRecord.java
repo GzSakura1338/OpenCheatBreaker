@@ -1,63 +1,63 @@
 package net.minecraft.item;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.block.BlockJukebox;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.stats.StatList;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 
 public class ItemRecord extends Item {
-   public static Map<String, ItemRecord> RECORDS = Maps.newHashMap();
-   public String recordName;
+    public static Map records = new HashMap();
+    public String recordName;
 
-   public ItemRecord(String name) {
-      this.recordName = name;
-      this.maxStackSize = 1;
-      this.setCreativeTab(CreativeTabs.tabMisc);
-      RECORDS.put("records." + name, this);
-   }
+    public ItemRecord(String str) {
+        this.recordName = str;
+        this.maxStackSize = 1;
+        this.setCreativeTab(CreativeTabs.tabMisc);
+        records.put(str, this);
+    }
 
-   @Override
-   public boolean onItemUse(ItemStack stack, EntityPlayer playerIn, World worldIn, BlockPos pos, EnumFacing side, float hitX, float hitY, float hitZ) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      if (blockState.getBlock() != Blocks.jukebox || blockState.getValue(BlockJukebox.HAS_RECORD)) {
-         return false;
-      }
+    @Override
+    public IIcon getIconFromDamage(int n) {
+        return this.itemIcon;
+    }
 
-      if (worldIn.isRemote) {
-         return true;
-      }
+    @Override
+    public boolean onItemUse(ItemStack itemStack, EntityPlayer entityPlayer, World world, int n, int n2, int n3, int n4, float f, float f2, float f3) {
+        if (world.getBlock(n, n2, n3) != Blocks.jukebox || world.getBlockMetadata(n, n2, n3) != 0) {
+            return false;
+        }
 
-      ((BlockJukebox)Blocks.jukebox).insertRecord(worldIn, pos, blockState, stack);
-      worldIn.playAuxSFXAtEntity((EntityPlayer)null, 1005, pos, Item.getIdFromItem(this));
-      stack.stackSize--;
-      playerIn.triggerAchievement(StatList.RECORD_PLAYED);
-      return true;
-   }
+        if (world.isRemote) {
+            return true;
+        }
 
-   @Override
-   public void addInformation(ItemStack stack, EntityPlayer playerIn, List<String> tooltip, boolean advanced) {
-      tooltip.add(this.getRecordNameLocal());
-   }
+        ((BlockJukebox)Blocks.jukebox).handleWorld(world, n, n2, n3, itemStack);
+        world.playAuxSFXAtEntity(null, 1005, n, n2, n3, Item.getIdFromItem(this));
+        itemStack.stackSize--;
+        return true;
+    }
 
-   public String getRecordNameLocal() {
-      return StatCollector.translateToLocal("item.record." + this.recordName + ".desc");
-   }
+    @Override
+    public void addInformation(ItemStack itemStack, EntityPlayer entityPlayer, List list, boolean flag) {
+        list.add(this.getRecordNameLocal());
+    }
 
-   @Override
-   public EnumRarity getRarity(ItemStack stack) {
-      return EnumRarity.RARE;
-   }
+    public String getRecordNameLocal() {
+        return StatCollector.translateToLocal("item.record." + this.recordName + ".desc");
+    }
 
-   public static ItemRecord getRecord(String name) {
-      return RECORDS.get(name);
-   }
+    @Override
+    public EnumRarity getRarity(ItemStack itemStack) {
+        return EnumRarity.rare;
+    }
+
+    public static ItemRecord getRecord(String str) {
+        return (ItemRecord)records.get(str);
+    }
 }

@@ -1,44 +1,44 @@
 package net.minecraft.util;
 
 public class FrameTimer {
-   public long[] frames = new long[240];
-   public int lastIndex;
-   public int counter;
-   public int index;
+    public int counter;
+    public int index;
+    public int lastIndex;
+    public long[] frames = new long[240];
 
-   public void addFrame(long runningTime) {
-      this.frames[this.index] = runningTime;
-      this.index++;
-      if (this.index == 240) {
-         this.index = 0;
-      }
+    public int getIndex() {
+        return this.index;
+    }
 
-      if (this.counter < 240) {
-         this.lastIndex = 0;
-         this.counter++;
-      } else {
-         this.lastIndex = this.parseIndex(this.index + 1);
-      }
-   }
+    public int getLagometerValue(long l, int n) {
+        double d = l / 1.6666666E7;
+        return (int)(d * n);
+    }
 
-   public int getLagometerValue(long time, int multiplier) {
-      double d = time / 1.6666666E7;
-      return (int)(d * multiplier);
-   }
+    public int parseIndex(int n) {
+        return n % 240;
+    }
 
-   public int getLastIndex() {
-      return this.lastIndex;
-   }
+    public int getLastIndex() {
+        return this.lastIndex;
+    }
 
-   public int getIndex() {
-      return this.index;
-   }
+    public long[] getFrames() {
+        return this.frames;
+    }
 
-   public int parseIndex(int rawIndex) {
-      return rawIndex % 240;
-   }
+    public void addFrame(long l) {
+        this.frames[this.index] = l;
+        this.index++;
+        if (this.index == 240) {
+            this.index = 0;
+        }
 
-   public long[] getFrames() {
-      return this.frames;
-   }
+        if (this.counter < 240) {
+            this.lastIndex = 0;
+            this.counter++;
+        } else {
+            this.lastIndex = this.parseIndex(this.index + 1);
+        }
+    }
 }

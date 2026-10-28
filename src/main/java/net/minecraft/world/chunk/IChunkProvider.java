@@ -2,37 +2,34 @@ package net.minecraft.world.chunk;
 
 import java.util.List;
 import net.minecraft.entity.EnumCreatureType;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.IProgressUpdate;
+import net.minecraft.world.ChunkPosition;
 import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeGenBase.SpawnListEntry;
 
 public interface IChunkProvider {
-   boolean chunkExists(int n, int n2);
+    boolean chunkExists(int n, int n2);
 
-   Chunk provideChunk(int n, int n2);
+    Chunk provideChunk(int n, int n2);
 
-   Chunk provideChunk(BlockPos blockPos);
+    Chunk loadChunk(int n, int n2);
 
-   void populate(IChunkProvider chunkProvider, int n, int n2);
+    void populate(IChunkProvider chunkProvider, int n, int n2);
 
-   boolean populateChunk(IChunkProvider chunkProvider, Chunk chunk, int n, int n2);
+    boolean saveChunks(boolean flag, IProgressUpdate progressUpdate);
 
-   boolean saveChunks(boolean flag, IProgressUpdate progressUpdate);
+    boolean unloadQueuedChunks();
 
-   boolean unloadQueuedChunks();
+    boolean canSave();
 
-   boolean canSave();
+    String makeString();
 
-   String makeString();
+    List getPossibleCreatures(EnumCreatureType enumCreatureType, int n, int n2, int n3);
 
-   List<SpawnListEntry> getPossibleCreatures(EnumCreatureType enumCreatureType, BlockPos blockPos);
+    ChunkPosition findClosestStructure(World world, String str, int n, int n2, int n3);
 
-   BlockPos getStrongholdGen(World world, String str, BlockPos blockPos);
+    int getLoadedChunkCount();
 
-   int getLoadedChunkCount();
+    void recreateStructures(int n, int n2);
 
-   void recreateStructures(Chunk chunk, int n, int n2);
-
-   void saveExtraData();
+    void saveExtraData();
 }

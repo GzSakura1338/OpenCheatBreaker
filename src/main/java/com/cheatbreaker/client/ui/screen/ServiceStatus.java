@@ -1,28 +1,28 @@
 package com.cheatbreaker.client.ui.screen;
 
 public class ServiceStatus {
-   public StatusLevel statusLevel = StatusLevel.UNKNOWN;
-   public String text;
-   public String text2;
+    public StatusLevel statusLevel = StatusLevel.UNKNOWN;
+    public String name;
+    public String text;
 
-   public String getText2() {
-      return this.text2;
-   }
+    public ServiceStatus(String str, String str2) {
+        this.name = str;
+        this.text = str2;
+    }
 
-   public String getText() {
-      return this.text;
-   }
+    public void setStatusLevel(StatusLevel statusLevel) {
+        this.statusLevel = statusLevel;
+    }
 
-   public void setStatusLevel(StatusLevel statusLevel) {
-      this.statusLevel = statusLevel;
-   }
+    public String getText() {
+        return this.text;
+    }
 
-   public ServiceStatus(String str, String str2) {
-      this.text = str;
-      this.text2 = str2;
-   }
+    public String getName() {
+        return this.name;
+    }
 
-   public StatusLevel getStatusLevel() {
-      return this.statusLevel;
-   }
+    public StatusLevel getStatusLevel() {
+        return this.statusLevel;
+    }
 }

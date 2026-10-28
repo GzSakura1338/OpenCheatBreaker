@@ -13,25 +13,25 @@ import com.cheatbreaker.client.network.packet.StringTriplePacket;
 import com.cheatbreaker.client.network.packet.ToggleEntryPacket;
 
 public interface PacketHandler {
-   void handleFriendStatus(FriendStatusPacket friendStatusPacket);
+    void handleStringTriple(StringTriplePacket stringTriplePacket);
 
-   void handlePlayEmoteRequest(PlayEmoteRequestPacket playEmoteRequestPacket);
+    void handleRecentCosmetics(RecentCosmeticsPacket recentCosmeticsPacket);
 
-   void handleStringTriple(StringTriplePacket stringTriplePacket);
+    void handleFriendServer(FriendServerPacket friendServerPacket);
 
-   void handleRecentCosmetics(RecentCosmeticsPacket recentCosmeticsPacket);
+    void handleFriendRequestReceived(FriendRequestReceivedPacket friendRequestReceivedPacket);
 
-   void handleToggleEntry(ToggleEntryPacket toggleEntryPacket);
+    void handleFriendStatus(FriendStatusPacket friendStatusPacket);
 
-   void handleFriendServer(FriendServerPacket friendServerPacket);
+    void handleMessage(MessagePacket messagePacket);
 
-   void handleFriendMessage(FriendMessagePacket friendMessagePacket);
+    void handlePlayEmoteRequest(PlayEmoteRequestPacket playEmoteRequestPacket);
 
-   void handleFriendRequestReceived(FriendRequestReceivedPacket friendRequestReceivedPacket);
+    void handleFriendRemoved(FriendRemovedPacket friendRemovedPacket);
 
-   void handleFriendRequestResponse(FriendRequestResponsePacket friendRequestResponsePacket);
+    void handleFriendMessage(FriendMessagePacket friendMessagePacket);
 
-   void handleFriendRemoved(FriendRemovedPacket friendRemovedPacket);
+    void handleFriendRequestResponse(FriendRequestResponsePacket friendRequestResponsePacket);
 
-   void handleMessage(MessagePacket messagePacket);
+    void handleToggleEntry(ToggleEntryPacket toggleEntryPacket);
 }

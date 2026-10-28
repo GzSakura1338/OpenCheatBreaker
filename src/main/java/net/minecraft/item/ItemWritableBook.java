@@ -3,43 +3,46 @@ package net.minecraft.item;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import net.minecraft.stats.StatList;
 import net.minecraft.world.World;
 
 public class ItemWritableBook extends Item {
-   public ItemWritableBook() {
-      this.setMaxStackSize(1);
-   }
+    public ItemWritableBook() {
+        this.setMaxStackSize(1);
+    }
 
-   @Override
-   public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer playerIn) {
-      playerIn.displayGUIBook(itemStackIn);
-      playerIn.triggerAchievement(StatList.objectUseStats[Item.getIdFromItem(this)]);
-      return itemStackIn;
-   }
+    @Override
+    public ItemStack onItemRightClick(ItemStack itemStackIn, World worldIn, EntityPlayer player) throws java.io.IOException {
+        player.displayGUIBook(itemStackIn);
+        return itemStackIn;
+    }
 
-   public static boolean isNBTValid(NBTTagCompound nbt) {
-      if (nbt == null) {
-         return false;
-      }
+    @Override
+    public boolean getShareTag() {
+        return true;
+    }
 
-      if (!nbt.hasKey("pages", 9)) {
-         return false;
-      }
-
-      NBTTagList tagList = nbt.getTagList("pages", 8);
-
-      for (int i = 0; i < tagList.tagCount(); i++) {
-         String stringTagAt = tagList.getStringTagAt(i);
-         if (stringTagAt == null) {
+    public static boolean validBookPageTagContents(NBTTagCompound nbttagCompound) {
+        if (nbttagCompound == null) {
             return false;
-         }
+        }
 
-         if (stringTagAt.length() > 32767) {
+        if (!nbttagCompound.hasKey("pages", 9)) {
             return false;
-         }
-      }
+        }
 
-      return true;
-   }
+        NBTTagList tagList = nbttagCompound.getTagList("pages", 8);
+
+        for (int i = 0; i < tagList.tagCount(); i++) {
+            String stringTagAt = tagList.getStringTagAt(i);
+            if (stringTagAt == null) {
+                return false;
+            }
+
+            if (stringTagAt.length() > 256) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }

@@ -15,92 +15,92 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 public class ModelDefinitionDeserializer implements JsonDeserializer<ModelDefinition> {
-   public void readTransforms(Map<String, Transform> map, JsonElement jsonElement, JsonDeserializationContext jsonDeserializationContext) {
-      map.clear();
-      if (jsonElement.isJsonArray()) {
-         for (String str : toStringArray(jsonElement.getAsJsonArray())) {
-            map.put(str, new Transform(str));
-         }
-      } else if (jsonElement.isJsonObject()) {
-         for (Entry entry : ((JsonObject)jsonElement).entrySet()) {
-            Transform deserialize = (Transform)jsonDeserializationContext.deserialize((JsonElement)entry.getValue(), Transform.class);
-            deserialize.name = (String)entry.getKey();
-            map.put(deserialize.name, deserialize);
-         }
-      }
-   }
+    public void readTransforms(Map<String, Transform> map, JsonElement jsonElement, JsonDeserializationContext jsonDeserializationContext) {
+        map.clear();
+        if (jsonElement.isJsonArray()) {
+            for (String str : toStringArray(jsonElement.getAsJsonArray())) {
+                map.put(str, new Transform(str));
+            }
+        } else if (jsonElement.isJsonObject()) {
+            for (Entry entry : ((JsonObject)jsonElement).entrySet()) {
+                Transform deserialize = (Transform)jsonDeserializationContext.deserialize((JsonElement)entry.getValue(), Transform.class);
+                deserialize.name = (String)entry.getKey();
+                map.put(deserialize.name, deserialize);
+            }
+        }
+    }
 
-   public static String[] toStringArray(JsonArray jsonArray) {
-      ArrayList list = new ArrayList();
-      int size = jsonArray.size();
+    public ModelDefinition deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
+        if (!jsonElement.isJsonObject()) {
+            return null;
+        }
 
-      for (int i = 0; i < size; i++) {
-         JsonElement jsonElement = jsonArray.get(i);
-         if (jsonElement.isJsonPrimitive()) {
-            list.add(jsonElement.getAsString());
-         }
-      }
+        JsonObject asJsonObject = jsonElement.getAsJsonObject();
+        ModelDefinition modelDefinition = new ModelDefinition();
+        if (asJsonObject.has("name")) {
+            modelDefinition.name = asJsonObject.get("name").getAsString();
+        }
 
-      return (String[])list.toArray(new String[list.size()]);
-   }
+        if (asJsonObject.has("primaryMesh")) {
+            modelDefinition.primaryMesh = asJsonObject.get("primaryMesh").getAsString();
+        }
 
-   public ModelDefinition deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) {
-      if (!jsonElement.isJsonObject()) {
-         return null;
-      }
+        if (asJsonObject.has("scale")) {
+            modelDefinition.scale = asJsonObject.get("scale").getAsFloat();
+        }
 
-      JsonObject asJsonObject = jsonElement.getAsJsonObject();
-      ModelDefinition modelDefinition = new ModelDefinition();
-      if (asJsonObject.has("name")) {
-         modelDefinition.name = asJsonObject.get("name").getAsString();
-      }
+        if (asJsonObject.has("scaleGui")) {
+            modelDefinition.scaleGUI = asJsonObject.get("scaleGui").getAsFloat();
+        }
 
-      if (asJsonObject.has("primaryMesh")) {
-         modelDefinition.primaryMesh = asJsonObject.get("primaryMesh").getAsString();
-      }
+        if (asJsonObject.has("scaleItems")) {
+            modelDefinition.scaleItems = asJsonObject.get("scaleItems").getAsFloat();
+        }
 
-      if (asJsonObject.has("scale")) {
-         modelDefinition.scale = asJsonObject.get("scale").getAsFloat();
-      }
+        if (asJsonObject.has("renderHeldItems")) {
+            modelDefinition.renderHeldItems = asJsonObject.get("renderHeldItems").getAsBoolean();
+        }
 
-      if (asJsonObject.has("scaleGui")) {
-         modelDefinition.scaleGUI = asJsonObject.get("scaleGui").getAsFloat();
-      }
+        if (asJsonObject.has("leftHands")) {
+            this.readTransforms(modelDefinition.leftHands, asJsonObject.get("leftHands"), jsonDeserializationContext);
+        }
 
-      if (asJsonObject.has("scaleItems")) {
-         modelDefinition.scaleItems = asJsonObject.get("scaleItems").getAsFloat();
-      }
+        if (asJsonObject.has("rightHands")) {
+            this.readTransforms(modelDefinition.rightHands, asJsonObject.get("rightHands"), jsonDeserializationContext);
+        }
 
-      if (asJsonObject.has("renderHeldItems")) {
-         modelDefinition.renderHeldItems = asJsonObject.get("renderHeldItems").getAsBoolean();
-      }
+        if (asJsonObject.has("head")) {
+            modelDefinition.head = asJsonObject.get("head").getAsString();
+        }
 
-      if (asJsonObject.has("leftHands")) {
-         this.readTransforms(modelDefinition.leftHands, asJsonObject.get("leftHands"), jsonDeserializationContext);
-      }
+        if (asJsonObject.has("actions")) {
+            modelDefinition.actions = (ActionMap)jsonDeserializationContext.deserialize(asJsonObject.get("actions"), ActionMap.class);
+        }
 
-      if (asJsonObject.has("rightHands")) {
-         this.readTransforms(modelDefinition.rightHands, asJsonObject.get("rightHands"), jsonDeserializationContext);
-      }
+        if (asJsonObject.has("meshes")) {
+            HashMap map = new HashMap();
 
-      if (asJsonObject.has("head")) {
-         modelDefinition.head = asJsonObject.get("head").getAsString();
-      }
+            for (Entry entry : asJsonObject.getAsJsonObject("meshes").entrySet()) {
+                map.put(entry.getKey(), jsonDeserializationContext.deserialize((JsonElement)entry.getValue(), MeshMaterial.class));
+            }
 
-      if (asJsonObject.has("actions")) {
-         modelDefinition.actions = (ActionMap)jsonDeserializationContext.deserialize(asJsonObject.get("actions"), ActionMap.class);
-      }
+            modelDefinition.meshMaterials = map;
+        }
 
-      if (asJsonObject.has("meshes")) {
-         HashMap map = new HashMap();
+        return modelDefinition;
+    }
 
-         for (Entry entry : asJsonObject.getAsJsonObject("meshes").entrySet()) {
-            map.put(entry.getKey(), jsonDeserializationContext.deserialize((JsonElement)entry.getValue(), MeshMaterial.class));
-         }
+    public static String[] toStringArray(JsonArray jsonArray) {
+        ArrayList list = new ArrayList();
+        int size = jsonArray.size();
 
-         modelDefinition.meshMaterials = map;
-      }
+        for (int i = 0; i < size; i++) {
+            JsonElement jsonElement = jsonArray.get(i);
+            if (jsonElement.isJsonPrimitive()) {
+                list.add(jsonElement.getAsString());
+            }
+        }
 
-      return modelDefinition;
-   }
+        return (String[])list.toArray(new String[list.size()]);
+    }
 }

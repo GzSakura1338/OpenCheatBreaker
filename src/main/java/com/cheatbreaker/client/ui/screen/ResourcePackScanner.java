@@ -4,12 +4,11 @@ import com.cheatbreaker.client.CheatBreaker;
 import com.cheatbreaker.client.util.Logging;
 import com.cheatbreaker.client.util.SneakyThrow;
 import java.io.File;
-import java.io.IOException;
+import java.io.FileFilter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -18,84 +17,95 @@ import net.minecraft.client.resources.ResourcePackRepository;
 import net.minecraft.client.resources.ResourcePackRepository.Entry;
 
 public class ResourcePackScanner {
-   public static Minecraft mc = Minecraft.getMinecraft();
+    public static Minecraft mc = Minecraft.getMinecraft();
 
-   public static List<Entry> createArrayList(File file, String str) {
-      ArrayList list = new ArrayList();
+    public static Optional<Entry> createEntry(File file) {
+        Entry entry;
+        try {
+            Constructor declaredConstructor = Entry.class.getDeclaredConstructor(ResourcePackRepository.class, File.class);
+            declaredConstructor.setAccessible(true);
+            entry = (Entry)declaredConstructor.newInstance(mc.getResourcePackRepository(), file);
+        } catch (NoSuchMethodException e) {
+            CheatBreaker.getInstance().getLogger().error("Failed to find constructor", e);
+            return Optional.empty();
+        } catch (IllegalAccessException | InstantiationException | InvocationTargetException e) {
+            CheatBreaker.getInstance().getLogger().error("Failed to create entry", e);
+            return Optional.empty();
+        }
 
-      for (File file2 : Objects.requireNonNull(file.listFiles())) {
-         if (checkFile2(file2)) {
-            if (file2.getName().equals(str)) {
-               findOptional(file2).ifPresent(list::add);
+        try {
+            entry.updateResourcePack();
+        } catch (Exception e) {
+            entry.closeResourcePack();
+            CheatBreaker.getInstance().getLogger().error("Failed to load resource pack " + file.getName(), e);
+            return Optional.empty();
+        }
+
+        return Optional.of(entry);
+    }
+
+    public static boolean checkFile(File file) {
+        return file.isDirectory() && !new File(file, "pack.mcmeta").isFile();
+    }
+
+    public static List<Entry> getEnabledEntries() {
+        ArrayList list = new ArrayList();
+        ResourcePackRepository resourcePackRepository = mc.getResourcePackRepository();
+
+        for (String str : mc.gameSettings.resourcePacks) {
+            for (Entry entry : resourcePackRepository.getRepositoryEntriesAll()) {
+                if (!entry.getResourcePackName().equals(str)) {
+                }
             }
-         } else if (checkFile(file2)) {
-            list.addAll(createArrayList(file2, str));
-         }
-      }
 
-      return list;
-   }
-
-   public static boolean checkFile(File file) {
-      return file.isDirectory() && !new File(file, "pack.mcmeta").isFile();
-   }
-
-   public static Optional<Entry> findOptional(File file) {
-      Optional empty = Optional.empty();
-
-      try {
-         Constructor declaredConstructor = Entry.class.getDeclaredConstructor(ResourcePackRepository.class, File.class);
-         declaredConstructor.setAccessible(true);
-         empty = Optional.of(declaredConstructor.newInstance(mc.getResourcePackRepository(), file));
-         ((Entry)empty.get()).updateResourcePack();
-      } catch (NoSuchMethodException e) {
-         CheatBreaker.getInstance().getLogger().error("Failed to find constructor", e);
-         empty = Optional.empty();
-      } catch (IllegalAccessException | InstantiationException | InvocationTargetException | IOException e) {
-         CheatBreaker.getInstance().getLogger().error("Failed to create entry", e);
-      }
-
-      return empty;
-   }
-
-   public static List<Entry> createArrayList() {
-      ArrayList list = new ArrayList();
-      ResourcePackRepository resourcePackRepository = mc.getResourcePackRepository();
-
-      for (String str : mc.gameSettings.resourcePacks) {
-         for (Entry entry : resourcePackRepository.getRepositoryEntriesAll()) {
-            if (!entry.getResourcePackName().equals(str)) {
+            for (File file : listFiles(resourcePackRepository.getDirResourcepacks(), ResourcePackScanner::checkFile)) {
+                list.addAll(findEntries(file, str));
             }
-         }
+        }
 
-         for (File file : Objects.requireNonNull(resourcePackRepository.getDirResourcepacks().listFiles(ResourcePackScanner::checkFile))) {
-            list.addAll(createArrayList(file, str));
-         }
-      }
+        return list;
+    }
 
-      return list;
-   }
+    public static List<Entry> findEntries(File file, String str) {
+        ArrayList list = new ArrayList();
 
-   public static boolean checkFile2(File file) {
-      try {
-         if (file.isFile() && file.getName().endsWith(".zip")) {
-            try {
-               ZipFile zipFile = new ZipFile(file);
-               ZipEntry entry = zipFile.getEntry("pack.mcmeta");
-               if (entry == null) {
-                  Logging.debug("Not found in: " + file.getName());
-                  return false;
-               } else {
-                  return true;
-               }
-            } catch (Exception e) {
-               return false;
+        for (File file2 : listFiles(file, null)) {
+            if (isValidZipPack(file2)) {
+                if (file2.getName().equals(str)) {
+                    createEntry(file2).ifPresent(list::add);
+                }
+            } else if (checkFile(file2)) {
+                list.addAll(findEntries(file2, str));
             }
-         } else {
-            return file.isDirectory() && new File(file, "pack.mcmeta").isFile();
-         }
-      } catch (Throwable e) {
-         throw SneakyThrow.sneakyThrow(e);
-      }
-   }
+        }
+
+        return list;
+    }
+
+    public static boolean isValidZipPack(File file) {
+        try {
+            if (file.isFile() && file.getName().endsWith(".zip")) {
+                try (ZipFile zipFile = new ZipFile(file)) {
+                    ZipEntry entry = zipFile.getEntry("pack.mcmeta");
+                    if (entry == null) {
+                        Logging.debug("Not found in: " + file.getName());
+                        return false;
+                    } else {
+                        return true;
+                    }
+                } catch (Exception e) {
+                    return false;
+                }
+            } else {
+                return file.isDirectory() && new File(file, "pack.mcmeta").isFile();
+            }
+        } catch (Throwable e) {
+            throw SneakyThrow.sneakyThrow(e);
+        }
+    }
+
+    public static File[] listFiles(File file, FileFilter fileFilter) {
+        File[] listFiles = file.listFiles(fileFilter);
+        return listFiles == null ? new File[0] : listFiles;
+    }
 }

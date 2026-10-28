@@ -5,43 +5,44 @@ import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.entity.passive.EntityWaterMob;
-import net.minecraft.entity.passive.IAnimals;
 
 public enum EnumCreatureType {
-   MONSTER(IMob.class, 70, Material.air, false, false),
-   CREATURE(EntityAnimal.class, 10, Material.air, true, true),
-   AMBIENT(EntityAmbientCreature.class, 15, Material.air, true, false),
-   WATER_CREATURE(EntityWaterMob.class, 5, Material.water, true, false);
+    monster(IMob.class, 70, Material.air, false, false),
+    creature(EntityAnimal.class, 10, Material.air, true, true),
+    ambient(EntityAmbientCreature.class, 15, Material.air, true, false),
+    waterCreature(EntityWaterMob.class, 5, Material.water, true, false);
 
-   public Class<? extends IAnimals> creatureClass;
-   public int maxNumberOfCreature;
-   public Material creatureMaterial;
-   public boolean isPeacefulCreature;
-   public boolean isAnimal;
+    public Class creatureClass;
+    public int maxNumberOfCreature;
+    public Material creatureMaterial;
+    public boolean isPeacefulCreature;
+    public boolean isAnimal;
 
-   EnumCreatureType(
-      Class<? extends IAnimals> creatureClassIn, int maxNumberOfCreatureIn, Material creatureMaterialIn, boolean isPeacefulCreatureIn, boolean isAnimalIn
-   ) {
-      this.creatureClass = creatureClassIn;
-      this.maxNumberOfCreature = maxNumberOfCreatureIn;
-      this.creatureMaterial = creatureMaterialIn;
-      this.isPeacefulCreature = isPeacefulCreatureIn;
-      this.isAnimal = isAnimalIn;
-   }
+    EnumCreatureType(Class clazz, int n, Material material, boolean flag, boolean flag2) {
+        this.creatureClass = clazz;
+        this.maxNumberOfCreature = n;
+        this.creatureMaterial = material;
+        this.isPeacefulCreature = flag;
+        this.isAnimal = flag2;
+    }
 
-   public Class<? extends IAnimals> getCreatureClass() {
-      return this.creatureClass;
-   }
+    public Class getCreatureClass() {
+        return this.creatureClass;
+    }
 
-   public int getMaxNumberOfCreature() {
-      return this.maxNumberOfCreature;
-   }
+    public int getMaxNumberOfCreature() {
+        return this.maxNumberOfCreature;
+    }
 
-   public boolean getPeacefulCreature() {
-      return this.isPeacefulCreature;
-   }
+    public Material getCreatureMaterial() {
+        return this.creatureMaterial;
+    }
 
-   public boolean getAnimal() {
-      return this.isAnimal;
-   }
+    public boolean getPeacefulCreature() {
+        return this.isPeacefulCreature;
+    }
+
+    public boolean getAnimal() {
+        return this.isAnimal;
+    }
 }

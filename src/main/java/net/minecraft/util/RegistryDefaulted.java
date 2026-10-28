@@ -1,15 +1,15 @@
 package net.minecraft.util;
 
-public class RegistryDefaulted<K, V> extends RegistrySimple<K, V> {
-   public V defaultObject;
+public class RegistryDefaulted extends RegistrySimple {
+    public Object defaultObject;
 
-   public RegistryDefaulted(V defaultObjectIn) {
-      this.defaultObject = (V)defaultObjectIn;
-   }
+    public RegistryDefaulted(Object obj) {
+        this.defaultObject = obj;
+    }
 
-   @Override
-   public V getObject(K name) {
-      Object object = super.getObject((K)name);
-      return (V)(object == null ? this.defaultObject : object);
-   }
+    @Override
+    public Object getObject(Object obj) {
+        Object object = super.getObject(obj);
+        return object == null ? this.defaultObject : object;
+    }
 }

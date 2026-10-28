@@ -4,110 +4,104 @@ import com.cheatbreaker.client.CheatBreaker;
 import com.cheatbreaker.client.event.IntEvent3;
 import com.cheatbreaker.client.event.SimpleEvent31;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.EntityFishHook;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Vec3;
+import org.lwjgl.opengl.GL11;
 
-public class RenderFish extends Render<EntityFishHook> {
-   public static ResourceLocation FISH_PARTICLES = new ResourceLocation("textures/particle/particles.png");
+public class RenderFish extends Render {
+    public static ResourceLocation PARTICLES = new ResourceLocation("textures/particle/particles.png");
 
-   public RenderFish(RenderManager renderManagerIn) {
-      super(renderManagerIn);
-   }
+    public void doRender(EntityFishHook entityFishHook, double d, double d2, double d3, float f, float f2) {
+        GL11.glPushMatrix();
+        GL11.glTranslatef((float)d, (float)d2, (float)d3);
+        GL11.glEnable(32826);
+        GL11.glScalef(0.5F, 0.5F, 0.5F);
+        this.bindEntityTexture(entityFishHook);
+        Tessellator instance = Tessellator.instance;
+        byte b = 1;
+        byte b2 = 2;
+        float f3 = (b * 8 + 0) / 128.0F;
+        float f4 = (b * 8 + 8) / 128.0F;
+        float f5 = (b2 * 8 + 0) / 128.0F;
+        float f6 = (b2 * 8 + 8) / 128.0F;
+        float f7 = 1.0F;
+        float f8 = 0.5F;
+        float f9 = 0.5F;
+        GL11.glRotatef(180.0F - this.renderManager.playerViewY, 0.0F, 1.0F, 0.0F);
+        GL11.glRotatef(-this.renderManager.playerViewX, 1.0F, 0.0F, 0.0F);
+        instance.startDrawingQuads();
+        instance.setNormal(0.0F, 1.0F, 0.0F);
+        instance.addVertexWithUV(0.0F - f8, 0.0F - f9, 0.0, f3, f6);
+        instance.addVertexWithUV(f7 - f8, 0.0F - f9, 0.0, f4, f6);
+        instance.addVertexWithUV(f7 - f8, 1.0F - f9, 0.0, f4, f5);
+        instance.addVertexWithUV(0.0F - f8, 1.0F - f9, 0.0, f3, f5);
+        instance.draw();
+        GL11.glDisable(32826);
+        GL11.glPopMatrix();
+        if (entityFishHook.angler != null) {
+            float swingProgress = entityFishHook.angler.getSwingProgress(f2);
+            float sin = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float) Math.PI);
+            Vec3 createVectorHelper = Vec3.createVectorHelper(-0.5, 0.03, 0.8);
+            createVectorHelper.rotateAroundX(-(entityFishHook.angler.prevRotationPitch + (entityFishHook.angler.rotationPitch - entityFishHook.angler.prevRotationPitch) * f2) * (float) Math.PI / 180.0F);
+            createVectorHelper.rotateAroundY(-(entityFishHook.angler.prevRotationYaw + (entityFishHook.angler.rotationYaw - entityFishHook.angler.prevRotationYaw) * f2) * (float) Math.PI / 180.0F);
+            createVectorHelper.rotateAroundY(sin * 0.5F);
+            createVectorHelper.rotateAroundX(-sin * 0.7F);
+            double d4 = entityFishHook.angler.prevPosX + (entityFishHook.angler.posX - entityFishHook.angler.prevPosX) * f2 + createVectorHelper.xCoord;
+            double d5 = entityFishHook.angler.prevPosY + (entityFishHook.angler.posY - entityFishHook.angler.prevPosY) * f2 + createVectorHelper.yCoord;
+            double d6 = entityFishHook.angler.prevPosZ + (entityFishHook.angler.posZ - entityFishHook.angler.prevPosZ) * f2 + createVectorHelper.zCoord;
+            double d7 = entityFishHook.angler == Minecraft.getMinecraft().thePlayer ? 0.0 : entityFishHook.angler.getEyeHeight();
+            if (this.renderManager.options.thirdPersonView > 0 || entityFishHook.angler != Minecraft.getMinecraft().thePlayer) {
+                float f10 = (entityFishHook.angler.prevRenderYawOffset + (entityFishHook.angler.renderYawOffset - entityFishHook.angler.prevRenderYawOffset) * f2) * (float) Math.PI / 180.0F;
+                double sin2 = MathHelper.sin(f10);
+                double cos = MathHelper.cos(f10);
+                d4 = entityFishHook.angler.prevPosX + (entityFishHook.angler.posX - entityFishHook.angler.prevPosX) * f2 - cos * 0.35 - sin2 * 0.85;
+                d5 = entityFishHook.angler.prevPosY + d7 + (entityFishHook.angler.posY - entityFishHook.angler.prevPosY) * f2 - 0.45;
+                d6 = entityFishHook.angler.prevPosZ + (entityFishHook.angler.posZ - entityFishHook.angler.prevPosZ) * f2 - sin2 * 0.35 + cos * 0.85;
+            }
 
-   public void doRender(EntityFishHook entity, double x, double y, double z, float entityYaw, float partialTicks) {
-      GlStateManager.pushMatrix();
-      GlStateManager.translate((float)x, (float)y, (float)z);
-      GlStateManager.enableRescaleNormal();
-      GlStateManager.scale(0.5F, 0.5F, 0.5F);
-      this.bindEntityTexture(entity);
-      Tessellator instance = Tessellator.getInstance();
-      WorldRenderer worldRenderer = instance.getWorldRenderer();
-      boolean flag = true;
-      byte b = 2;
-      float f = 0.0625F;
-      float f2 = 0.125F;
-      float f3 = 0.125F;
-      float f4 = 0.1875F;
-      float f5 = 1.0F;
-      float f6 = 0.5F;
-      float f7 = 0.5F;
-      GlStateManager.rotate(180.0F - this.renderManager.playerViewY, 0.0F, 1.0F, 0.0F);
-      GlStateManager.rotate(-this.renderManager.playerViewX, 1.0F, 0.0F, 0.0F);
-      worldRenderer.begin(7, DefaultVertexFormats.POSITION_TEX_NORMAL);
-      worldRenderer.pos(-0.5, -0.5, 0.0).tex(0.0625, 0.1875).normal(0.0F, 1.0F, 0.0F).endVertex();
-      worldRenderer.pos(0.5, -0.5, 0.0).tex(0.125, 0.1875).normal(0.0F, 1.0F, 0.0F).endVertex();
-      worldRenderer.pos(0.5, 0.5, 0.0).tex(0.125, 0.125).normal(0.0F, 1.0F, 0.0F).endVertex();
-      worldRenderer.pos(-0.5, 0.5, 0.0).tex(0.0625, 0.125).normal(0.0F, 1.0F, 0.0F).endVertex();
-      instance.draw();
-      GlStateManager.disableRescaleNormal();
-      GlStateManager.popMatrix();
-      if (entity.angler != null) {
-         float swingProgress = entity.angler.getSwingProgress(partialTicks);
-         float sin = MathHelper.sin(MathHelper.sqrt_float(swingProgress) * (float) Math.PI);
-         Vec3 vec3 = new Vec3(-0.36, 0.03, 0.35);
-         vec3 = vec3.rotatePitch(
-            -(entity.angler.prevRotationPitch + (entity.angler.rotationPitch - entity.angler.prevRotationPitch) * partialTicks) * (float) Math.PI / 180.0F
-         );
-         vec3 = vec3.rotateYaw(
-            -(entity.angler.prevRotationYaw + (entity.angler.rotationYaw - entity.angler.prevRotationYaw) * partialTicks) * (float) Math.PI / 180.0F
-         );
-         vec3 = vec3.rotateYaw(sin * 0.5F);
-         vec3 = vec3.rotatePitch(-sin * 0.7F);
-         double d = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * partialTicks + vec3.xCoord;
-         double d2 = entity.angler.prevPosY + (entity.angler.posY - entity.angler.prevPosY) * partialTicks + vec3.yCoord;
-         double d3 = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * partialTicks + vec3.zCoord;
-         double eyeHeight = entity.angler.getEyeHeight();
-         if (this.renderManager.options != null && this.renderManager.options.thirdPersonView > 0 || entity.angler != Minecraft.getMinecraft().thePlayer) {
-            float f8 = (entity.angler.prevRenderYawOffset + (entity.angler.renderYawOffset - entity.angler.prevRenderYawOffset) * partialTicks)
-               * (float) Math.PI
-               / 180.0F;
-            double sin2 = MathHelper.sin(f8);
-            double cos = MathHelper.cos(f8);
-            double d4 = 0.35;
-            double d5 = 0.8;
-            d = entity.angler.prevPosX + (entity.angler.posX - entity.angler.prevPosX) * partialTicks - cos * 0.35 - sin2 * 0.8;
-            d2 = entity.angler.prevPosY + eyeHeight + (entity.angler.posY - entity.angler.prevPosY) * partialTicks - 0.45;
-            d3 = entity.angler.prevPosZ + (entity.angler.posZ - entity.angler.prevPosZ) * partialTicks - sin2 * 0.35 + cos * 0.8;
-            eyeHeight = entity.angler.isSneaking() ? -0.1875 : 0.0;
-         }
+            double d8 = entityFishHook.prevPosX + (entityFishHook.posX - entityFishHook.prevPosX) * f2;
+            double d9 = entityFishHook.prevPosY + (entityFishHook.posY - entityFishHook.prevPosY) * f2 + 0.25;
+            double d10 = entityFishHook.prevPosZ + (entityFishHook.posZ - entityFishHook.prevPosZ) * f2;
+            double d11 = (float)(d4 - d8);
+            double d12 = (float)(d5 - d9);
+            double d13 = (float)(d6 - d10);
+            GL11.glDisable(3553);
+            GL11.glDisable(2896);
+            instance.startDrawing(3);
+            int n = -16777216;
+            IntEvent3 intEvent3 = new IntEvent3(n);
+            CheatBreaker.getInstance().getEventBus().handleEvent(intEvent3);
+            n = intEvent3.getIntValue();
+            instance.setColorOpaque_I(n);
+            byte b3 = 16;
 
-         double d4 = entity.prevPosX + (entity.posX - entity.prevPosX) * partialTicks;
-         double d5 = entity.prevPosY + (entity.posY - entity.prevPosY) * partialTicks + 0.25;
-         double d6 = entity.prevPosZ + (entity.posZ - entity.prevPosZ) * partialTicks;
-         double d7 = (float)(d - d4);
-         double d8 = (float)(d2 - d5) + eyeHeight;
-         double d9 = (float)(d3 - d6);
-         GlStateManager.disableTexture2D();
-         GlStateManager.disableLighting();
-         worldRenderer.begin(3, DefaultVertexFormats.POSITION_COLOR);
-         byte b2 = 16;
-         int n = -16777216;
-         IntEvent3 intEvent3 = new IntEvent3(n);
-         CheatBreaker.getInstance().getEventBus().handleEvent(intEvent3);
-         n = intEvent3.getIntValue();
+            for (int i = 0; i <= b3; i++) {
+                float f10 = (float)i / b3;
+                instance.addVertex(d + d11 * f10, d2 + d12 * (f10 * f10 + f10) * 0.5 + 0.25, d3 + d13 * f10);
+            }
 
-         for (int i = 0; i <= 16; i++) {
-            float f8 = i / 16.0F;
-            worldRenderer.pos(x + d7 * f8, y + d8 * (f8 * f8 + f8) * 0.5 + 0.25, z + d9 * f8)
-               .color(n >> 16 & 0xFF, n >> 8 & 0xFF, n & 0xFF, n >> 24 & 0xFF)
-               .endVertex();
-         }
+            instance.draw();
+            CheatBreaker.getInstance().getEventBus().handleEvent(new SimpleEvent31());
+            GL11.glEnable(2896);
+            GL11.glEnable(3553);
+        }
+    }
 
-         instance.draw();
-         CheatBreaker.getInstance().getEventBus().handleEvent(new SimpleEvent31());
-         GlStateManager.enableLighting();
-         GlStateManager.enableTexture2D();
-         super.doRender(entity, x, y, z, entityYaw, partialTicks);
-      }
-   }
+    public ResourceLocation getEntityTexture(EntityFishHook entityFishHook) {
+        return PARTICLES;
+    }
 
-   public ResourceLocation getEntityTexture(EntityFishHook entity) {
-      return FISH_PARTICLES;
-   }
+    @Override
+    public ResourceLocation getEntityTexture(Entity entity) {
+        return this.getEntityTexture((EntityFishHook)entity);
+    }
+
+    @Override
+    public void doRender(Entity entity, double d, double d2, double d3, float f, float f2) {
+        this.doRender((EntityFishHook)entity, d, d2, d3, f, f2);
+    }
 }

@@ -1,292 +1,293 @@
 package net.minecraft.block;
 
-import com.google.common.base.MoreObjects;
 import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.Direction;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockTripWireHook extends Block {
-   public static PropertyDirection FACING = PropertyDirection.create("facing", Plane.HORIZONTAL);
-   public static PropertyBool POWERED = PropertyBool.create("powered");
-   public static PropertyBool ATTACHED = PropertyBool.create("attached");
-   public static PropertyBool SUSPENDED = PropertyBool.create("suspended");
+    public BlockTripWireHook() {
+        super(Material.circuits);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+        this.setTickRandomly(true);
+    }
 
-   public BlockTripWireHook() {
-      super(Material.circuits);
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(FACING, EnumFacing.NORTH)
-            .withProperty(POWERED, false)
-            .withProperty(ATTACHED, false)
-            .withProperty(SUSPENDED, false)
-      );
-      this.setCreativeTab(CreativeTabs.tabRedstone);
-      this.setTickRandomly(true);
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-   @Override
-   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-      return state.withProperty(SUSPENDED, !World.doesBlockHaveSolidTopSurface(worldIn, pos.down()));
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public int getRenderType() {
+        return 29;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public int tickRate(World worldIn) {
+        return 10;
+    }
 
-   @Override
-   public boolean canPlaceBlockOnSide(World worldIn, BlockPos pos, EnumFacing side) {
-      return side.getAxis().isHorizontal() && worldIn.getBlockState(pos.offset(side.getOpposite())).getBlock().isNormalCube();
-   }
+    @Override
+    public boolean canPlaceBlockOnSide(World worldIn, int x, int y, int z, int side) {
+        return side == 2 && worldIn.getBlock(x, y, z + 1).isNormalCube()
+            || side == 3 && worldIn.getBlock(x, y, z - 1).isNormalCube()
+            || side == 4 && worldIn.getBlock(x + 1, y, z).isNormalCube()
+            || side == 5 && worldIn.getBlock(x - 1, y, z).isNormalCube();
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-         if (worldIn.getBlockState(pos.offset(enumFacing)).getBlock().isNormalCube()) {
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return worldIn.getBlock(x - 1, y, z).isNormalCube()
+            || worldIn.getBlock(x + 1, y, z).isNormalCube()
+            || worldIn.getBlock(x, y, z - 1).isNormalCube()
+            || worldIn.getBlock(x, y, z + 1).isNormalCube();
+    }
+
+    @Override
+    public int onBlockPlaced(World worldIn, int x, int y, int z, int side, float subX, float subY, float subZ, int meta) {
+        byte b = 0;
+        if (side == 2 && worldIn.isBlockNormalCubeDefault(x, y, z + 1, true)) {
+            b = 2;
+        }
+
+        if (side == 3 && worldIn.isBlockNormalCubeDefault(x, y, z - 1, true)) {
+            b = 0;
+        }
+
+        if (side == 4 && worldIn.isBlockNormalCubeDefault(x + 1, y, z, true)) {
+            b = 1;
+        }
+
+        if (side == 5 && worldIn.isBlockNormalCubeDefault(x - 1, y, z, true)) {
+            b = 3;
+        }
+
+        return b;
+    }
+
+    @Override
+    public void onPostBlockPlaced(World worldIn, int x, int y, int z, int meta) {
+        this.handleWorld(worldIn, x, y, z, false, meta, false, -1, 0);
+    }
+
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (neighbor != this && this.checkWorld(worldIn, x, y, z)) {
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            int n = blockMetadata & 3;
+            boolean flag = !worldIn.getBlock(x - 1, y, z).isNormalCube() && n == 3;
+            if (!worldIn.getBlock(x + 1, y, z).isNormalCube() && n == 1) {
+                flag = true;
+            }
+
+            if (!worldIn.getBlock(x, y, z - 1).isNormalCube() && n == 0) {
+                flag = true;
+            }
+
+            if (!worldIn.getBlock(x, y, z + 1).isNormalCube() && n == 2) {
+                flag = true;
+            }
+
+            if (flag) {
+                this.dropBlockAsItem(worldIn, x, y, z, blockMetadata, 0);
+                worldIn.setBlockToAir(x, y, z);
+            }
+        }
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3, boolean flag, int n4, boolean flag2, int n5, int n6) {
+        int n7 = n4 & 3;
+        boolean flag3 = (n4 & 4) == 4;
+        boolean flag4 = (n4 & 8) == 8;
+        boolean flag5 = !flag;
+        boolean flag6 = false;
+        boolean flag7 = !World.doesBlockHaveSolidTopSurface(world, n, n2 - 1, n3);
+        int n8 = Direction.offsetX[n7];
+        int n9 = Direction.offsetZ[n7];
+        int n10 = 0;
+        int[] ints = new int[42];
+
+        for (int i = 1; i < 42; i++) {
+            int n11 = n + n8 * i;
+            int n12 = n3 + n9 * i;
+            Block block = world.getBlock(n11, n2, n12);
+            if (block == Blocks.tripwire_hook) {
+                int blockMetadata = world.getBlockMetadata(n11, n2, n12);
+                if ((blockMetadata & 3) == Direction.rotateOpposite[n7]) {
+                    n10 = i;
+                }
+                break;
+            }
+
+            if (block != Blocks.tripwire && i != n5) {
+                ints[i] = -1;
+                flag5 = false;
+            } else {
+                int n13 = i == n5 ? n6 : world.getBlockMetadata(n11, n2, n12);
+                boolean flag8 = (n13 & 8) != 8;
+                boolean flag9 = (n13 & 1) == 1;
+                boolean flag10 = (n13 & 2) == 2;
+                flag5 &= flag10 == flag7;
+                flag6 |= flag8 && flag9;
+                ints[i] = n13;
+                if (i == n5) {
+                    world.scheduleBlockUpdate(n, n2, n3, this, this.tickRate(world));
+                    flag5 &= flag8;
+                }
+            }
+        }
+
+        flag5 &= n10 > 1;
+        flag6 &= flag5;
+        int n11 = (flag5 ? 4 : 0) | (flag6 ? 8 : 0);
+        n4 = n7 | n11;
+        if (n10 > 0) {
+            int n12 = n + n8 * n10;
+            int n13 = n3 + n9 * n10;
+            int n14 = Direction.rotateOpposite[n7];
+            world.setBlockMetadataWithNotify(n12, n2, n13, n14 | n11, 3);
+            this.handleWorld(world, n12, n2, n13, n14);
+            this.handleWorld(world, n12, n2, n13, flag5, flag6, flag3, flag4);
+        }
+
+        this.handleWorld(world, n, n2, n3, flag5, flag6, flag3, flag4);
+        if (!flag) {
+            world.setBlockMetadataWithNotify(n, n2, n3, n4, 3);
+            if (flag2) {
+                this.handleWorld(world, n, n2, n3, n7);
+            }
+        }
+
+        if (flag3 != flag5) {
+            for (int i = 1; i < n10; i++) {
+                int n12 = n + n8 * i;
+                int n13 = n3 + n9 * i;
+                int n14 = ints[i];
+                if (n14 >= 0) {
+                    if (flag5) {
+                        n14 |= 4;
+                    } else {
+                        n14 &= -5;
+                    }
+
+                    world.setBlockMetadataWithNotify(n12, n2, n13, n14, 3);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        this.handleWorld(worldIn, x, y, z, false, worldIn.getBlockMetadata(x, y, z), true, -1, 0);
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3, boolean flag, boolean flag2, boolean flag3, boolean flag4) {
+        if (flag2 && !flag4) {
+            world.playSoundEffect(n + 0.5, n2 + 0.1, n3 + 0.5, "random.click", 0.4F, 0.6F);
+        } else if (!flag2 && flag4) {
+            world.playSoundEffect(n + 0.5, n2 + 0.1, n3 + 0.5, "random.click", 0.4F, 0.5F);
+        } else if (flag && !flag3) {
+            world.playSoundEffect(n + 0.5, n2 + 0.1, n3 + 0.5, "random.click", 0.4F, 0.7F);
+        } else if (!flag && flag3) {
+            world.playSoundEffect(n + 0.5, n2 + 0.1, n3 + 0.5, "random.bowhit", 0.4F, 1.2F / (world.rand.nextFloat() * 0.2F + 0.9F));
+        }
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3, int n4) {
+        world.notifyBlocksOfNeighborChange(n, n2, n3, this);
+        if (n4 == 3) {
+            world.notifyBlocksOfNeighborChange(n - 1, n2, n3, this);
+        } else if (n4 == 1) {
+            world.notifyBlocksOfNeighborChange(n + 1, n2, n3, this);
+        } else if (n4 == 0) {
+            world.notifyBlocksOfNeighborChange(n, n2, n3 - 1, this);
+        } else if (n4 == 2) {
+            world.notifyBlocksOfNeighborChange(n, n2, n3 + 1, this);
+        }
+    }
+
+    public boolean checkWorld(World world, int n, int n2, int n3) {
+        if (!this.canPlaceBlockAt(world, n, n2, n3)) {
+            this.dropBlockAsItem(world, n, n2, n3, world.getBlockMetadata(n, n2, n3), 0);
+            world.setBlockToAir(n, n2, n3);
+            return false;
+        } else {
             return true;
-         }
-      }
+        }
+    }
 
-      return false;
-   }
-
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      IBlockState withProperty = this.getDefaultState().withProperty(POWERED, false).withProperty(ATTACHED, false).withProperty(SUSPENDED, false);
-      if (facing.getAxis().isHorizontal()) {
-         withProperty = withProperty.withProperty(FACING, facing);
-      }
-
-      return withProperty;
-   }
-
-   @Override
-   public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
-      this.update(worldIn, pos, state, false, false, -1, (IBlockState)null);
-   }
-
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (neighborBlock != this && this.checkForDrop(worldIn, pos, state)) {
-         EnumFacing value = state.getValue(FACING);
-         if (!worldIn.getBlockState(pos.offset(value.getOpposite())).getBlock().isNormalCube()) {
-            this.dropBlockAsItem(worldIn, pos, state, 0);
-            worldIn.setBlockToAir(pos);
-         }
-      }
-   }
-
-   public void update(World worldIn, BlockPos pos, IBlockState hookState, boolean flag, boolean flag2, int n, IBlockState blockState) {
-      EnumFacing value = hookState.getValue(FACING);
-      boolean value2 = hookState.getValue(ATTACHED);
-      boolean value3 = hookState.getValue(POWERED);
-      boolean flag3 = !World.doesBlockHaveSolidTopSurface(worldIn, pos.down());
-      boolean flag4 = !flag;
-      boolean flag5 = false;
-      int n2 = 0;
-      IBlockState[] blockStates = new IBlockState[42];
-
-      for (int i = 1; i < 42; i++) {
-         BlockPos offset = pos.offset(value, i);
-         IBlockState blockState2 = worldIn.getBlockState(offset);
-         if (blockState2.getBlock() == Blocks.tripwire_hook) {
-            if (blockState2.getValue(FACING) == value.getOpposite()) {
-               n2 = i;
-            }
-            break;
-         }
-
-         if (blockState2.getBlock() != Blocks.tripwire && i != n) {
-            blockStates[i] = null;
-            flag4 = false;
-         } else {
-            if (i == n) {
-               blockState2 = (IBlockState)MoreObjects.firstNonNull(blockState, blockState2);
-            }
-
-            boolean flag6 = !blockState2.getValue(BlockTripWire.DISARMED);
-            boolean value4 = blockState2.getValue(BlockTripWire.POWERED);
-            boolean value5 = blockState2.getValue(BlockTripWire.SUSPENDED);
-            flag4 &= value5 == flag3;
-            flag5 |= flag6 && value4;
-            blockStates[i] = blockState2;
-            if (i == n) {
-               worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-               flag4 &= flag6;
-            }
-         }
-      }
-
-      flag4 &= n2 > 1;
-      flag5 &= flag4;
-      IBlockState withProperty = this.getDefaultState().withProperty(ATTACHED, flag4).withProperty(POWERED, flag5);
-      if (n2 > 0) {
-         BlockPos offset = pos.offset(value, n2);
-         EnumFacing opposite = value.getOpposite();
-         worldIn.setBlockState(offset, withProperty.withProperty(FACING, opposite), 3);
-         this.updateNeighborsOnAxis(worldIn, offset, opposite);
-         this.playSound(worldIn, offset, flag4, flag5, value2, value3);
-      }
-
-      this.playSound(worldIn, pos, flag4, flag5, value2, value3);
-      if (!flag) {
-         worldIn.setBlockState(pos, withProperty.withProperty(FACING, value), 3);
-         if (flag2) {
-            this.updateNeighborsOnAxis(worldIn, pos, value);
-         }
-      }
-
-      if (value2 != flag4) {
-         for (int i = 1; i < n2; i++) {
-            BlockPos offset = pos.offset(value, i);
-            IBlockState blockState2 = blockStates[i];
-            if (blockState2 != null && worldIn.getBlockState(offset).getBlock() != Blocks.air) {
-               worldIn.setBlockState(offset, blockState2.withProperty(ATTACHED, flag4), 3);
-            }
-         }
-      }
-   }
-
-   @Override
-   public void randomTick(World worldIn, BlockPos pos, IBlockState state, Random random) {
-   }
-
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      this.update(worldIn, pos, state, false, true, -1, (IBlockState)null);
-   }
-
-   public void playSound(World worldIn, BlockPos pos, boolean flag, boolean flag2, boolean flag3, boolean flag4) {
-      if (flag2 && !flag4) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.click", 0.4F, 0.6F);
-      } else if (!flag2 && flag4) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.click", 0.4F, 0.5F);
-      } else if (flag && !flag3) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.click", 0.4F, 0.7F);
-      } else if (!flag && flag3) {
-         worldIn.playSoundEffect(pos.getX() + 0.5, pos.getY() + 0.1, pos.getZ() + 0.5, "random.bowhit", 0.4F, 1.2F / (worldIn.rand.nextFloat() * 0.2F + 0.9F));
-      }
-   }
-
-   public void updateNeighborsOnAxis(World worldIn, BlockPos blockPos, EnumFacing enumFacing) {
-      worldIn.notifyNeighborsOfStateChange(blockPos, this);
-      worldIn.notifyNeighborsOfStateChange(blockPos.offset(enumFacing.getOpposite()), this);
-   }
-
-   public boolean checkForDrop(World worldIn, BlockPos pos, IBlockState state) {
-      if (!this.canPlaceBlockAt(worldIn, pos)) {
-         this.dropBlockAsItem(worldIn, pos, state, 0);
-         worldIn.setBlockToAir(pos);
-         return false;
-      } else {
-         return true;
-      }
-   }
-
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      float f = 0.1875F;
-      switch (worldIn.getBlockState(pos).getValue(FACING)) {
-         case EAST:
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int n = worldIn.getBlockMetadata(x, y, z) & 3;
+        float f = 0.1875F;
+        if (n == 3) {
             this.setBlockBounds(0.0F, 0.2F, 0.5F - f, f * 2.0F, 0.8F, 0.5F + f);
-            break;
-         case WEST:
+        } else if (n == 1) {
             this.setBlockBounds(1.0F - f * 2.0F, 0.2F, 0.5F - f, 1.0F, 0.8F, 0.5F + f);
-            break;
-         case SOUTH:
+        } else if (n == 0) {
             this.setBlockBounds(0.5F - f, 0.2F, 0.0F, 0.5F + f, 0.8F, f * 2.0F);
-            break;
-         case NORTH:
+        } else if (n == 2) {
             this.setBlockBounds(0.5F - f, 0.2F, 1.0F - f * 2.0F, 0.5F + f, 0.8F, 1.0F);
-      }
-   }
+        }
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      boolean value = state.getValue(ATTACHED);
-      boolean value2 = state.getValue(POWERED);
-      if (value || value2) {
-         this.update(worldIn, pos, state, true, false, -1, (IBlockState)null);
-      }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        boolean flag = (meta & 4) == 4;
+        boolean flag2 = (meta & 8) == 8;
+        if (flag || flag2) {
+            this.handleWorld(worldIn, x, y, z, true, meta, false, -1, 0);
+        }
 
-      if (value2) {
-         worldIn.notifyNeighborsOfStateChange(pos, this);
-         worldIn.notifyNeighborsOfStateChange(pos.offset(state.getValue(FACING).getOpposite()), this);
-      }
+        if (flag2) {
+            worldIn.notifyBlocksOfNeighborChange(x, y, z, this);
+            int n = meta & 3;
+            if (n == 3) {
+                worldIn.notifyBlocksOfNeighborChange(x - 1, y, z, this);
+            } else if (n == 1) {
+                worldIn.notifyBlocksOfNeighborChange(x + 1, y, z, this);
+            } else if (n == 0) {
+                worldIn.notifyBlocksOfNeighborChange(x, y, z - 1, this);
+            } else if (n == 2) {
+                worldIn.notifyBlocksOfNeighborChange(x, y, z + 1, this);
+            }
+        }
 
-      super.breakBlock(worldIn, pos, state);
-   }
+        super.breakBlock(worldIn, x, y, z, blockBroken, meta);
+    }
 
-   @Override
-   public int getWeakPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      return state.getValue(POWERED) ? 15 : 0;
-   }
+    @Override
+    public int isProvidingWeakPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        return (worldIn.getBlockMetadata(x, y, z) & 8) == 8 ? 15 : 0;
+    }
 
-   @Override
-   public int getStrongPower(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing side) {
-      return !state.getValue(POWERED) ? 0 : (state.getValue(FACING) == side ? 15 : 0);
-   }
+    @Override
+    public int isProvidingStrongPower(IBlockAccess worldIn, int x, int y, int z, int side) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if ((blockMetadata & 8) != 8) {
+            return 0;
+        }
 
-   @Override
-   public boolean canProvidePower() {
-      return true;
-   }
+        int n = blockMetadata & 3;
+        return n == 2 && side == 2 ? 15 : (n == 0 && side == 3 ? 15 : (n == 1 && side == 4 ? 15 : (n == 3 && side == 5 ? 15 : 0)));
+    }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.CUTOUT_MIPPED;
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(FACING, EnumFacing.getHorizontal(meta & 3))
-         .withProperty(POWERED, (meta & 8) > 0)
-         .withProperty(ATTACHED, (meta & 4) > 0);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(FACING).getHorizontalIndex();
-      if (state.getValue(POWERED)) {
-         n |= 8;
-      }
-
-      if (state.getValue(ATTACHED)) {
-         n |= 4;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, POWERED, ATTACHED, SUSPENDED);
-   }
+    @Override
+    public boolean canProvidePower() {
+        return true;
+    }
 }

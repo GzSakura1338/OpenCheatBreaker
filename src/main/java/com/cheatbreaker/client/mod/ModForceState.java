@@ -1,7 +1,7 @@
 package com.cheatbreaker.client.mod;
 
 public enum ModForceState {
-   NEUTRAL,
-   ALLOWED,
-   FORCED_OFF;
+    NEUTRAL,
+    ALLOWED,
+    FORCED_OFF;
 }

@@ -10,80 +10,80 @@ import java.util.Collections;
 import net.minecraft.util.Vec3;
 
 public class ReachDisplayMod extends AbstractCombatValueHudMod {
-   public Setting decimals;
-   public Setting showTrailingZeros;
-   public double doubleValue;
-   public DecimalFormat decimalsValue = new DecimalFormat("#.#");
+    public Setting decimals;
+    public double lastReach;
+    public Setting showTrailingZeros;
+    public DecimalFormat decimalsValue = new DecimalFormat("#.#");
 
-   @Override
-   public Number getNumericValue() {
-      return Double.parseDouble(this.createStringBuilder(this.doubleValue).replaceAll(",", "."));
-   }
+    @Override
+    public Number getNumericValue() {
+        return Double.parseDouble(this.formatReach(this.lastReach).replaceAll(",", "."));
+    }
 
-   @Override
-   public String getLabelText() {
-      return "blocks";
-   }
+    @Override
+    public String getDynamicText() {
+        return super.getDynamicText() == null ? null : this.formatReach(this.lastReach);
+    }
 
-   public String createStringBuilder(double d) {
-      return this.showTrailingZeros.getBooleanValue() ? String.format("%." + this.decimals.getValue() + "f", d) : this.decimalsValue.format(d);
-   }
+    @Override
+    public String getStaticText() {
+        return this.formatReach(2.780034105782015);
+    }
 
-   public ReachDisplayMod() {
-      super("Reach Display");
-      this.setDescription("Displays how far you hit an entity.");
-      this.setAuthors("dewgs");
-      this.handleString("[2.8 blocks]");
-      this.addEventHandler(EntityEntityPlayerEvent.class, this::onEntityEntityPlayerEvent);
-   }
+    public ReachDisplayMod() throws java.io.IOException {
+        super("Reach Display");
+        this.setDescription("Displays how far you hit an entity.");
+        this.setAuthors("dewgs");
+        this.setLabel("[2.8 blocks]");
+        this.addEventHandler(EntityEntityPlayerEvent.class, this::onEntityEntityPlayerEvent);
+    }
 
-   @Override
-   public ValueRange getHiddenValueRange() {
-      return new ValueRange(0, 2, 5);
-   }
+    @Override
+    public String getLabelText() {
+        return "blocks";
+    }
 
-   @Override
-   public String getStaticText() {
-      return this.createStringBuilder(2.780034105782015);
-   }
+    @Override
+    public void createFormatOptions() {
+        this.showTrailingZeros = new Setting(this, "Show trailing zeros")
+            .setDescription("Show all trailing zeros.")
+            .withHierarchyParents(this.formatOptions)
+            .changeValue(true)
+            .setCustomizationLevel(SettingsLevel.MEDIUM)
+            .setCondition(() -> this.decimals.getIntValue() != 0);
+        this.decimals = new Setting(this, "Decimals")
+            .setDescription("Change how many decimals the mod should display.")
+            .withHierarchyParents(this.formatOptions)
+            .changeValue(1)
+            .setRange(0, 16)
+            .setCustomizationLevel(SettingsLevel.MEDIUM)
+            .setOnUpdate(
+                obj -> this.decimalsValue = new DecimalFormat(
+                    (Integer)obj == 0 ? "#" : "#." + String.join("", Collections.nCopies(Integer.parseInt(obj.toString()), "#"))
+                )
+            );
+        super.createFormatOptions();
+    }
 
-   public void onEntityEntityPlayerEvent(EntityEntityPlayerEvent entityEntityPlayerEvent) {
-      if (entityEntityPlayerEvent.getEntityPlayer() == this.mc.thePlayer) {
-         Vec3 positionEyes = this.mc.getRenderViewEntity().getPositionEyes(1.0F);
-         this.doubleValue = this.mc.objectMouseOver.hitVec.distanceTo(positionEyes);
-         this.longValue = System.currentTimeMillis();
-      }
-   }
+    @Override
+    public ValueRange getHiddenValueRange() {
+        return new ValueRange(0, 2, 5);
+    }
 
-   @Override
-   public void reset() {
-      this.doubleValue = 0.0;
-   }
+    public void onEntityEntityPlayerEvent(EntityEntityPlayerEvent entityEntityPlayerEvent) {
+        if (entityEntityPlayerEvent.getEntityPlayer() == this.mc.thePlayer) {
+            Vec3 position = this.mc.renderViewEntity.getPosition(1.0F);
+            this.lastReach = this.mc.objectMouseOver.hitVec.distanceTo(position);
+            this.lastAttackMillis = System.currentTimeMillis();
+        }
+    }
 
-   @Override
-   public String getDynamicText() {
-      return super.getDynamicText() == null ? null : this.createStringBuilder(this.doubleValue);
-   }
+    @Override
+    public void reset() {
+        this.lastReach = 0.0;
+    }
 
-   @Override
-   public void createFormatOptions() {
-      this.showTrailingZeros = new Setting(this, "Show trailing zeros")
-         .setDescription("Show all trailing zeros.")
-         .withHierarchyParents(this.formatOptions)
-         .changeValue(true)
-         .setCustomizationLevel(SettingsLevel.MEDIUM)
-         .setCondition(() -> this.decimals.getIntValue() != 0);
-      this.decimals = new Setting(this, "Decimals")
-         .setDescription("Change how many decimals the mod should display.")
-         .withHierarchyParents(this.formatOptions)
-         .changeValue(1)
-         .setRange(0, 16)
-         .setCustomizationLevel(SettingsLevel.MEDIUM)
-         .setOnUpdate(
-            obj -> this.decimalsValue = new DecimalFormat(
-               (Integer)obj == 0 ? "#" : "#." + String.join("", Collections.nCopies(Integer.parseInt(obj.toString()), "#"))
-            )
-         );
-      super.createFormatOptions();
-   }
+    public String formatReach(double d) {
+        return this.showTrailingZeros.getBooleanValue() ? String.format("%." + this.decimals.getValue() + "f", d) : this.decimalsValue.format(d);
+    }
 }

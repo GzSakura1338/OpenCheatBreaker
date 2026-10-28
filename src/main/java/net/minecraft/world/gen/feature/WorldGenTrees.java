@@ -2,197 +2,172 @@ package net.minecraft.world.gen.feature;
 
 import java.util.Random;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockCocoa;
-import net.minecraft.block.BlockLeaves;
-import net.minecraft.block.BlockOldLeaf;
-import net.minecraft.block.BlockOldLog;
-import net.minecraft.block.BlockPlanks.EnumType;
-import net.minecraft.block.BlockVine;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.BlockPos.MutableBlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
+import net.minecraft.util.Direction;
 import net.minecraft.world.World;
 
 public class WorldGenTrees extends WorldGenAbstractTree {
-   public static IBlockState LOG = Blocks.log.getDefaultState().withProperty(BlockOldLog.VARIANT, EnumType.OAK);
-   public static IBlockState LEAVES = Blocks.leaves
-      .getDefaultState()
-      .withProperty(BlockOldLeaf.VARIANT, EnumType.OAK)
-      .withProperty(BlockLeaves.CHECK_DECAY, false);
-   public int minTreeHeight;
-   public IBlockState metaWood;
-   public IBlockState metaLeaves;
-   public boolean vinesGrow;
+    public int minTreeHeight;
+    public int metaWood;
+    public int metaLeaves;
+    public boolean vinesGrow;
 
-   public WorldGenTrees(boolean flag) {
-      this(flag, 4, LOG, LEAVES, false);
-   }
+    public WorldGenTrees(boolean flag) {
+        this(flag, 4, 0, 0, false);
+    }
 
-   public WorldGenTrees(boolean flag, int n, IBlockState blockState, IBlockState blockState2, boolean flag2) {
-      super(flag);
-      this.minTreeHeight = n;
-      this.metaWood = blockState;
-      this.metaLeaves = blockState2;
-      this.vinesGrow = flag2;
-   }
+    public WorldGenTrees(boolean flag, int n, int n2, int n3, boolean flag2) {
+        super(flag);
+        this.minTreeHeight = n;
+        this.metaWood = n2;
+        this.metaLeaves = n3;
+        this.vinesGrow = flag2;
+    }
 
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      int n = rand.nextInt(3) + this.minTreeHeight;
-      boolean flag = true;
-      if (position.getY() >= 1 && position.getY() + n + 1 <= 256) {
-         for (int i = position.getY(); i <= position.getY() + 1 + n; i++) {
-            byte b = 1;
-            if (i == position.getY()) {
-               b = 0;
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        int n4 = random.nextInt(3) + this.minTreeHeight;
+        boolean flag = true;
+        if (n2 >= 1 && n2 + n4 + 1 <= 256) {
+            for (int i = n2; i <= n2 + 1 + n4; i++) {
+                byte b = 1;
+                if (i == n2) {
+                    b = 0;
+                }
+
+                if (i >= n2 + 1 + n4 - 2) {
+                    b = 2;
+                }
+
+                for (int j = n - b; j <= n + b && flag; j++) {
+                    for (int k = n3 - b; k <= n3 + b && flag; k++) {
+                        if (i >= 0 && i < 256) {
+                            Block block = world.getBlock(j, i, k);
+                            if (!this.isBlockReplaceable(block)) {
+                                flag = false;
+                            }
+                        } else {
+                            flag = false;
+                        }
+                    }
+                }
             }
 
-            if (i >= position.getY() + 1 + n - 2) {
-               b = 2;
+            if (!flag) {
+                return false;
             }
 
-            MutableBlockPos mutableBlockPos = new MutableBlockPos();
+            Block block = world.getBlock(n, n2 - 1, n3);
+            if ((block == Blocks.grass || block == Blocks.dirt || block == Blocks.farmland) && n2 < 256 - n4 - 1) {
+                this.setBlockAndNotifyAdequately(world, n, n2 - 1, n3, Blocks.dirt);
+                byte b = 3;
+                byte b2 = 0;
 
-            for (int j = position.getX() - b; j <= position.getX() + b && flag; j++) {
-               for (int k = position.getZ() - b; k <= position.getZ() + b && flag; k++) {
-                  if (i < 0 || i >= 256) {
-                     flag = false;
-                  } else if (!this.isBlockReplaceable(worldIn.getBlockState(mutableBlockPos.set(j, i, k)).getBlock())) {
-                     flag = false;
-                  }
-               }
+                for (int i = n2 - b + n4; i <= n2 + n4; i++) {
+                    int n5 = i - (n2 + n4);
+                    int n6 = b2 + 1 - n5 / 2;
+
+                    for (int j = n - n6; j <= n + n6; j++) {
+                        int n7 = j - n;
+
+                        for (int k = n3 - n6; k <= n3 + n6; k++) {
+                            int n8 = k - n3;
+                            if (Math.abs(n7) != n6 || Math.abs(n8) != n6 || random.nextInt(2) != 0 && n5 != 0) {
+                                Block block2 = world.getBlock(j, i, k);
+                                if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves) {
+                                    this.setBlockAndNotifyAdequately(world, j, i, k, Blocks.leaves, this.metaLeaves);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                for (int i = 0; i < n4; i++) {
+                    Block block2 = world.getBlock(n, n2 + i, n3);
+                    if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves) {
+                        this.setBlockAndNotifyAdequately(world, n, n2 + i, n3, Blocks.log, this.metaWood);
+                        if (this.vinesGrow && i > 0) {
+                            if (random.nextInt(3) > 0 && world.isAirBlock(n - 1, n2 + i, n3)) {
+                                this.setBlockAndNotifyAdequately(world, n - 1, n2 + i, n3, Blocks.vine, 8);
+                            }
+
+                            if (random.nextInt(3) > 0 && world.isAirBlock(n + 1, n2 + i, n3)) {
+                                this.setBlockAndNotifyAdequately(world, n + 1, n2 + i, n3, Blocks.vine, 2);
+                            }
+
+                            if (random.nextInt(3) > 0 && world.isAirBlock(n, n2 + i, n3 - 1)) {
+                                this.setBlockAndNotifyAdequately(world, n, n2 + i, n3 - 1, Blocks.vine, 1);
+                            }
+
+                            if (random.nextInt(3) > 0 && world.isAirBlock(n, n2 + i, n3 + 1)) {
+                                this.setBlockAndNotifyAdequately(world, n, n2 + i, n3 + 1, Blocks.vine, 4);
+                            }
+                        }
+                    }
+                }
+
+                if (this.vinesGrow) {
+                    for (int i = n2 - 3 + n4; i <= n2 + n4; i++) {
+                        int n5 = i - (n2 + n4);
+                        int n6 = 2 - n5 / 2;
+
+                        for (int j = n - n6; j <= n + n6; j++) {
+                            for (int k = n3 - n6; k <= n3 + n6; k++) {
+                                if (world.getBlock(j, i, k).getMaterial() == Material.leaves) {
+                                    if (random.nextInt(4) == 0 && world.getBlock(j - 1, i, k).getMaterial() == Material.air) {
+                                        this.growVines(world, j - 1, i, k, 8);
+                                    }
+
+                                    if (random.nextInt(4) == 0 && world.getBlock(j + 1, i, k).getMaterial() == Material.air) {
+                                        this.growVines(world, j + 1, i, k, 2);
+                                    }
+
+                                    if (random.nextInt(4) == 0 && world.getBlock(j, i, k - 1).getMaterial() == Material.air) {
+                                        this.growVines(world, j, i, k - 1, 1);
+                                    }
+
+                                    if (random.nextInt(4) == 0 && world.getBlock(j, i, k + 1).getMaterial() == Material.air) {
+                                        this.growVines(world, j, i, k + 1, 4);
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (random.nextInt(5) == 0 && n4 > 5) {
+                        for (int i = 0; i < 2; i++) {
+                            for (int j = 0; j < 4; j++) {
+                                if (random.nextInt(4 - i) == 0) {
+                                    int nextInt = random.nextInt(3);
+                                    this.setBlockAndNotifyAdequately(
+                                        world,
+                                        n + Direction.offsetX[Direction.rotateOpposite[j]],
+                                        n2 + n4 - 5 + i,
+                                        n3 + Direction.offsetZ[Direction.rotateOpposite[j]],
+                                        Blocks.cocoa,
+                                        nextInt << 2 | j
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return true;
+            } else {
+                return false;
             }
-         }
-
-         if (!flag) {
+        } else {
             return false;
-         }
+        }
+    }
 
-         Block block = worldIn.getBlockState(position.down()).getBlock();
-         if ((block == Blocks.grass || block == Blocks.dirt || block == Blocks.farmland) && position.getY() < 256 - n - 1) {
-            this.setDirt(worldIn, position.down());
-            byte b = 3;
-            byte b2 = 0;
+    public void growVines(World world, int n, int n2, int n3, int n4) {
+        this.setBlockAndNotifyAdequately(world, n, n2, n3, Blocks.vine, n4);
 
-            for (int i = position.getY() - b + n; i <= position.getY() + n; i++) {
-               int n2 = i - (position.getY() + n);
-               int n3 = b2 + 1 - n2 / 2;
-
-               for (int j = position.getX() - n3; j <= position.getX() + n3; j++) {
-                  int n4 = j - position.getX();
-
-                  for (int k = position.getZ() - n3; k <= position.getZ() + n3; k++) {
-                     int n5 = k - position.getZ();
-                     if (Math.abs(n4) != n3 || Math.abs(n5) != n3 || rand.nextInt(2) != 0 && n2 != 0) {
-                        BlockPos blockPos = new BlockPos(j, i, k);
-                        Block block2 = worldIn.getBlockState(blockPos).getBlock();
-                        if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves || block2.getMaterial() == Material.vine) {
-                           this.setBlockAndNotifyAdequately(worldIn, blockPos, this.metaLeaves);
-                        }
-                     }
-                  }
-               }
-            }
-
-            for (int i = 0; i < n; i++) {
-               Block block2 = worldIn.getBlockState(position.up(i)).getBlock();
-               if (block2.getMaterial() == Material.air || block2.getMaterial() == Material.leaves || block2.getMaterial() == Material.vine) {
-                  this.setBlockAndNotifyAdequately(worldIn, position.up(i), this.metaWood);
-                  if (this.vinesGrow && i > 0) {
-                     if (rand.nextInt(3) > 0 && worldIn.isAirBlock(position.add(-1, i, 0))) {
-                        this.setVines(worldIn, position.add(-1, i, 0), BlockVine.EAST);
-                     }
-
-                     if (rand.nextInt(3) > 0 && worldIn.isAirBlock(position.add(1, i, 0))) {
-                        this.setVines(worldIn, position.add(1, i, 0), BlockVine.WEST);
-                     }
-
-                     if (rand.nextInt(3) > 0 && worldIn.isAirBlock(position.add(0, i, -1))) {
-                        this.setVines(worldIn, position.add(0, i, -1), BlockVine.SOUTH);
-                     }
-
-                     if (rand.nextInt(3) > 0 && worldIn.isAirBlock(position.add(0, i, 1))) {
-                        this.setVines(worldIn, position.add(0, i, 1), BlockVine.NORTH);
-                     }
-                  }
-               }
-            }
-
-            if (this.vinesGrow) {
-               for (int i = position.getY() - 3 + n; i <= position.getY() + n; i++) {
-                  int n2 = i - (position.getY() + n);
-                  int n3 = 2 - n2 / 2;
-                  MutableBlockPos mutableBlockPos = new MutableBlockPos();
-
-                  for (int j = position.getX() - n3; j <= position.getX() + n3; j++) {
-                     for (int k = position.getZ() - n3; k <= position.getZ() + n3; k++) {
-                        mutableBlockPos.set(j, i, k);
-                        if (worldIn.getBlockState(mutableBlockPos).getBlock().getMaterial() == Material.leaves) {
-                           BlockPos west = mutableBlockPos.west();
-                           BlockPos east = mutableBlockPos.east();
-                           BlockPos north = mutableBlockPos.north();
-                           BlockPos south = mutableBlockPos.south();
-                           if (rand.nextInt(4) == 0 && worldIn.getBlockState(west).getBlock().getMaterial() == Material.air) {
-                              this.generateVines(worldIn, west, BlockVine.EAST);
-                           }
-
-                           if (rand.nextInt(4) == 0 && worldIn.getBlockState(east).getBlock().getMaterial() == Material.air) {
-                              this.generateVines(worldIn, east, BlockVine.WEST);
-                           }
-
-                           if (rand.nextInt(4) == 0 && worldIn.getBlockState(north).getBlock().getMaterial() == Material.air) {
-                              this.generateVines(worldIn, north, BlockVine.SOUTH);
-                           }
-
-                           if (rand.nextInt(4) == 0 && worldIn.getBlockState(south).getBlock().getMaterial() == Material.air) {
-                              this.generateVines(worldIn, south, BlockVine.NORTH);
-                           }
-                        }
-                     }
-                  }
-               }
-
-               if (rand.nextInt(5) == 0 && n > 5) {
-                  for (int i = 0; i < 2; i++) {
-                     for (EnumFacing enumFacing : Plane.HORIZONTAL) {
-                        if (rand.nextInt(4 - i) == 0) {
-                           EnumFacing opposite = enumFacing.getOpposite();
-                           this.setCocoaBeans(worldIn, rand.nextInt(3), position.add(opposite.getFrontOffsetX(), n - 5 + i, opposite.getFrontOffsetZ()), enumFacing);
-                        }
-                     }
-                  }
-               }
-            }
-
-            return true;
-         } else {
-            return false;
-         }
-      } else {
-         return false;
-      }
-   }
-
-   public void setCocoaBeans(World world, int n, BlockPos blockPos, EnumFacing enumFacing) {
-      this.setBlockAndNotifyAdequately(world, blockPos, Blocks.cocoa.getDefaultState().withProperty(BlockCocoa.AGE, n).withProperty(BlockCocoa.FACING, enumFacing));
-   }
-
-   public void setVines(World world, BlockPos blockPos, PropertyBool propertyBool) {
-      this.setBlockAndNotifyAdequately(world, blockPos, Blocks.vine.getDefaultState().withProperty(propertyBool, true));
-   }
-
-   public void generateVines(World world, BlockPos blockPos, PropertyBool propertyBool) {
-      this.setVines(world, blockPos, propertyBool);
-      int n = 4;
-
-      for (BlockPos down = blockPos.down(); world.getBlockState(down).getBlock().getMaterial() == Material.air && n > 0; n--) {
-         this.setVines(world, down, propertyBool);
-         down = down.down();
-      }
-   }
+        for (int i = 4; world.getBlock(n, --n2, n3).getMaterial() == Material.air && i > 0; i--) {
+            this.setBlockAndNotifyAdequately(world, n, n2, n3, Blocks.vine, n4);
+        }
+    }
 }

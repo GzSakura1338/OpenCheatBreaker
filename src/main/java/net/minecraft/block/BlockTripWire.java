@@ -3,246 +3,191 @@ package net.minecraft.block;
 import java.util.List;
 import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.Direction;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockTripWire extends Block {
-   public static PropertyBool POWERED = PropertyBool.create("powered");
-   public static PropertyBool SUSPENDED = PropertyBool.create("suspended");
-   public static PropertyBool ATTACHED = PropertyBool.create("attached");
-   public static PropertyBool DISARMED = PropertyBool.create("disarmed");
-   public static PropertyBool NORTH = PropertyBool.create("north");
-   public static PropertyBool EAST = PropertyBool.create("east");
-   public static PropertyBool SOUTH = PropertyBool.create("south");
-   public static PropertyBool WEST = PropertyBool.create("west");
+    public BlockTripWire() {
+        super(Material.circuits);
+        this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.15625F, 1.0F);
+        this.setTickRandomly(true);
+    }
 
-   public BlockTripWire() {
-      super(Material.circuits);
-      this.setDefaultState(
-         this.blockState
-            .getBaseState()
-            .withProperty(POWERED, false)
-            .withProperty(SUSPENDED, false)
-            .withProperty(ATTACHED, false)
-            .withProperty(DISARMED, false)
-            .withProperty(NORTH, false)
-            .withProperty(EAST, false)
-            .withProperty(SOUTH, false)
-            .withProperty(WEST, false)
-      );
-      this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.15625F, 1.0F);
-      this.setTickRandomly(true);
-   }
+    @Override
+    public int tickRate(World worldIn) {
+        return 10;
+    }
 
-   @Override
-   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-      return state.withProperty(NORTH, isConnectedTo(worldIn, pos, state, EnumFacing.NORTH))
-         .withProperty(EAST, isConnectedTo(worldIn, pos, state, EnumFacing.EAST))
-         .withProperty(SOUTH, isConnectedTo(worldIn, pos, state, EnumFacing.SOUTH))
-         .withProperty(WEST, isConnectedTo(worldIn, pos, state, EnumFacing.WEST));
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        return null;
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      return null;
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public int getRenderBlockPass() {
+        return 1;
+    }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.TRANSLUCENT;
-   }
+    @Override
+    public int getRenderType() {
+        return 30;
+    }
 
-   @Override
-   public Item getItemDropped(IBlockState state, Random rand, int fortune) {
-      return Items.string;
-   }
+    @Override
+    public Item getItemDropped(int meta, Random random, int fortune) {
+        return Items.string;
+    }
 
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return Items.string;
-   }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        return Items.string;
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      boolean value = state.getValue(SUSPENDED);
-      boolean flag = !World.doesBlockHaveSolidTopSurface(worldIn, pos.down());
-      if (value != flag) {
-         this.dropBlockAsItem(worldIn, pos, state, 0);
-         worldIn.setBlockToAir(pos);
-      }
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        boolean flag = (blockMetadata & 2) == 2;
+        boolean flag2 = !World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z);
+        if (flag != flag2) {
+            this.dropBlockAsItem(worldIn, x, y, z, blockMetadata, 0);
+            worldIn.setBlockToAir(x, y, z);
+        }
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      boolean value = blockState.getValue(ATTACHED);
-      boolean value2 = blockState.getValue(SUSPENDED);
-      if (!value2) {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.09375F, 1.0F);
-      } else if (!value) {
-         this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
-      } else {
-         this.setBlockBounds(0.0F, 0.0625F, 0.0F, 1.0F, 0.15625F, 1.0F);
-      }
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        boolean flag = (blockMetadata & 4) == 4;
+        boolean flag2 = (blockMetadata & 2) == 2;
+        if (!flag2) {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.09375F, 1.0F);
+        } else if (!flag) {
+            this.setBlockBounds(0.0F, 0.0F, 0.0F, 1.0F, 0.5F, 1.0F);
+        } else {
+            this.setBlockBounds(0.0F, 0.0625F, 0.0F, 1.0F, 0.15625F, 1.0F);
+        }
+    }
 
-   @Override
-   public void onBlockAdded(World worldIn, BlockPos pos, IBlockState state) {
-      state = state.withProperty(SUSPENDED, !World.doesBlockHaveSolidTopSurface(worldIn, pos.down()));
-      worldIn.setBlockState(pos, state, 3);
-      this.notifyHook(worldIn, pos, state);
-   }
+    @Override
+    public void onBlockAdded(World worldIn, int x, int y, int z) {
+        int n = World.doesBlockHaveSolidTopSurface(worldIn, x, y - 1, z) ? 0 : 2;
+        worldIn.setBlockMetadataWithNotify(x, y, z, n, 3);
+        this.handleWorld(worldIn, x, y, z, n);
+    }
 
-   @Override
-   public void breakBlock(World worldIn, BlockPos pos, IBlockState state) {
-      this.notifyHook(worldIn, pos, state.withProperty(POWERED, true));
-   }
+    @Override
+    public void breakBlock(World worldIn, int x, int y, int z, Block blockBroken, int meta) {
+        this.handleWorld(worldIn, x, y, z, meta | 1);
+    }
 
-   @Override
-   public void onBlockHarvested(World worldIn, BlockPos pos, IBlockState state, EntityPlayer player) {
-      if (!worldIn.isRemote && player.getCurrentEquippedItem() != null && player.getCurrentEquippedItem().getItem() == Items.shears) {
-         worldIn.setBlockState(pos, state.withProperty(DISARMED, Boolean.TRUE), 4);
-      }
-   }
+    @Override
+    public void onBlockHarvested(World worldIn, int x, int y, int z, int meta, EntityPlayer player) {
+        if (!worldIn.isRemote && player.getCurrentEquippedItem() != null && player.getCurrentEquippedItem().getItem() == Items.shears) {
+            worldIn.setBlockMetadataWithNotify(x, y, z, meta | 8, 4);
+        }
+    }
 
-   public void notifyHook(World worldIn, BlockPos pos, IBlockState state) {
-      for (EnumFacing enumFacing : new EnumFacing[]{EnumFacing.SOUTH, EnumFacing.WEST}) {
-         for (int i = 1; i < 42; i++) {
-            BlockPos offset = pos.offset(enumFacing, i);
-            IBlockState blockState = worldIn.getBlockState(offset);
-            if (blockState.getBlock() == Blocks.tripwire_hook) {
-               if (blockState.getValue(BlockTripWireHook.FACING) == enumFacing.getOpposite()) {
-                  Blocks.tripwire_hook.update(worldIn, offset, blockState, false, true, i, state);
-               }
-               break;
+    public void handleWorld(World world, int n, int n2, int n3, int n4) {
+        for (int i = 0; i < 2; i++) {
+            for (int j = 1; j < 42; j++) {
+                int n5 = n + Direction.offsetX[i] * j;
+                int n6 = n3 + Direction.offsetZ[i] * j;
+                Block block = world.getBlock(n5, n2, n6);
+                if (block == Blocks.tripwire_hook) {
+                    int n7 = world.getBlockMetadata(n5, n2, n6) & 3;
+                    if (n7 == Direction.rotateOpposite[i]) {
+                        Blocks.tripwire_hook.handleWorld(world, n5, n2, n6, false, world.getBlockMetadata(n5, n2, n6), true, j, n4);
+                    }
+                    break;
+                }
+
+                if (block != Blocks.tripwire) {
+                    break;
+                }
             }
+        }
+    }
 
-            if (blockState.getBlock() != Blocks.tripwire) {
-               break;
+    @Override
+    public void onEntityCollidedWithBlock(World worldIn, int x, int y, int z, Entity entityIn) {
+        if (!worldIn.isRemote && (worldIn.getBlockMetadata(x, y, z) & 1) != 1) {
+            this.handleWorld(worldIn, x, y, z);
+        }
+    }
+
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        if (!worldIn.isRemote && (worldIn.getBlockMetadata(x, y, z) & 1) == 1) {
+            this.handleWorld(worldIn, x, y, z);
+        }
+    }
+
+    public void handleWorld(World world, int n, int n2, int n3) {
+        int blockMetadata = world.getBlockMetadata(n, n2, n3);
+        boolean flag = (blockMetadata & 1) == 1;
+        boolean flag2 = false;
+        List list = world.getEntitiesWithinAABBExcludingEntity(
+            null, AxisAlignedBB.getBoundingBox(n + this.minX, n2 + this.minY, n3 + this.minZ, n + this.maxX, n2 + this.maxY, n3 + this.maxZ)
+        );
+        if (!list.isEmpty()) {
+            for (Entity entity : (Iterable<Entity>)list) {
+                if (!entity.doesEntityNotTriggerPressurePlate()) {
+                    flag2 = true;
+                    break;
+                }
             }
-         }
-      }
-   }
+        }
 
-   @Override
-   public void onEntityCollidedWithBlock(World worldIn, BlockPos pos, IBlockState state, Entity entityIn) {
-      if (!worldIn.isRemote && !state.getValue(POWERED)) {
-         this.updateState(worldIn, pos);
-      }
-   }
+        if (flag2 && !flag) {
+            blockMetadata |= 1;
+        }
 
-   @Override
-   public void randomTick(World worldIn, BlockPos pos, IBlockState state, Random random) {
-   }
+        if (!flag2 && flag) {
+            blockMetadata &= -2;
+        }
 
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      if (!worldIn.isRemote && worldIn.getBlockState(pos).getValue(POWERED)) {
-         this.updateState(worldIn, pos);
-      }
-   }
+        if (flag2 != flag) {
+            world.setBlockMetadataWithNotify(n, n2, n3, blockMetadata, 3);
+            this.handleWorld(world, n, n2, n3, blockMetadata);
+        }
 
-   public void updateState(World worldIn, BlockPos pos) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      boolean value = blockState.getValue(POWERED);
-      boolean flag = false;
-      List list = worldIn.getEntitiesWithinAABBExcludingEntity(
-         (Entity)null,
-         new AxisAlignedBB(
-            pos.getX() + this.minX, pos.getY() + this.minY, pos.getZ() + this.minZ, pos.getX() + this.maxX, pos.getY() + this.maxY, pos.getZ() + this.maxZ
-         )
-      );
-      if (!list.isEmpty()) {
-         for (Entity entity : (Iterable<Entity>)list) {
-            if (!entity.doesEntityNotTriggerPressurePlate()) {
-               flag = true;
-               break;
-            }
-         }
-      }
+        if (flag2) {
+            world.scheduleBlockUpdate(n, n2, n3, this, this.tickRate(world));
+        }
+    }
 
-      if (flag != value) {
-         blockState = blockState.withProperty(POWERED, flag);
-         worldIn.setBlockState(pos, blockState, 3);
-         this.notifyHook(worldIn, pos, blockState);
-      }
-
-      if (flag) {
-         worldIn.scheduleUpdate(pos, this, this.tickRate(worldIn));
-      }
-   }
-
-   public static boolean isConnectedTo(IBlockAccess worldIn, BlockPos pos, IBlockState state, EnumFacing direction) {
-      BlockPos offset = pos.offset(direction);
-      IBlockState blockState = worldIn.getBlockState(offset);
-      Block block = blockState.getBlock();
-      if (block == Blocks.tripwire_hook) {
-         EnumFacing opposite = direction.getOpposite();
-         return blockState.getValue(BlockTripWireHook.FACING) == opposite;
-      } else if (block == Blocks.tripwire) {
-         boolean value = state.getValue(SUSPENDED);
-         boolean value2 = blockState.getValue(SUSPENDED);
-         return value == value2;
-      } else {
-         return false;
-      }
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(POWERED, (meta & 1) > 0)
-         .withProperty(SUSPENDED, (meta & 2) > 0)
-         .withProperty(ATTACHED, (meta & 4) > 0)
-         .withProperty(DISARMED, (meta & 8) > 0);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      if (state.getValue(POWERED)) {
-         n |= 1;
-      }
-
-      if (state.getValue(SUSPENDED)) {
-         n |= 2;
-      }
-
-      if (state.getValue(ATTACHED)) {
-         n |= 4;
-      }
-
-      if (state.getValue(DISARMED)) {
-         n |= 8;
-      }
-
-      return n;
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, POWERED, SUSPENDED, ATTACHED, DISARMED, NORTH, EAST, WEST, SOUTH);
-   }
+    public static boolean checkIBlockAccess(IBlockAccess blockAccess, int n, int n2, int n3, int n4, int n5) {
+        int n6 = n + Direction.offsetX[n5];
+        int n7 = n3 + Direction.offsetZ[n5];
+        Block block = blockAccess.getBlock(n6, n2, n7);
+        boolean flag = (n4 & 2) == 2;
+        if (block == Blocks.tripwire_hook) {
+            int blockMetadata = blockAccess.getBlockMetadata(n6, n2, n7);
+            int n8 = blockMetadata & 3;
+            return n8 == Direction.rotateOpposite[n5];
+        } else if (block == Blocks.tripwire) {
+            int blockMetadata = blockAccess.getBlockMetadata(n6, n2, n7);
+            boolean flag2 = (blockMetadata & 2) == 2;
+            return flag == flag2;
+        } else {
+            return false;
+        }
+    }
 }

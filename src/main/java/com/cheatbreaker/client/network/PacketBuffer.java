@@ -7,78 +7,78 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class PacketBuffer {
-   public ByteBuf byteBuf;
+    public ByteBuf byteBuf;
 
-   public void writeString(String str) {
-      byte[] bytes = str.getBytes(Charsets.UTF_8);
-      this.writeVarInt(bytes.length);
-      this.byteBuf.writeBytes(bytes);
-   }
+    public PacketBuffer(ByteBuf byteBuf) {
+        this.byteBuf = byteBuf;
+    }
 
-   public byte[] toByteArray() {
-      return this.byteBuf.array();
-   }
+    public void writeUuid(UUID uuid) {
+        this.byteBuf.writeLong(uuid.getMostSignificantBits());
+        this.byteBuf.writeLong(uuid.getLeastSignificantBits());
+    }
 
-   public void writeUuid(UUID uuid) {
-      this.byteBuf.writeLong(uuid.getMostSignificantBits());
-      this.byteBuf.writeLong(uuid.getLeastSignificantBits());
-   }
+    public byte[] toByteArray() {
+        return this.byteBuf.array();
+    }
 
-   public PacketBuffer(ByteBuf byteBuf) {
-      this.byteBuf = byteBuf;
-   }
+    public String readString() {
+        int readVarInt = this.readVarInt();
+        byte[] bytes = new byte[readVarInt];
+        this.byteBuf.readBytes(bytes);
+        return new String(bytes, Charsets.UTF_8);
+    }
 
-   public ByteBuf getByteBuf() {
-      return this.byteBuf;
-   }
+    public <T> void writeOptional(T value, Consumer<T> consumer) {
+        this.byteBuf.writeBoolean(value != null);
+        if (value != null) {
+            consumer.accept(value);
+        }
+    }
 
-   public int readVarInt() {
-      int n = 0;
-      int n2 = 0;
+    public void writeVarInt(int n) {
+        while ((n & -128) != 0) {
+            this.byteBuf.writeByte(n & 127 | 128);
+            n >>>= 7;
+        }
 
-      byte b;
-      do {
-         b = this.byteBuf.readByte();
-         n |= (b & 127) << n2++ * 7;
-         if (n2 > 5) {
-            throw new RuntimeException("VarInt too big");
-         }
-      } while ((b & 128) == 128);
+        this.byteBuf.writeByte(n);
+    }
 
-      return n;
-   }
+    public int readVarInt() {
+        int n = 0;
+        int n2 = 0;
 
-   public String readString() {
-      int readVarInt = this.readVarInt();
-      byte[] bytes = new byte[readVarInt];
-      this.byteBuf.readBytes(bytes);
-      return new String(bytes, Charsets.UTF_8);
-   }
+        byte b;
+        do {
+            b = this.byteBuf.readByte();
+            n |= (b & 127) << n2++ * 7;
+            if (n2 > 5) {
+                throw new RuntimeException("VarInt too big");
+            }
+        } while ((b & 128) == 128);
 
-   public UUID readUuid() {
-      long readLong = this.byteBuf.readLong();
-      long readLong2 = this.byteBuf.readLong();
-      return new UUID(readLong, readLong2);
-   }
+        return n;
+    }
 
-   public <T> void writeOptional(T value, Consumer<T> consumer) {
-      this.byteBuf.writeBoolean(value != null);
-      if (value != null) {
-         consumer.accept(value);
-      }
-   }
+    public ByteBuf getByteBuf() {
+        return this.byteBuf;
+    }
 
-   public void writeVarInt(int n) {
-      while ((n & -128) != 0) {
-         this.byteBuf.writeByte(n & 127 | 128);
-         n >>>= 7;
-      }
+    public <T> T readOptional(Supplier<T> supplier) {
+        boolean readBoolean = this.byteBuf.readBoolean();
+        return (T)(readBoolean ? supplier.get() : null);
+    }
 
-      this.byteBuf.writeByte(n);
-   }
+    public UUID readUuid() {
+        long readLong = this.byteBuf.readLong();
+        long readLong2 = this.byteBuf.readLong();
+        return new UUID(readLong, readLong2);
+    }
 
-   public <T> T readOptional(Supplier<T> supplier) {
-      boolean readBoolean = this.byteBuf.readBoolean();
-      return (T)(readBoolean ? supplier.get() : null);
-   }
+    public void writeString(String str) {
+        byte[] bytes = str.getBytes(Charsets.UTF_8);
+        this.writeVarInt(bytes.length);
+        this.byteBuf.writeBytes(bytes);
+    }
 }

@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel target="25">
-      <module name="OpenCheatBreaker.main" target="8" />
-      <module name="OpenCheatBreaker.test" target="8" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="25" />
   </component>
   <component name="JavacSettings">
-    <option name="ADDITIONAL_OPTIONS_STRING" value="-Xmaxerrs 100000 -nowarn" />
+    <option name="ADDITIONAL_OPTIONS_STRING" value="-proc:none -Xlint:-options -Xmaxerrs 1000" />
   </component>
 </project>

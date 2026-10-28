@@ -12,9 +12,15 @@ import com.cheatbreaker.client.ui.component.CosmeticItemComponent;
 import com.cheatbreaker.client.ui.component.IconButton;
 import com.cheatbreaker.client.ui.component.TextButton;
 import com.cheatbreaker.client.ui.component.TextField;
+import com.cheatbreaker.client.ui.screen.EmoteEntry;
+import com.cheatbreaker.client.ui.screen.MainMenuScreen;
+import com.cheatbreaker.client.ui.screen.MenuScreen;
+import com.cheatbreaker.client.ui.screen.ModsScreen;
+import com.cheatbreaker.client.ui.screen.PlayerViewer;
 import com.cheatbreaker.client.util.ClientValidator;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -25,695 +31,612 @@ import net.minecraft.util.ResourceLocation;
 import org.lwjgl.input.Keyboard;
 
 public class CosmeticsScreen extends MenuScreen {
-   public static final int CONSTANT_3 = 3;
-   public List<CosmeticItemComponent> cosmeticItems = new ArrayList<>();
-   public IconButton previousPageButton = new IconButton(4.0F, new ResourceLocation("client/icons/left.png"));
-   public IconButton nextPageButton = new IconButton(4.0F, new ResourceLocation("client/icons/right.png"));
-   public static final int CONSTANT_8 = 8;
-   public static final int CONSTANT_0 = 0;
-   public static final double CONSTANT_11_0 = 11.0;
-   public TextButton capes = new TextButton("CAPES");
-   public TextButton wings = new TextButton("WINGS");
-   public TextButton hats = new TextButton("HATS");
-   public TextButton recent = new TextButton("RECENT");
-   public static final int CONSTANT_4 = 4;
-   public static final int CONSTANT_100 = 100;
-   public TextButton emotes = new TextButton("EMOTES");
-   public static final int CONSTANT_5 = 5;
-   public static final int CONSTANT_2 = 2;
-   public static final double CONSTANT_33_0 = 33.0;
-   public TextButton back = new TextButton("BACK");
-   public TextButton claim = new TextButton("CLAIM");
-   public static final float CONSTANT_150_0 = 150.0F;
-   public int pageOffset = 0;
-   public int activeTab = 0;
-   public int selectedWheelSlot = 0;
-   public static final int CONSTANT_2_2 = 2;
-   public int emotePage = 0;
-   public int hoveredWheelSlot = -1;
-   public List<EmoteEntry> visibleEmotes = new ArrayList<>();
-   public List<EmoteEntry> filteredEmotes = new ArrayList<>();
-   public static final int CONSTANT_9 = 9;
-   public static final double CONSTANT_48_0 = 48.0;
-   public static final int CONSTANT_1 = 1;
-   public static final int ITEMS_PER_PAGE = 18;
-   public TextField searchCapes = new TextField(CheatBreaker.getInstance().getFontManager().playRegular14, "Search Capes...", 805306367, 1879048191);
+    public List<CosmeticItemComponent> cosmeticItems = new ArrayList<CosmeticItemComponent>();
+    public static final int ITEMS_PER_PAGE = 18;
+    public IconButton previousPageButton = new IconButton(4.0f, new ResourceLocation("client/icons/left.png"));
+    public static final int CONSTANT_100 = 100;
+    public static final int CONSTANT_3 = 3;
+    public static final double CONSTANT_33_0 = 33.0;
+    public static final int CONSTANT_8 = 8;
+    public IconButton nextPageButton = new IconButton(4.0f, new ResourceLocation("client/icons/right.png"));
+    public TextButton capes = new TextButton("CAPES");
+    public static final float CONSTANT_150_0 = 150.0f;
+    public TextButton wings = new TextButton("WINGS");
+    public TextButton hats = new TextButton("HATS");
+    public static final int CONSTANT_2 = 2;
+    public TextButton recent = new TextButton("RECENT");
+    public TextButton emotes = new TextButton("EMOTES");
+    public TextButton back = new TextButton("BACK");
+    public static final int CONSTANT_0 = 0;
+    public static final int CONSTANT_9 = 9;
+    public static final double CONSTANT_11_0 = 11.0;
+    public TextButton claim = new TextButton("CLAIM");
+    public static final double CONSTANT_48_0 = 48.0;
+    public int pageOffset = 0;
+    public int activeTab = 0;
+    public static final int CONSTANT_4 = 4;
+    public int selectedWheelSlot = 0;
+    public int emotePage = 0;
+    public int hoveredWheelSlot = -1;
+    public List<EmoteEntry> visibleEmotes = new ArrayList<EmoteEntry>();
+    public static final int CONSTANT_5 = 5;
+    public static final int CONSTANT_1 = 1;
+    public List<EmoteEntry> filteredEmotes = new ArrayList<EmoteEntry>();
+    public static final int CONSTANT_2_2 = 2;
+    public TextField searchCapes;
 
-   public List<Integer> getEmoteWheelActions() {
-      ArrayList listValue = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActions.getListValue();
+    public CosmeticsScreen() {
+        this.searchCapes = new TextField(CheatBreaker.getInstance().getFontManager().playRegular14, "Search Capes...", 0x2FFFFFFF, 0x6FFFFFFF);
+        this.searchCapes.setMaxStringLength(256);
+        this.layoutCosmetics(this.getCosmeticsOfType("cape"));
+        this.refreshEmotes();
+    }
 
-      while (listValue.size() < 8) {
-         listValue.add(-1);
-      }
+    public void layoutCosmetics(List<Cosmetic> list) {
+        Set<String> set = RecentCosmeticsManager.getFavorites();
+        ArrayList<Cosmetic> arrayList = new ArrayList<Cosmetic>(list);
+        Comparator<Cosmetic> comparator = Comparator.comparing(cosmetic -> !cosmetic.isEquipped());
+        if (this.activeTab != 3) {
+            comparator = comparator.thenComparing(cosmetic -> !set.contains(RecentCosmeticsManager.getKey(cosmetic)));
+        }
+        arrayList.sort(comparator);
+        this.cosmeticItems.clear();
+        for (Cosmetic cosmetic2 : arrayList) {
+            CosmeticItemComponent cosmeticItemComponent = new CosmeticItemComponent(cosmetic2, 1.0f);
+            cosmeticItemComponent.setHovered(set.contains(RecentCosmeticsManager.getKey(cosmetic2)));
+            this.cosmeticItems.add(cosmeticItemComponent);
+        }
+    }
 
-      return listValue;
-   }
+    public List<Integer> getEmoteWheelKeybinds() {
+        ArrayList arrayList = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActionKeybinds.getListValue();
+        while (arrayList.size() < 8) {
+            arrayList.add(-1);
+        }
+        return arrayList;
+    }
 
-   public void refreshEmotes() {
-      EmoteManager emoteManager = CheatBreaker.getInstance().getEmoteManager();
-      ArrayList list = new ArrayList();
+    public void setWheelKeybind(int n, int n2) {
+        Setting setting = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActionKeybinds;
+        List<Integer> list = this.getEmoteWheelKeybinds();
+        list.set(n, n2);
+        setting.changeValue(list);
+    }
 
-      for (Object obj : EmoteManager.emoteClassIds.keySet()) {
-         list.add((Integer)obj);
-      }
+    public List<Cosmetic> getCurrentCosmetics() {
+        if (this.activeTab == 3) {
+            return this.getAllCosmetics();
+        }
+        if (this.activeTab == 4) {
+            return this.getCosmeticsOfType("hat");
+        }
+        return this.getCosmeticsOfType(this.activeTab == 1 ? "dragon_wings" : "cape");
+    }
 
-      list.addAll(EmoteManager.resourceEmoteIds.keySet());
-      this.visibleEmotes.clear();
+    public String getKeyLabel(int n) {
+        if (n < 0) {
+            return "-";
+        }
+        String string = Keyboard.getKeyName((int)n);
+        return string != null ? string : "?";
+    }
 
-      for (int n : (Iterable<Integer>)list) {
-         AbstractEmote createEmote = emoteManager.createEmote(n);
-         if (createEmote != null && emoteManager.getOwnedEmotes().contains(n)) {
-            this.visibleEmotes.add(new EmoteEntry(n, createEmote));
-         }
-      }
+    public int getColumnX(int n) {
+        if (this.activeTab == 3) {
+            return -235 + n * 102;
+        }
+        return n == 0 ? -235 : -75;
+    }
 
-      this.visibleEmotes.sort(Comparator.comparing(emoteEntry -> emoteEntry.abstractEmote.getText(), String.CASE_INSENSITIVE_ORDER));
-      this.filterEmotes(this.activeTab == 2 ? this.searchCapes.getText() : "");
-      int max = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18);
-      this.emotePage = Math.min(this.emotePage, max - 1);
-   }
-
-   public void drawSectionTitle(String str, int n, boolean flag) {
-      float f = Math.round(this.getScaledWidth() / 2.0F) + this.getColumnX(n) + this.getItemWidth() / 2.0F;
-      float round = Math.round(this.getScaledHeight() / 2.0F);
-      CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString(str, f, round - 91.0F, -1426063361);
-      if (flag) {
-         CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString("None", f, round - 70.0F, 1728053247);
-      }
-   }
-
-   public boolean hasItems() {
-      return this.activeTab == 2 ? !this.visibleEmotes.isEmpty() : !this.getCurrentCosmetics().isEmpty();
-   }
-
-   public List<Integer> getEmoteWheelKeybinds() {
-      ArrayList listValue = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActionKeybinds.getListValue();
-
-      while (listValue.size() < 8) {
-         listValue.add(-1);
-      }
-
-      return listValue;
-   }
-
-   public String getKeyLabel(int n) {
-      if (n < 0) {
-         return "-";
-      }
-
-      String keyName = Keyboard.getKeyName(n);
-      return keyName != null ? keyName : "?";
-   }
-
-   public void layoutCosmetics(List<Cosmetic> list) {
-      Set favorites = RecentCosmeticsManager.getFavorites();
-      ArrayList list2 = new ArrayList(list);
-      Comparator comparing = Comparator.comparing((Cosmetic cosmetic) -> !cosmetic.isEquipped());
-      if (this.activeTab != 3) {
-         comparing = comparing.thenComparing(obj -> !favorites.contains(RecentCosmeticsManager.getKey((Cosmetic)obj)));
-      }
-
-      list2.sort(comparing);
-      this.cosmeticItems.clear();
-
-      for (Cosmetic cosmetic : (Iterable<Cosmetic>)list2) {
-         CosmeticItemComponent cosmeticItemComponent = new CosmeticItemComponent(cosmetic, 1.0F);
-         cosmeticItemComponent.setFlag(favorites.contains(RecentCosmeticsManager.getKey(cosmetic)));
-         this.cosmeticItems.add(cosmeticItemComponent);
-      }
-   }
-
-   public List<Cosmetic> getSearchResults() {
-      return this.filterCosmetics(this.searchCapes.getText());
-   }
-
-   @Override
-   public void drawScreenScaled(float f, float f2) {
-      if (Minecraft.getMinecraft().theWorld == null) {
-         super.drawScreenScaled(f, f2);
-      }
-
-      if (!CheatBreaker.getInstance().isWebsocketConnected()) {
-         ClientValidator.process(this.getScaledWidth() / 2.0F, this.getScaledHeight() / 2.0F - 10.0F);
-         this.back.setBounds(this.getScaledWidth() / 2.0F - 30.0F, this.getScaledHeight() / 2.0F + 16.0F, 60.0F, 12.0F);
-         this.back.renderAndTestHover(f, f2, true);
-      } else {
-         float round = Math.round(this.getScaledWidth() / 2.0F);
-         float round2 = Math.round(this.getScaledHeight() / 2.0F);
-         RenderUtils.drawRoundedRectFilledPrecise(round - 250.0F, round2 - 95.0F, round + 85.0F, round2 + 110.0F, 3.0, 1660944384);
-         RenderUtils.drawRoundedRectFilledPrecise(round + 95.0F, round2 - 95.0F, round + 250.0F, round2 + 110.0F, 3.0, 1660944384);
-         RenderUtils.drawRoundedRectFilledPrecise(round - 235.0F, round2 + 75.0F, round + 70.0F, round2 + 76.0F, 0.0, 1358296565);
-         this.back.setBounds(this.getScaledWidth() / 2.0F - 30.0F, this.getScaledHeight() / 2.0F + 125.0F, 60.0F, 12.0F);
-         this.back.renderAndTestHover(f, f2, true);
-         this.capes.setFlag2(this.activeTab == 0);
-         this.capes.setBounds(round - 250.0F, round2 - 109.0F, 50.0F, 12.0F);
-         this.capes.renderAndTestHover(f, f2, true);
-         this.wings.setFlag2(this.activeTab == 1);
-         this.wings.setBounds(round - 195.0F, round2 - 109.0F, 50.0F, 12.0F);
-         this.wings.renderAndTestHover(f, f2, true);
-         this.hats.setFlag2(this.activeTab == 4);
-         this.hats.setBounds(round - 140.0F, round2 - 109.0F, 50.0F, 12.0F);
-         this.hats.renderAndTestHover(f, f2, true);
-         this.recent.setFlag2(this.activeTab == 3);
-         this.recent.setBounds(round - 30.0F, round2 - 109.0F, 50.0F, 12.0F);
-         this.recent.renderAndTestHover(f, f2, true);
-         this.emotes.setFlag2(this.activeTab == 2);
-         this.emotes.setBounds(round - 85.0F, round2 - 109.0F, 50.0F, 12.0F);
-         this.emotes.renderAndTestHover(f, f2, true);
-         if (this.activeTab == 2) {
-            this.drawEmotesTab(f, f2, round, round2);
-            return;
-         }
-
-         float f3 = round + this.width - 50.0F - f;
-         float f4 = round2 + 30.0F - f2;
-         PlayerViewer.render(round + 170.0F, round2 + 10.0F, f3, f4, f, f2 + 50.0F);
-         CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("Hint: Click to drag.", round + 170.0F, round2 + 72.0F, -419430401);
-         if (this.cosmeticItems.isEmpty()) {
-            String str;
-            if (this.hasItems()) {
-               str = "There are no cosmetics matching your query.";
-            } else if (this.activeTab == 3) {
-               str = "Capes, wings and hats you equip will show up here.";
-            } else {
-               str = "Join our Discord for giveaways on emotes and other cosmetics!";
+    public void drawEmotesTab(float f, float f2, float f3, float f4) {
+        int n;
+        Object object;
+        float f5;
+        int n2;
+        CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("All Emotes", f3 - 82.0f, f4 - 88.0f, -1);
+        float f6 = f3 - 245.0f;
+        float f7 = f3 - 80.0f;
+        float f8 = f4 - 75.0f;
+        float f9 = 16.0f;
+        int n3 = this.emotePage * 18;
+        for (n2 = 0; n2 < 2; ++n2) {
+            f5 = n2 == 0 ? f6 : f7;
+            for (int i = 0; i < 9; ++i) {
+                boolean bl;
+                int n4 = n3 + n2 * 9 + i;
+                if (n4 >= this.filteredEmotes.size()) continue;
+                object = this.filteredEmotes.get(n4);
+                float f10 = f8 + (float)i * f9;
+                boolean bl2 = bl = f >= f5 && f <= f5 + 150.0f && f2 >= f10 && f2 <= f10 + f9;
+                if (bl) {
+                    Gui.drawRect(f5, f10, f5 + 150.0f, f10 + f9, 0x40FFFFFF);
+                }
+                RenderUtils.applyColor(-1);
+                RenderUtils.drawSquareTextureViaRenderEngine(((EmoteEntry)object).abstractEmote.getClientEmotes(), 7.0f, f5 + 2.0f, f10 + 1.0f);
+                CheatBreaker.getInstance().getFontManager().playRegular16.drawString(((EmoteEntry)object).name, f5 + 22.0f, f10 + 3.0f, -1);
             }
-
-            CheatBreaker.getInstance()
-               .getFontManager()
-               .playRegular18
-               .drawCenteredString(str, this.getScaledWidth() / 2.0F - 75.0F, this.getScaledHeight() / 2.0F + 4.0F, -1);
-         }
-
-         int n = 0;
-         float[] floats = new float[3];
-
-         for (CosmeticItemComponent cosmeticItemComponent : this.cosmeticItems) {
-            if (this.isOnCurrentPage(n++)) {
-               int column = this.getColumn(cosmeticItemComponent, n - 1 - this.pageOffset * 5);
-               int n2 = (int)this.getScaledWidth() / 2 + this.getColumnX(column);
-               cosmeticItemComponent.setBounds(n2, (int)(this.getScaledHeight() / 2.0F - 80.0F + floats[column]), this.getItemWidth(), cosmeticItemComponent.getHeight());
-               cosmeticItemComponent.render((int)f, (int)f2, 1.0F);
-               floats[column] += cosmeticItemComponent.getHeight();
-            }
-         }
-
-         if (this.activeTab == 3 && !this.cosmeticItems.isEmpty()) {
-            this.drawSectionTitle("Recent Capes", 0, floats[0] == 0.0F);
-            this.drawSectionTitle("Recent Wings", 1, floats[1] == 0.0F);
-            this.drawSectionTitle("Recent Hats", 2, floats[2] == 0.0F);
-         }
-
-         if (this.cosmeticItems.size() > 5 && this.activeTab != 3) {
-            this.previousPageButton.setBounds(this.getScaledWidth() / 2.0F - 30.0F, this.getScaledHeight() / 2.0F + 84.0F, 15.0F, 15.0F);
-            this.nextPageButton.setBounds(this.getScaledWidth() / 2.0F + 25.0F, this.getScaledHeight() / 2.0F + 84.0F, 15.0F, 15.0F);
-            this.drawPageIndicator(this.pageOffset / 2, (this.cosmeticItems.size() + 9) / 10, this.getScaledWidth() / 2.0F, this.getScaledHeight() / 2.0F);
+        }
+        if (this.filteredEmotes.isEmpty()) {
+            CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString(this.visibleEmotes.isEmpty() ? "Join our Discord for giveaways on emotes and other cosmetics!" : "There are no emotes matching your query.", f3 - 82.0f, f4 - 20.0f, -1);
+        }
+        if ((n2 = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18)) > 1) {
+            this.previousPageButton.setBounds(f3 - 30.0f, f4 + 84.0f, 15.0f, 15.0f);
+            this.nextPageButton.setBounds(f3 + 25.0f, f4 + 84.0f, 15.0f, 15.0f);
+            this.drawPageIndicator(this.emotePage, n2, f3, f4);
             this.previousPageButton.renderAndTestHover(f, f2, true);
             this.nextPageButton.renderAndTestHover(f, f2, true);
-            this.previousPageButton.setEnabled(this.pageOffset != 0);
-            this.nextPageButton.setEnabled(this.pageOffset + 2 < this.cosmeticItems.size() / 5.0F);
-         }
-
-         this.searchCapes.setBounds(this.getScaledWidth() / 2.0F - 235.0F, this.getScaledHeight() / 2.0F + 84.0F, 140.0F, 15.0F);
-         this.searchCapes.render(f, f2, true);
-      }
-   }
-
-   public List<Cosmetic> filterCosmetics(String str) {
-      String str2 = str == null ? "" : str.toLowerCase().replace(" ", "_");
-      return this.getCurrentCosmetics().stream().filter(cosmetic -> str2.isEmpty() || cosmetic.getName().toLowerCase().contains(str2)).collect(Collectors.toList());
-   }
-
-   public int getItemWidth() {
-      return this.activeTab == 3 ? 100 : 152;
-   }
-
-   public void drawPageIndicator(int n, int n2, float f, float f2) {
-      CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString(n + 1 + " / " + n2, f + 5.0F, f2 + 86.5F, -1);
-   }
-
-   public AbstractEmote getEmote(int n) {
-      EmoteManager emoteManager = CheatBreaker.getInstance().getEmoteManager();
-      return n >= 0 && emoteManager.getOwnedEmotes().contains(n) ? emoteManager.createEmote(n) : null;
-   }
-
-   @Override
-   public void mouseClickedScaled(float f, float f2, int n) {
-      if (Minecraft.getMinecraft().theWorld == null) {
-         super.mouseClickedScaled(f, f2, n);
-      }
-
-      if (!this.searchCapes.containsPoint(f, f2) && this.searchCapes.isFocused()) {
-         this.searchCapes.setFocused(false);
-      } else if (this.searchCapes.containsPoint(f, f2) && !this.searchCapes.isFocused()) {
-         this.searchCapes.setFocused(true);
-      }
-
-      if (this.wings.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.activeTab = 1;
-         this.searchCapes.setPlaceholder("Search Wings...");
-         this.searchCapes.setText("");
-         this.pageOffset = 0;
-         this.layoutCosmetics(this.getCosmeticsOfType("dragon_wings"));
-      }
-
-      if (this.hats.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.activeTab = 4;
-         this.searchCapes.setPlaceholder("Search Hats...");
-         this.searchCapes.setText("");
-         this.pageOffset = 0;
-         this.layoutCosmetics(this.getCosmeticsOfType("hat"));
-      }
-
-      if (this.capes.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.activeTab = 0;
-         this.searchCapes.setPlaceholder("Search Capes...");
-         this.searchCapes.setText("");
-         this.pageOffset = 0;
-         this.layoutCosmetics(this.getCosmeticsOfType("cape"));
-      }
-
-      if (this.recent.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.activeTab = 3;
-         this.searchCapes.setPlaceholder("Search Recent...");
-         this.searchCapes.setText("");
-         this.pageOffset = 0;
-         this.layoutCosmetics(this.getSearchResults());
-      }
-
-      if (this.emotes.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.activeTab = 2;
-         this.searchCapes.setPlaceholder("Search Emotes...");
-         this.searchCapes.setText("");
-         this.emotePage = 0;
-         this.filterEmotes("");
-      }
-
-      if (this.claim.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         this.mc2.displayGuiScreen(new MainMenuScreen());
-      } else if (this.back.containsPoint(f, f2)) {
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-         if (Minecraft.getMinecraft().theWorld != null) {
-            this.mc2.displayGuiScreen(new ModsScreen());
-         } else {
-            this.mc2.displayGuiScreen(new MainMenuScreen());
-         }
-      } else if (this.activeTab == 2) {
-         this.drawCosmeticsGrid(f, f2, n);
-      } else {
-         if (this.cosmeticItems.size() > 5 && this.activeTab != 3) {
-            if (this.pageOffset > 0 && this.previousPageButton.containsPoint(f, f2)) {
-               this.pageOffset -= 2;
-               Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-            } else if (this.nextPageButton.containsPoint(f, f2) && this.pageOffset + 2 < this.cosmeticItems.size() / 5.0F) {
-               this.pageOffset += 2;
-               Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
+            this.previousPageButton.setEnabled(this.emotePage > 0);
+            this.nextPageButton.setEnabled(this.emotePage < n2 - 1);
+        }
+        this.searchCapes.setBounds(f3 - 235.0f, f4 + 84.0f, 140.0f, 15.0f);
+        this.searchCapes.render(f, f2, true);
+        f5 = f3 + 172.0f;
+        float f11 = f4 - 5.0f;
+        CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("Quick Actions Wheel", f5, f4 - 88.0f, -1);
+        List<Integer> list = this.getEmoteWheelActions();
+        object = this.getEmoteWheelKeybinds();
+        RenderUtils.applyColor(Integer.MIN_VALUE);
+        RenderUtils.drawProgressRing(f5, f11, 50.0, 48.0, 100.0, 100, 100.0);
+        RenderUtils.drawProgressRing(f5, f11, 11.0, 9.0, 100.0, 100, 100.0);
+        for (n = 0; n < 8; ++n) {
+            String string;
+            float f12 = 22.5f + (float)n * 45.0f;
+            RenderUtils.applyColor(n == this.selectedWheelSlot ? CheatBreaker.getInstance().getKeybindSettings().emoteRadialColor.getColorValue() | 0xFF000000 : 0x4D4D4D4D);
+            RenderUtils.drawArc(f5, f11, 48.0, 11.0, 360.0 - (double)f12 + 90.0, 360.0 - (double)f12 + 90.0 + 45.0);
+            double d = Math.toRadians((double)f12 - 90.0 - 22.5);
+            double d2 = (double)f5 + 33.0 * Math.cos(d);
+            double d3 = (double)f11 + 33.0 * Math.sin(d);
+            int n5 = list.get(n);
+            AbstractEmote abstractEmote = this.getEmote(n5);
+            if (abstractEmote != null) {
+                RenderUtils.applyColor(-1);
+                RenderUtils.drawSquareTextureViaRenderEngine(abstractEmote.getClientEmotes(), 7.0f, (float)d2 - 7.0f, (float)d3 - 7.0f);
             }
-         }
+            boolean bl = this.hoveredWheelSlot == n;
+            String string2 = string = bl ? "..." : this.getKeyLabel((Integer)((List)object).get(n));
+            int n6 = bl ? -171 : ((Integer)((List)object).get(n) >= 0 ? -5592406 : -11184811);
+            CheatBreaker.getInstance().getFontManager().playRegular12.drawCenteredString(string, (float)d2, (float)d3 + 9.0f, n6);
+        }
+        n = list.get(this.selectedWheelSlot);
+        AbstractEmote abstractEmote = this.getEmote(n);
+        String string = "Slot " + (this.selectedWheelSlot + 1) + ": " + (abstractEmote != null ? abstractEmote.getDisplayName() : "Empty");
+        CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString(string, f5, f11 + 48.0f + 20.0f, -1);
+        CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString("Click a slot, then click an emote to assign it.", f5, f11 + 48.0f + 34.0f, -1426063361);
+        CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString("Right click a slot to clear it.", f5, f11 + 48.0f + 46.0f, -1426063361);
+    }
 
-         int n2 = 0;
-         CosmeticItemComponent cosmeticItemComponent = null;
-         boolean flag = false;
+    public int getColumn(CosmeticItemComponent cosmeticItemComponent, int n) {
+        if (this.activeTab == 3) {
+            CosmeticType cosmeticType = cosmeticItemComponent.getCosmetic().getCosmeticType();
+            return cosmeticType == CosmeticType.CAPE ? 0 : (cosmeticType == CosmeticType.WINGS ? 1 : 2);
+        }
+        return n < 5 ? 0 : 1;
+    }
 
-         for (CosmeticItemComponent cosmeticItemComponent2 : this.cosmeticItems) {
-            if (this.isOnCurrentPage(n2++)) {
-               if (n == 1) {
-                  if (this.isOver(cosmeticItemComponent2, f, f2)) {
-                     cosmeticItemComponent = cosmeticItemComponent2;
-                  }
-               } else {
-                  if (this.isOver(cosmeticItemComponent2, f, f2)) {
-                     flag = true;
-                  }
+    public void drawSectionTitle(String string, int n, boolean bl) {
+        float f = (float)(Math.round(this.getScaledWidth() / 2.0f) + this.getColumnX(n)) + (float)this.getItemWidth() / 2.0f;
+        float f2 = Math.round(this.getScaledHeight() / 2.0f);
+        CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString(string, f, f2 - 91.0f, -1426063361);
+        if (bl) {
+            CheatBreaker.getInstance().getFontManager().playRegular14.drawCenteredString("None", f, f2 - 70.0f, 0x66FFFFFF);
+        }
+    }
 
-                  cosmeticItemComponent2.mouseClicked((int)f, (int)f2, n);
-               }
+    public void drawCosmeticsGrid(float f, float f2, int n) {
+        double d;
+        int n2;
+        float f3;
+        float f4 = Math.round(this.getScaledWidth() / 2.0f);
+        float f5 = Math.round(this.getScaledHeight() / 2.0f);
+        float f6 = f4 - 245.0f;
+        float f7 = f4 - 80.0f;
+        float f8 = f5 - 75.0f;
+        float f9 = 16.0f;
+        int n3 = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18);
+        if (this.emotePage > 0 && this.previousPageButton.containsPoint(f, f2)) {
+            --this.emotePage;
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            return;
+        }
+        if (this.emotePage < n3 - 1 && this.nextPageButton.containsPoint(f, f2)) {
+            ++this.emotePage;
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            return;
+        }
+        int n4 = this.emotePage * 18;
+        for (int i = 0; i < 2; ++i) {
+            f3 = i == 0 ? f6 : f7;
+            for (n2 = 0; n2 < 9; ++n2) {
+                int n5 = n4 + i * 9 + n2;
+                if (n5 >= this.filteredEmotes.size()) continue;
+                float f10 = f8 + (float)n2 * f9;
+                if (!(f >= f3) || !(f <= f3 + 150.0f) || !(f2 >= f10) || !(f2 <= f10 + f9)) continue;
+                EmoteEntry emoteEntry = this.filteredEmotes.get(n5);
+                this.setWheelAction(this.selectedWheelSlot, emoteEntry.emoteId);
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+                return;
             }
-         }
-
-         if (cosmeticItemComponent != null) {
-            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-            this.toggleCosmetic(cosmeticItemComponent.getCosmetic());
-         } else if (flag) {
-            this.layoutCosmetics(this.getSearchResults());
-         }
-      }
-   }
-
-   public void filterEmotes(String str) {
-      this.filteredEmotes.clear();
-      if (str != null && !str.isEmpty()) {
-         String toLowerCase = str.toLowerCase();
-
-         for (EmoteEntry emoteEntry : this.visibleEmotes) {
-            if (emoteEntry.text.toLowerCase().contains(toLowerCase)) {
-               this.filteredEmotes.add(emoteEntry);
-            }
-         }
-      } else {
-         this.filteredEmotes.addAll(this.visibleEmotes);
-      }
-   }
-
-   public void toggleCosmetic(Cosmetic cosmetic) {
-      RecentCosmeticsManager.toggleFavorite(cosmetic);
-      this.layoutCosmetics(this.getSearchResults());
-   }
-
-   public void drawCosmeticsGrid(float f, float f2, int n) {
-      float round = Math.round(this.getScaledWidth() / 2.0F);
-      float round2 = Math.round(this.getScaledHeight() / 2.0F);
-      float f3 = round - 245.0F;
-      float f4 = round - 80.0F;
-      float f5 = round2 - 75.0F;
-      float f6 = 16.0F;
-      int max = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18);
-      if (this.emotePage > 0 && this.previousPageButton.containsPoint(f, f2)) {
-         this.emotePage--;
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-      } else if (this.emotePage < max - 1 && this.nextPageButton.containsPoint(f, f2)) {
-         this.emotePage++;
-         Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-      } else {
-         int n2 = this.emotePage * 18;
-
-         for (int i = 0; i < 2; i++) {
-            float f7 = i == 0 ? f3 : f4;
-
-            for (int j = 0; j < 9; j++) {
-               int n3 = n2 + i * 9 + j;
-               if (n3 < this.filteredEmotes.size()) {
-                  float f8 = f5 + j * f6;
-                  if (f >= f7 && f <= f7 + 150.0F && f2 >= f8 && f2 <= f8 + f6) {
-                     EmoteEntry emoteEntry = this.filteredEmotes.get(n3);
-                     this.setWheelAction(this.selectedWheelSlot, emoteEntry.emoteId);
-                     Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-                     return;
-                  }
-               }
-            }
-         }
-
-         float f7 = round + 172.0F;
-         float f8 = round2 - 5.0F;
-
-         for (int i = 0; i < 8; i++) {
-            float f9 = 22.5F + i * 45.0F;
-            double toRadians = Math.toRadians(f9 - 90.0 - 22.5);
-            double d = f7 + 33.0 * Math.cos(toRadians);
-            double d2 = f8 + 33.0 * Math.sin(toRadians);
-            float f10 = (float)d - 10.0F;
-            float f11 = (float)d2 + 6.0F;
-            if (f >= f10 && f <= f10 + 20.0F && f2 >= f11 && f2 <= f11 + 9.0F) {
-               Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
-               if (n == 1) {
-                  this.setWheelKeybind(i, -1);
-                  this.hoveredWheelSlot = -1;
-               } else {
-                  this.hoveredWheelSlot = this.hoveredWheelSlot == i ? -1 : i;
-               }
-
-               return;
-            }
-         }
-
-         double d = f - f7;
-         double d2 = f2 - f8;
-         double sqrt = Math.sqrt(d * d + d2 * d2);
-         if (sqrt >= 9.0 && sqrt <= 52.0) {
-            int n3 = -1;
-            double d3 = Double.MAX_VALUE;
-
-            for (int i = 0; i < 8; i++) {
-               float f9 = 22.5F + i * 45.0F;
-               double toRadians = Math.toRadians(f9 - 90.0 - 22.5);
-               double d4 = f7 + 33.0 * Math.cos(toRadians);
-               double d5 = f8 + 33.0 * Math.sin(toRadians);
-               double d6 = (f - d4) * (f - d4) + (f2 - d5) * (f2 - d5);
-               if (d6 < d3) {
-                  d3 = d6;
-                  n3 = i;
-               }
-            }
-
-            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.create(new ResourceLocation("gui.button.press"), 1.0F));
+        }
+        float f11 = f4 + 172.0f;
+        f3 = f5 - 5.0f;
+        for (n2 = 0; n2 < 8; ++n2) {
+            float f12 = 22.5f + (float)n2 * 45.0f;
+            double d2 = Math.toRadians((double)f12 - 90.0 - 22.5);
+            d = (double)f11 + 33.0 * Math.cos(d2);
+            double d3 = (double)f3 + 33.0 * Math.sin(d2);
+            float f13 = (float)d - 10.0f;
+            float f14 = (float)d3 + 6.0f;
+            if (!(f >= f13) || !(f <= f13 + 20.0f) || !(f2 >= f14) || !(f2 <= f14 + 9.0f)) continue;
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
             if (n == 1) {
-               this.setWheelAction(n3, -1);
+                this.setWheelKeybind(n2, -1);
+                this.hoveredWheelSlot = -1;
             } else {
-               this.selectedWheelSlot = n3;
+                this.hoveredWheelSlot = this.hoveredWheelSlot == n2 ? -1 : n2;
             }
-         }
-      }
-   }
-
-   public void updateEmoteSelection() {
-      Set set = this.visibleEmotes.stream().map(emoteEntry -> emoteEntry.emoteId).collect(Collectors.toSet());
-      Set set2 = CheatBreaker.getInstance()
-         .getEmoteManager()
-         .getOwnedEmotes()
-         .stream()
-         .filter(integer -> EmoteManager.emoteClassIds.containsKey(integer) || EmoteManager.resourceEmoteIds.containsKey(integer))
-         .collect(Collectors.toSet());
-      if (!set.equals(set2)) {
-         this.refreshEmotes();
-      }
-
-      if (this.activeTab != 2) {
-         List searchResults = this.getSearchResults();
-         boolean flag = searchResults.size() != this.cosmeticItems.size();
-
-         for (int i = 0; !flag && i < searchResults.size(); i++) {
-            flag = !searchResults.contains(this.cosmeticItems.get(i).getCosmetic());
-         }
-
-         if (flag) {
-            this.layoutCosmetics(searchResults);
-            int n = Math.max(0, (this.cosmeticItems.size() - 1) / 10) * 2;
-            this.pageOffset = Math.min(this.pageOffset, n);
-         }
-      }
-   }
-
-   public List<Cosmetic> getAllCosmetics() {
-      List cosmeticsOfType = this.getCosmeticsOfType("all");
-      RecentCosmeticsManager.registerEquipped(cosmeticsOfType);
-      ArrayList list = new ArrayList();
-      int n = 0;
-      int n2 = 0;
-      int n3 = 0;
-
-      for (String str : RecentCosmeticsManager.getRecent()) {
-         for (Cosmetic cosmetic : (Iterable<Cosmetic>)cosmeticsOfType) {
-            if (RecentCosmeticsManager.getKey(cosmetic).equals(str)) {
-               int n4 = cosmetic.getCosmeticType() == CosmeticType.CAPE ? n++ : (cosmetic.getCosmeticType() == CosmeticType.WINGS ? n2++ : n3++);
-               if (n4 < 5) {
-                  list.add(cosmetic);
-               }
-               break;
+            return;
+        }
+        double d4 = f - f11;
+        double d5 = f2 - f3;
+        d = Math.sqrt(d4 * d4 + d5 * d5);
+        if (d >= 9.0 && d <= 52.0) {
+            int n6 = -1;
+            double d6 = Double.MAX_VALUE;
+            for (int i = 0; i < 8; ++i) {
+                double d7;
+                float f15 = 22.5f + (float)i * 45.0f;
+                double d8 = Math.toRadians((double)f15 - 90.0 - 22.5);
+                double d9 = (double)f11 + 33.0 * Math.cos(d8);
+                double d10 = ((double)f - d9) * ((double)f - d9) + ((double)f2 - (d7 = (double)f3 + 33.0 * Math.sin(d8))) * ((double)f2 - d7);
+                if (!(d10 < d6)) continue;
+                d6 = d10;
+                n6 = i;
             }
-         }
-      }
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            if (n == 1) {
+                this.setWheelAction(n6, -1);
+            } else {
+                this.selectedWheelSlot = n6;
+            }
+        }
+    }
 
-      return list;
-   }
+    public void updateEmoteSelection() {
+        int n2;
+        Set set;
+        Set set2 = this.visibleEmotes.stream().map(emoteEntry -> emoteEntry.emoteId).collect(Collectors.toSet());
+        if (!set2.equals(set = CheatBreaker.getInstance().getEmoteManager().getOwnedEmotes().stream().filter(n -> EmoteManager.emoteClassIds.containsKey(n) || EmoteManager.resourceEmoteIds.containsKey(n)).collect(Collectors.toSet()))) {
+            this.refreshEmotes();
+        }
+        if (this.activeTab == 2) {
+            return;
+        }
+        List<Cosmetic> list = this.getSearchResults();
+        boolean bl = list.size() != this.cosmeticItems.size();
+        for (n2 = 0; !bl && n2 < list.size(); ++n2) {
+            bl = !list.contains(this.cosmeticItems.get(n2).getCosmetic());
+        }
+        if (bl) {
+            this.layoutCosmetics(list);
+            n2 = Math.max(0, (this.cosmeticItems.size() - 1) / 10) * 2;
+            this.pageOffset = Math.min(this.pageOffset, n2);
+        }
+    }
 
-   public CosmeticsScreen() {
-      this.searchCapes.setMaxStringLength(256);
-      this.layoutCosmetics(this.getCosmeticsOfType("cape"));
-      this.refreshEmotes();
-   }
+    public boolean hasItems() {
+        if (this.activeTab == 2) {
+            return !this.visibleEmotes.isEmpty();
+        }
+        return !this.getCurrentCosmetics().isEmpty();
+    }
 
-   public void setWheelAction(int n, int n2) {
-      Setting emoteWheelQuickActions = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActions;
-      List emoteWheelActions = this.getEmoteWheelActions();
-      emoteWheelActions.set(n, n2);
-      emoteWheelQuickActions.changeValue(emoteWheelActions);
-      CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().sendEmoteWheel();
-   }
+    public boolean isOnCurrentPage(int n) {
+        return this.activeTab == 3 || n >= this.pageOffset * 5 && n < (this.pageOffset + 2) * 5;
+    }
 
-   public List<Cosmetic> getCosmeticsOfType(String str) {
-      return str != null && !str.equalsIgnoreCase("all")
-         ? CheatBreaker.getInstance()
-            .getCosmeticsManager()
-            .getList()
-            .stream()
-            .filter(cosmetic -> cosmetic.getCosmeticType().getText().toLowerCase().contains(str.toLowerCase()))
-            .collect(Collectors.toList())
-         : new ArrayList<>(CheatBreaker.getInstance().getCosmeticsManager().getList());
-   }
+    public void setWheelAction(int n, int n2) {
+        Setting setting = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActions;
+        List<Integer> list = this.getEmoteWheelActions();
+        list.set(n, n2);
+        setting.changeValue(list);
+        CheatBreaker.getInstance().getPlayerassetsCheatbreakerNet().sendEmoteWheel();
+    }
 
-   @Override
-   public void updateScreen() {
-      super.updateScreen();
-      this.searchCapes.tick();
-      this.updateEmoteSelection();
-   }
+    @Override
+    public void drawScreenScaled(float f, float f2) {
+        if (Minecraft.getMinecraft().theWorld == null) {
+            super.drawScreenScaled(f, f2);
+        }
+        if (!CheatBreaker.getInstance().isWebsocketConnected()) {
+            ClientValidator.drawMessage(this.getScaledWidth() / 2.0f, this.getScaledHeight() / 2.0f - 10.0f);
+            this.back.setBounds(this.getScaledWidth() / 2.0f - 30.0f, this.getScaledHeight() / 2.0f + 16.0f, 60.0f, 12.0f);
+            this.back.renderAndTestHover(f, f2, true);
+        } else {
+            float f3 = Math.round(this.getScaledWidth() / 2.0f);
+            float f4 = Math.round(this.getScaledHeight() / 2.0f);
+            RenderUtils.drawRoundedRectFilledPrecise(f3 - 250.0f, f4 - 95.0f, f3 + 85.0f, f4 + 110.0f, 3.0, 0x63000000);
+            RenderUtils.drawRoundedRectFilledPrecise(f3 + 95.0f, f4 - 95.0f, f3 + 250.0f, f4 + 110.0f, 3.0, 0x63000000);
+            RenderUtils.drawRoundedRectFilledPrecise(f3 - 235.0f, f4 + 75.0f, f3 + 70.0f, f4 + 76.0f, 0.0, 0x50F5F5F5);
+            this.back.setBounds(this.getScaledWidth() / 2.0f - 30.0f, this.getScaledHeight() / 2.0f + 125.0f, 60.0f, 12.0f);
+            this.back.renderAndTestHover(f, f2, true);
+            this.capes.setFlag(this.activeTab == 0);
+            this.capes.setBounds(f3 - 250.0f, f4 - 109.0f, 50.0f, 12.0f);
+            this.capes.renderAndTestHover(f, f2, true);
+            this.wings.setFlag(this.activeTab == 1);
+            this.wings.setBounds(f3 - 195.0f, f4 - 109.0f, 50.0f, 12.0f);
+            this.wings.renderAndTestHover(f, f2, true);
+            this.hats.setFlag(this.activeTab == 4);
+            this.hats.setBounds(f3 - 140.0f, f4 - 109.0f, 50.0f, 12.0f);
+            this.hats.renderAndTestHover(f, f2, true);
+            this.recent.setFlag(this.activeTab == 3);
+            this.recent.setBounds(f3 - 30.0f, f4 - 109.0f, 50.0f, 12.0f);
+            this.recent.renderAndTestHover(f, f2, true);
+            this.emotes.setFlag(this.activeTab == 2);
+            this.emotes.setBounds(f3 - 85.0f, f4 - 109.0f, 50.0f, 12.0f);
+            this.emotes.renderAndTestHover(f, f2, true);
+            if (this.activeTab == 2) {
+                this.drawEmotesTab(f, f2, f3, f4);
+                return;
+            }
+            float f5 = f3 + (float)this.width - 50.0f - f;
+            float f6 = f4 + 30.0f - f2;
+            PlayerViewer.render(f3 + 170.0f, f4 + 10.0f, f5, f6, f, f2 + 50.0f);
+            CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("Hint: Click to drag.", f3 + 170.0f, f4 + 72.0f, -419430401);
+            if (this.cosmeticItems.isEmpty()) {
+                String string = this.hasItems() ? "There are no cosmetics matching your query." : (this.activeTab == 3 ? "Capes, wings and hats you equip will show up here." : "Join our Discord for giveaways on emotes and other cosmetics!");
+                CheatBreaker.getInstance().getFontManager().playRegular18.drawCenteredString(string, this.getScaledWidth() / 2.0f - 75.0f, this.getScaledHeight() / 2.0f + 4.0f, -1);
+            }
+            int n = 0;
+            float[] fArray = new float[3];
+            for (CosmeticItemComponent cosmeticItemComponent : this.cosmeticItems) {
+                if (!this.isOnCurrentPage(n++)) continue;
+                int n2 = this.getColumn(cosmeticItemComponent, n - 1 - this.pageOffset * 5);
+                int n3 = (int)this.getScaledWidth() / 2 + this.getColumnX(n2);
+                cosmeticItemComponent.setBounds(n3, (int)(this.getScaledHeight() / 2.0f - 80.0f + fArray[n2]), this.getItemWidth(), cosmeticItemComponent.getHeight());
+                cosmeticItemComponent.render((int)f, (int)f2, 1.0f);
+                int n4 = n2;
+                fArray[n4] = fArray[n4] + (float)cosmeticItemComponent.getHeight();
+            }
+            if (this.activeTab == 3 && !this.cosmeticItems.isEmpty()) {
+                this.drawSectionTitle("Recent Capes", 0, fArray[0] == 0.0f);
+                this.drawSectionTitle("Recent Wings", 1, fArray[1] == 0.0f);
+                this.drawSectionTitle("Recent Hats", 2, fArray[2] == 0.0f);
+            }
+            if (this.cosmeticItems.size() > 5 && this.activeTab != 3) {
+                this.previousPageButton.setBounds(this.getScaledWidth() / 2.0f - 30.0f, this.getScaledHeight() / 2.0f + 84.0f, 15.0f, 15.0f);
+                this.nextPageButton.setBounds(this.getScaledWidth() / 2.0f + 25.0f, this.getScaledHeight() / 2.0f + 84.0f, 15.0f, 15.0f);
+                this.drawPageIndicator(this.pageOffset / 2, (this.cosmeticItems.size() + 9) / 10, this.getScaledWidth() / 2.0f, this.getScaledHeight() / 2.0f);
+                this.previousPageButton.renderAndTestHover(f, f2, true);
+                this.nextPageButton.renderAndTestHover(f, f2, true);
+                this.previousPageButton.setEnabled(this.pageOffset != 0);
+                this.nextPageButton.setEnabled((float)(this.pageOffset + 2) < (float)this.cosmeticItems.size() / 5.0f);
+            }
+            this.searchCapes.setBounds(this.getScaledWidth() / 2.0f - 235.0f, this.getScaledHeight() / 2.0f + 84.0f, 140.0f, 15.0f);
+            this.searchCapes.render(f, f2, true);
+        }
+    }
 
-   public boolean isOnCurrentPage(int n) {
-      return this.activeTab == 3 || n >= this.pageOffset * 5 && n < (this.pageOffset + 2) * 5;
-   }
+    public void filterEmotes(String string) {
+        this.filteredEmotes.clear();
+        if (string == null || string.isEmpty()) {
+            this.filteredEmotes.addAll(this.visibleEmotes);
+            return;
+        }
+        String string2 = string.toLowerCase();
+        for (EmoteEntry emoteEntry : this.visibleEmotes) {
+            if (!emoteEntry.name.toLowerCase().contains(string2)) continue;
+            this.filteredEmotes.add(emoteEntry);
+        }
+    }
 
-   public boolean isOver(CosmeticItemComponent cosmeticItemComponent, float f, float f2) {
-      return f > cosmeticItemComponent.x && f < cosmeticItemComponent.x + cosmeticItemComponent.width && f2 > cosmeticItemComponent.y && f2 < cosmeticItemComponent.y + cosmeticItemComponent.height;
-   }
+    @Override
+    public void mouseClickedScaled(float f, float f2, int n) throws java.io.IOException {
+        if (Minecraft.getMinecraft().theWorld == null) {
+            super.mouseClickedScaled(f, f2, n);
+        }
+        if (!this.searchCapes.containsPoint(f, f2) && this.searchCapes.isFocused()) {
+            this.searchCapes.setFocused(false);
+        } else if (this.searchCapes.containsPoint(f, f2) && !this.searchCapes.isFocused()) {
+            this.searchCapes.setFocused(true);
+        }
+        if (this.wings.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.activeTab = 1;
+            this.searchCapes.setPlaceholder("Search Wings...");
+            this.searchCapes.setText("");
+            this.pageOffset = 0;
+            this.layoutCosmetics(this.getCosmeticsOfType("dragon_wings"));
+        }
+        if (this.hats.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.activeTab = 4;
+            this.searchCapes.setPlaceholder("Search Hats...");
+            this.searchCapes.setText("");
+            this.pageOffset = 0;
+            this.layoutCosmetics(this.getCosmeticsOfType("hat"));
+        }
+        if (this.capes.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.activeTab = 0;
+            this.searchCapes.setPlaceholder("Search Capes...");
+            this.searchCapes.setText("");
+            this.pageOffset = 0;
+            this.layoutCosmetics(this.getCosmeticsOfType("cape"));
+        }
+        if (this.recent.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.activeTab = 3;
+            this.searchCapes.setPlaceholder("Search Recent...");
+            this.searchCapes.setText("");
+            this.pageOffset = 0;
+            this.layoutCosmetics(this.getSearchResults());
+        }
+        if (this.emotes.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.activeTab = 2;
+            this.searchCapes.setPlaceholder("Search Emotes...");
+            this.searchCapes.setText("");
+            this.emotePage = 0;
+            this.filterEmotes("");
+        }
+        if (this.claim.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            this.mc2.displayGuiScreen(new MainMenuScreen());
+        } else if (this.back.containsPoint(f, f2)) {
+            Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+            if (Minecraft.getMinecraft().theWorld != null) {
+                this.mc2.displayGuiScreen(new ModsScreen());
+            } else {
+                this.mc2.displayGuiScreen(new MainMenuScreen());
+            }
+        } else if (this.activeTab == 2) {
+            this.drawCosmeticsGrid(f, f2, n);
+        } else {
+            if (this.cosmeticItems.size() > 5 && this.activeTab != 3) {
+                if (this.pageOffset > 0 && this.previousPageButton.containsPoint(f, f2)) {
+                    this.pageOffset -= 2;
+                    Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+                } else if (this.nextPageButton.containsPoint(f, f2) && (float)(this.pageOffset + 2) < (float)this.cosmeticItems.size() / 5.0f) {
+                    this.pageOffset += 2;
+                    Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+                }
+            }
+            int n2 = 0;
+            CosmeticItemComponent cosmeticItemComponent = null;
+            boolean bl = false;
+            for (CosmeticItemComponent cosmeticItemComponent2 : this.cosmeticItems) {
+                if (!this.isOnCurrentPage(n2++)) continue;
+                if (n == 1) {
+                    if (!this.isOver(cosmeticItemComponent2, f, f2)) continue;
+                    cosmeticItemComponent = cosmeticItemComponent2;
+                    continue;
+                }
+                if (this.isOver(cosmeticItemComponent2, f, f2)) {
+                    bl = true;
+                }
+                cosmeticItemComponent2.mouseClicked((int)f, (int)f2, n);
+            }
+            if (cosmeticItemComponent != null) {
+                Minecraft.getMinecraft().getSoundHandler().playSound(PositionedSoundRecord.createPositionedSoundRecord(new ResourceLocation("gui.button.press"), 1.0f));
+                this.toggleCosmetic(cosmeticItemComponent.getCosmetic());
+            } else if (bl) {
+                this.layoutCosmetics(this.getSearchResults());
+            }
+        }
+    }
 
-   public void setWheelKeybind(int n, int n2) {
-      Setting emoteWheelQuickActionKeybinds = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActionKeybinds;
-      List emoteWheelKeybinds = this.getEmoteWheelKeybinds();
-      emoteWheelKeybinds.set(n, n2);
-      emoteWheelQuickActionKeybinds.changeValue(emoteWheelKeybinds);
-   }
+    public List<Cosmetic> filterCosmetics(String string) {
+        String string2 = string == null ? "" : string.toLowerCase().replace(" ", "_");
+        return this.getCurrentCosmetics().stream().filter(cosmetic -> string2.isEmpty() || cosmetic.getName().toLowerCase().contains(string2)).collect(Collectors.toList());
+    }
 
-   public List<Cosmetic> getCurrentCosmetics() {
-      if (this.activeTab == 3) {
-         return this.getAllCosmetics();
-      } else {
-         return this.activeTab == 4 ? this.getCosmeticsOfType("hat") : this.getCosmeticsOfType(this.activeTab == 1 ? "dragon_wings" : "cape");
-      }
-   }
+    @Override
+    public void updateScreen() throws java.io.IOException {
+        super.updateScreen();
+        this.searchCapes.tick();
+        this.updateEmoteSelection();
+    }
 
-   public int getColumnX(int n) {
-      if (this.activeTab == 3) {
-         return -235 + n * 102;
-      } else {
-         return n == 0 ? -235 : -75;
-      }
-   }
+    public List<Cosmetic> getSearchResults() {
+        return this.filterCosmetics(this.searchCapes.getText());
+    }
 
-   @Override
-   public void keyTyped(char c, int n) throws java.io.IOException {
-      if (this.hoveredWheelSlot >= 0) {
-         if (n != 1) {
-            this.setWheelKeybind(this.hoveredWheelSlot, n);
-         }
+    public List<Cosmetic> getCosmeticsOfType(String string) {
+        if (string == null || string.equalsIgnoreCase("all")) {
+            return new ArrayList<Cosmetic>(CheatBreaker.getInstance().getCosmeticsManager().getList());
+        }
+        return CheatBreaker.getInstance().getCosmeticsManager().getList().stream().filter(cosmetic -> cosmetic.getCosmeticType().getId().toLowerCase().contains(string.toLowerCase())).collect(Collectors.toList());
+    }
 
-         this.hoveredWheelSlot = -1;
-      } else {
-         if (this.searchCapes.isFocused()) {
+    public List<Cosmetic> getAllCosmetics() {
+        List<Cosmetic> list = this.getCosmeticsOfType("all");
+        RecentCosmeticsManager.registerEquipped(list);
+        ArrayList<Cosmetic> arrayList = new ArrayList<Cosmetic>();
+        int n = 0;
+        int n2 = 0;
+        int n3 = 0;
+        block0: for (String string : RecentCosmeticsManager.getRecent()) {
+            for (Cosmetic cosmetic : list) {
+                if (!RecentCosmeticsManager.getKey(cosmetic).equals(string)) continue;
+                int n4 = cosmetic.getCosmeticType() == CosmeticType.CAPE ? n++ : (cosmetic.getCosmeticType() == CosmeticType.WINGS ? n2++ : n3++);
+                if (n4 >= 5) continue block0;
+                arrayList.add(cosmetic);
+                continue block0;
+            }
+        }
+        return arrayList;
+    }
+
+    public AbstractEmote getEmote(int n) {
+        EmoteManager emoteManager = CheatBreaker.getInstance().getEmoteManager();
+        return n >= 0 && emoteManager.getOwnedEmotes().contains(n) ? emoteManager.createEmote(n) : null;
+    }
+
+    public List<Integer> getEmoteWheelActions() {
+        ArrayList arrayList = CheatBreaker.getInstance().getKeybindSettings().emoteWheelQuickActions.getListValue();
+        while (arrayList.size() < 8) {
+            arrayList.add(-1);
+        }
+        return arrayList;
+    }
+
+    public int getItemWidth() {
+        return this.activeTab == 3 ? 100 : 152;
+    }
+
+    public void drawPageIndicator(int n, int n2, float f, float f2) {
+        CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString(n + 1 + " / " + n2, f + 5.0f, f2 + 86.5f, -1);
+    }
+
+    @Override
+    public void keyTyped(char c, int n) throws java.io.IOException {
+        if (this.hoveredWheelSlot >= 0) {
+            if (n != 1) {
+                this.setWheelKeybind(this.hoveredWheelSlot, n);
+            }
+            this.hoveredWheelSlot = -1;
+            return;
+        }
+        if (this.searchCapes.isFocused()) {
             this.searchCapes.keyTyped(c, n);
             this.pageOffset = 0;
             this.emotePage = 0;
             if (this.activeTab == 2) {
-               this.filterEmotes(this.searchCapes.getText());
+                this.filterEmotes(this.searchCapes.getText());
             } else {
-               this.layoutCosmetics(this.getSearchResults());
+                this.layoutCosmetics(this.getSearchResults());
             }
-         }
+        }
+        super.keyTyped(c, n);
+    }
 
-         super.keyTyped(c, n);
-      }
-   }
+    public boolean isOver(CosmeticItemComponent cosmeticItemComponent, float f, float f2) {
+        return f > (float)cosmeticItemComponent.x && f < (float)(cosmeticItemComponent.x + cosmeticItemComponent.width) && f2 > (float)cosmeticItemComponent.y && f2 < (float)(cosmeticItemComponent.y + cosmeticItemComponent.height);
+    }
 
-   public void drawEmotesTab(float f, float f2, float f3, float f4) {
-      CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("All Emotes", f3 - 82.0F, f4 - 88.0F, -1);
-      float f5 = f3 - 245.0F;
-      float f6 = f3 - 80.0F;
-      float f7 = f4 - 75.0F;
-      float f8 = 16.0F;
-      int n = this.emotePage * 18;
+    public void toggleCosmetic(Cosmetic cosmetic) {
+        RecentCosmeticsManager.toggleFavorite(cosmetic);
+        this.layoutCosmetics(this.getSearchResults());
+    }
 
-      for (int i = 0; i < 2; i++) {
-         float f9 = i == 0 ? f5 : f6;
-
-         for (int j = 0; j < 9; j++) {
-            int n2 = n + i * 9 + j;
-            if (n2 < this.filteredEmotes.size()) {
-               EmoteEntry emoteEntry = this.filteredEmotes.get(n2);
-               float f10 = f7 + j * f8;
-               boolean flag = f >= f9 && f <= f9 + 150.0F && f2 >= f10 && f2 <= f10 + f8;
-               if (flag) {
-                  Gui.drawRect(f9, f10, f9 + 150.0F, f10 + f8, 1090519039);
-               }
-
-               RenderUtils.applyColor(-1);
-               RenderUtils.drawSquareTextureViaRenderEngine(emoteEntry.abstractEmote.getClientEmotes(), 7.0F, f9 + 2.0F, f10 + 1.0F);
-               CheatBreaker.getInstance().getFontManager().playRegular16.drawString(emoteEntry.text, f9 + 22.0F, f10 + 3.0F, -1);
-            }
-         }
-      }
-
-      if (this.filteredEmotes.isEmpty()) {
-         CheatBreaker.getInstance()
-            .getFontManager()
-            .playRegular16
-            .drawCenteredString(
-               this.visibleEmotes.isEmpty() ? "Join our Discord for giveaways on emotes and other cosmetics!" : "There are no emotes matching your query.",
-               f3 - 82.0F,
-               f4 - 20.0F,
-               -1
-            );
-      }
-
-      int max = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18);
-      if (max > 1) {
-         this.previousPageButton.setBounds(f3 - 30.0F, f4 + 84.0F, 15.0F, 15.0F);
-         this.nextPageButton.setBounds(f3 + 25.0F, f4 + 84.0F, 15.0F, 15.0F);
-         this.drawPageIndicator(this.emotePage, max, f3, f4);
-         this.previousPageButton.renderAndTestHover(f, f2, true);
-         this.nextPageButton.renderAndTestHover(f, f2, true);
-         this.previousPageButton.setEnabled(this.emotePage > 0);
-         this.nextPageButton.setEnabled(this.emotePage < max - 1);
-      }
-
-      this.searchCapes.setBounds(f3 - 235.0F, f4 + 84.0F, 140.0F, 15.0F);
-      this.searchCapes.render(f, f2, true);
-      float f9 = f3 + 172.0F;
-      float f10 = f4 - 5.0F;
-      CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString("Quick Actions Wheel", f9, f4 - 88.0F, -1);
-      List emoteWheelActions = this.getEmoteWheelActions();
-      List emoteWheelKeybinds = this.getEmoteWheelKeybinds();
-      RenderUtils.applyColor(Integer.MIN_VALUE);
-      RenderUtils.drawProgressRing(f9, f10, 50.0, 48.0, 100.0, 100, 100.0);
-      RenderUtils.drawProgressRing(f9, f10, 11.0, 9.0, 100.0, 100, 100.0);
-
-      for (int i = 0; i < 8; i++) {
-         float f11 = 22.5F + i * 45.0F;
-         RenderUtils.applyColor(
-            i == this.selectedWheelSlot ? CheatBreaker.getInstance().getKeybindSettings().emoteRadialColor.getColorValue() | 0xFF000000 : 1296911693
-         );
-         RenderUtils.drawArc(f9, f10, 48.0, 11.0, 360.0 - f11 + 90.0, 360.0 - f11 + 90.0 + 45.0);
-         double toRadians = Math.toRadians(f11 - 90.0 - 22.5);
-         double d = f9 + 33.0 * Math.cos(toRadians);
-         double d2 = f10 + 33.0 * Math.sin(toRadians);
-         int n2 = (Integer)emoteWheelActions.get(i);
-         AbstractEmote emote = this.getEmote(n2);
-         if (emote != null) {
-            RenderUtils.applyColor(-1);
-            RenderUtils.drawSquareTextureViaRenderEngine(emote.getClientEmotes(), 7.0F, (float)d - 7.0F, (float)d2 - 7.0F);
-         }
-
-         boolean flag = this.hoveredWheelSlot == i;
-         String str = flag ? "..." : this.getKeyLabel((Integer)emoteWheelKeybinds.get(i));
-         int n3 = flag ? -171 : ((Integer)emoteWheelKeybinds.get(i) >= 0 ? -5592406 : -11184811);
-         CheatBreaker.getInstance().getFontManager().playRegular12.drawCenteredString(str, (float)d, (float)d2 + 9.0F, n3);
-      }
-
-      int n2 = (Integer)emoteWheelActions.get(this.selectedWheelSlot);
-      AbstractEmote emote = this.getEmote(n2);
-      String str = "Slot " + (this.selectedWheelSlot + 1) + ": " + (emote != null ? emote.getText() : "Empty");
-      CheatBreaker.getInstance().getFontManager().playRegular16.drawCenteredString(str, f9, f10 + 48.0F + 20.0F, -1);
-      CheatBreaker.getInstance()
-         .getFontManager()
-         .playRegular14
-         .drawCenteredString("Click a slot, then click an emote to assign it.", f9, f10 + 48.0F + 34.0F, -1426063361);
-      CheatBreaker.getInstance()
-         .getFontManager()
-         .playRegular14
-         .drawCenteredString("Right click a slot to clear it.", f9, f10 + 48.0F + 46.0F, -1426063361);
-   }
-
-   public int getColumn(CosmeticItemComponent cosmeticItemComponent, int n) {
-      if (this.activeTab == 3) {
-         CosmeticType cosmeticType = cosmeticItemComponent.getCosmetic().getCosmeticType();
-         return cosmeticType == CosmeticType.CAPE ? 0 : (cosmeticType == CosmeticType.WINGS ? 1 : 2);
-      } else {
-         return n < 5 ? 0 : 1;
-      }
-   }
+    public void refreshEmotes() {
+        EmoteManager emoteManager = CheatBreaker.getInstance().getEmoteManager();
+        ArrayList<Integer> arrayList = new ArrayList<Integer>();
+        for (Object k : EmoteManager.emoteClassIds.keySet()) {
+            arrayList.add((Integer)k);
+        }
+        arrayList.addAll(EmoteManager.resourceEmoteIds.keySet());
+        this.visibleEmotes.clear();
+        Iterator<Integer> iterator = arrayList.iterator();
+        while (iterator.hasNext()) {
+            int n = (Integer)iterator.next();
+            AbstractEmote abstractEmote = emoteManager.createEmote(n);
+            if (abstractEmote == null || !emoteManager.getOwnedEmotes().contains(n)) continue;
+            this.visibleEmotes.add(new EmoteEntry(n, abstractEmote));
+        }
+        this.visibleEmotes.sort(Comparator.comparing(emoteEntry -> emoteEntry.abstractEmote.getDisplayName(), String.CASE_INSENSITIVE_ORDER));
+        this.filterEmotes(this.activeTab == 2 ? this.searchCapes.getText() : "");
+        int n = Math.max(1, (this.filteredEmotes.size() + 18 - 1) / 18);
+        this.emotePage = Math.min(this.emotePage, n - 1);
+    }
 }

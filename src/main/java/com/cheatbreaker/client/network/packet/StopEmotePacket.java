@@ -6,16 +6,16 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.ServerPacketHandler;
 
 public class StopEmotePacket extends AbstractPacket {
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleStopEmote(this);
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleStopEmote(this);
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+    }
 }

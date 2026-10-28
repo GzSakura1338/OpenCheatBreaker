@@ -8,40 +8,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EmoteWheelPacket extends AbstractPacket {
-   public List<Integer> emoteIds = new ArrayList<>();
+    public List<Integer> emoteIds = new ArrayList<>();
 
-   public List<Integer> getEmoteIds() {
-      return this.emoteIds;
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((ServerPacketHandler)packetHandler).handleEmoteWheel(this);
+    }
 
-   public EmoteWheelPacket(List<Integer> list) {
-      this.emoteIds = list;
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        packetBuffer.writeVarInt(this.emoteIds.size());
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((ServerPacketHandler)packetHandler).handleEmoteWheel(this);
-   }
+        for (int n : this.emoteIds) {
+            packetBuffer.writeVarInt(n);
+        }
+    }
 
-   public EmoteWheelPacket() {
-   }
+    public EmoteWheelPacket() {
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      packetBuffer.writeVarInt(this.emoteIds.size());
+    public List<Integer> getEmoteIds() {
+        return this.emoteIds;
+    }
 
-      for (int n : this.emoteIds) {
-         packetBuffer.writeVarInt(n);
-      }
-   }
+    public EmoteWheelPacket(List<Integer> list) {
+        this.emoteIds = list;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      int readVarInt = packetBuffer.readVarInt();
-      this.emoteIds = new ArrayList<>();
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        int readVarInt = packetBuffer.readVarInt();
+        this.emoteIds = new ArrayList<>();
 
-      for (int i = 0; i < readVarInt; i++) {
-         this.emoteIds.add(packetBuffer.readVarInt());
-      }
-   }
+        for (int i = 0; i < readVarInt; i++) {
+            this.emoteIds.add(packetBuffer.readVarInt());
+        }
+    }
 }

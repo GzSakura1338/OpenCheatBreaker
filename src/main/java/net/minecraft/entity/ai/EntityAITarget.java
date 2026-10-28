@@ -1,165 +1,146 @@
 package net.minecraft.entity.ai;
 
 import net.minecraft.entity.EntityCreature;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.IEntityOwnable;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.pathfinding.PathEntity;
 import net.minecraft.pathfinding.PathPoint;
-import net.minecraft.scoreboard.Team;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import org.apache.commons.lang3.StringUtils;
 
 public abstract class EntityAITarget extends EntityAIBase {
-   public EntityCreature taskOwner;
-   public boolean shouldCheckSight;
-   public boolean nearbyOnly;
-   public int targetSearchStatus;
-   public int targetSearchDelay;
-   public int targetUnseenTicks;
+    public EntityCreature taskOwner;
+    public boolean shouldCheckSight;
+    public boolean nearbyOnly;
+    public int targetSearchStatus;
+    public int targetSearchDelay;
+    public int targetUnseenTicks;
 
-   public EntityAITarget(EntityCreature creature, boolean checkSight) {
-      this(creature, checkSight, false);
-   }
+    public EntityAITarget(EntityCreature entityCreature, boolean flag) {
+        this(entityCreature, flag, false);
+    }
 
-   public EntityAITarget(EntityCreature creature, boolean checkSight, boolean onlyNearby) {
-      this.taskOwner = creature;
-      this.shouldCheckSight = checkSight;
-      this.nearbyOnly = onlyNearby;
-   }
+    public EntityAITarget(EntityCreature entityCreature, boolean flag, boolean flag2) {
+        this.taskOwner = entityCreature;
+        this.shouldCheckSight = flag;
+        this.nearbyOnly = flag2;
+    }
 
-   @Override
-   public boolean continueExecuting() {
-      EntityLivingBase attackTarget = this.taskOwner.getAttackTarget();
-      if (attackTarget == null) {
-         return false;
-      }
-
-      if (!attackTarget.isEntityAlive()) {
-         return false;
-      }
-
-      Team team = this.taskOwner.getTeam();
-      Team team2 = attackTarget.getTeam();
-      if (team != null && team2 == team) {
-         return false;
-      }
-
-      double targetDistance = this.getTargetDistance();
-      if (this.taskOwner.getDistanceSqToEntity(attackTarget) > targetDistance * targetDistance) {
-         return false;
-      }
-
-      if (this.shouldCheckSight) {
-         if (this.taskOwner.getEntitySenses().canSee(attackTarget)) {
-            this.targetUnseenTicks = 0;
-         } else if (++this.targetUnseenTicks > 60) {
+    @Override
+    public boolean continueExecuting() {
+        EntityLivingBase attackTarget = this.taskOwner.getAttackTarget();
+        if (attackTarget == null) {
             return false;
-         }
-      }
+        }
 
-      return !(attackTarget instanceof EntityPlayer) || !((EntityPlayer)attackTarget).capabilities.disableDamage;
-   }
-
-   public double getTargetDistance() {
-      IAttributeInstance entityAttribute = this.taskOwner.getEntityAttribute(SharedMonsterAttributes.followRange);
-      return entityAttribute == null ? 16.0 : entityAttribute.getAttributeValue();
-   }
-
-   @Override
-   public void startExecuting() {
-      this.targetSearchStatus = 0;
-      this.targetSearchDelay = 0;
-      this.targetUnseenTicks = 0;
-   }
-
-   @Override
-   public void resetTask() {
-      this.taskOwner.setAttackTarget((EntityLivingBase)null);
-   }
-
-   public static boolean isSuitableTarget(EntityLiving attacker, EntityLivingBase target, boolean includeInvincibles, boolean checkSight) {
-      if (target == null) {
-         return false;
-      }
-
-      if (target == attacker) {
-         return false;
-      }
-
-      if (!target.isEntityAlive()) {
-         return false;
-      }
-
-      if (!attacker.canAttackClass((Class<? extends EntityLivingBase>)target.getClass())) {
-         return false;
-      }
-
-      Team team = attacker.getTeam();
-      Team team2 = target.getTeam();
-      if (team != null && team2 == team) {
-         return false;
-      }
-
-      if (attacker instanceof IEntityOwnable && StringUtils.isNotEmpty(((IEntityOwnable)attacker).getOwnerId())) {
-         if (target instanceof IEntityOwnable && ((IEntityOwnable)attacker).getOwnerId().equals(((IEntityOwnable)target).getOwnerId())) {
+        if (!attackTarget.isEntityAlive()) {
             return false;
-         }
+        }
 
-         if (target == ((IEntityOwnable)attacker).getOwner()) {
+        double targetDistance = this.getTargetDistance();
+        if (this.taskOwner.getDistanceSqToEntity(attackTarget) > targetDistance * targetDistance) {
             return false;
-         }
-      } else if (target instanceof EntityPlayer && !includeInvincibles && ((EntityPlayer)target).capabilities.disableDamage) {
-         return false;
-      }
+        }
 
-      return !checkSight || attacker.getEntitySenses().canSee(target);
-   }
+        if (this.shouldCheckSight) {
+            if (this.taskOwner.getEntitySenses().canSee(attackTarget)) {
+                this.targetUnseenTicks = 0;
+            } else if (++this.targetUnseenTicks > 60) {
+                return false;
+            }
+        }
 
-   public boolean isSuitableTarget(EntityLivingBase target, boolean includeInvincibles) {
-      if (!isSuitableTarget(this.taskOwner, target, includeInvincibles, this.shouldCheckSight)) {
-         return false;
-      }
+        return !(attackTarget instanceof EntityPlayerMP) || !((EntityPlayerMP)attackTarget).theItemInWorldManager.isCreative();
+    }
 
-      if (!this.taskOwner.isWithinHomeDistanceFromPosition(new BlockPos(target))) {
-         return false;
-      }
+    public double getTargetDistance() {
+        IAttributeInstance entityAttribute = this.taskOwner.getEntityAttribute(SharedMonsterAttributes.followRange);
+        return entityAttribute == null ? 16.0 : entityAttribute.getAttributeValue();
+    }
 
-      if (this.nearbyOnly) {
-         if (--this.targetSearchDelay <= 0) {
-            this.targetSearchStatus = 0;
-         }
+    @Override
+    public void startExecuting() {
+        this.targetSearchStatus = 0;
+        this.targetSearchDelay = 0;
+        this.targetUnseenTicks = 0;
+    }
 
-         if (this.targetSearchStatus == 0) {
-            this.targetSearchStatus = this.canEasilyReach(target) ? 1 : 2;
-         }
+    @Override
+    public void resetTask() {
+        this.taskOwner.setAttackTarget(null);
+    }
 
-         if (this.targetSearchStatus == 2) {
+    public boolean isSuitableTarget(EntityLivingBase entityLivingBase, boolean flag) {
+        if (entityLivingBase == null) {
             return false;
-         }
-      }
+        }
 
-      return true;
-   }
+        if (entityLivingBase == this.taskOwner) {
+            return false;
+        }
 
-   public boolean canEasilyReach(EntityLivingBase target) {
-      this.targetSearchDelay = 10 + this.taskOwner.getRNG().nextInt(5);
-      PathEntity pathToEntityLiving = this.taskOwner.getNavigator().getPathToEntityLiving(target);
-      if (pathToEntityLiving == null) {
-         return false;
-      }
+        if (!entityLivingBase.isEntityAlive()) {
+            return false;
+        }
 
-      PathPoint finalPathPoint = pathToEntityLiving.getFinalPathPoint();
-      if (finalPathPoint == null) {
-         return false;
-      }
+        if (!this.taskOwner.canAttackClass(entityLivingBase.getClass())) {
+            return false;
+        }
 
-      int n = finalPathPoint.xCoord - MathHelper.floor_double(target.posX);
-      int n2 = finalPathPoint.zCoord - MathHelper.floor_double(target.posZ);
-      return n * n + n2 * n2 <= 2.25;
-   }
+        if (this.taskOwner instanceof IEntityOwnable && StringUtils.isNotEmpty(((IEntityOwnable)this.taskOwner).getWatchableObjectString())) {
+            if (entityLivingBase instanceof IEntityOwnable
+                && ((IEntityOwnable)this.taskOwner).getWatchableObjectString().equals(((IEntityOwnable)entityLivingBase).getWatchableObjectString())) {
+                return false;
+            }
+
+            if (entityLivingBase == ((IEntityOwnable)this.taskOwner).getOwner()) {
+                return false;
+            }
+        } else if (entityLivingBase instanceof EntityPlayer && !flag && ((EntityPlayer)entityLivingBase).capabilities.disableDamage) {
+            return false;
+        }
+
+        if (!this.taskOwner.isWithinHomeDistance(MathHelper.floor_double(entityLivingBase.posX), MathHelper.floor_double(entityLivingBase.posY), MathHelper.floor_double(entityLivingBase.posZ))) {
+            return false;
+        }
+
+        if (this.shouldCheckSight && !this.taskOwner.getEntitySenses().canSee(entityLivingBase)) {
+            return false;
+        }
+
+        if (this.nearbyOnly) {
+            if (--this.targetSearchDelay <= 0) {
+                this.targetSearchStatus = 0;
+            }
+
+            if (this.targetSearchStatus == 0) {
+                this.targetSearchStatus = this.canEasilyReach(entityLivingBase) ? 1 : 2;
+            }
+
+            return this.targetSearchStatus != 2;
+        } else {
+            return true;
+        }
+    }
+
+    public boolean canEasilyReach(EntityLivingBase entityLivingBase) {
+        this.targetSearchDelay = 10 + this.taskOwner.getRNG().nextInt(5);
+        PathEntity pathToEntityLiving = this.taskOwner.getNavigator().getPathToEntityLiving(entityLivingBase);
+        if (pathToEntityLiving == null) {
+            return false;
+        }
+
+        PathPoint finalPathPoint = pathToEntityLiving.getFinalPathPoint();
+        if (finalPathPoint == null) {
+            return false;
+        }
+
+        int n = finalPathPoint.xCoord - MathHelper.floor_double(entityLivingBase.posX);
+        int n2 = finalPathPoint.zCoord - MathHelper.floor_double(entityLivingBase.posZ);
+        return n * n + n2 * n2 <= 2.25;
+    }
 }

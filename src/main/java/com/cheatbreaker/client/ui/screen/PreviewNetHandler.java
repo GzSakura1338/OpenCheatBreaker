@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.network.NetHandlerPlayClient;
 
 public class PreviewNetHandler extends NetHandlerPlayClient {
-   public PreviewNetHandler(Minecraft mc) {
-      super(mc, mc.currentScreen, new DummyNetworkManager(), mc.getSession().getProfile());
-   }
+    public PreviewNetHandler(Minecraft mc) {
+        super(mc, mc.currentScreen, new DummyNetworkManager());
+    }
 }

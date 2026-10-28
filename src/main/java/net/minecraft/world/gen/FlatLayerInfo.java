@@ -1,75 +1,54 @@
 package net.minecraft.world.gen;
 
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.ResourceLocation;
 
 public class FlatLayerInfo {
-   public int layerCount = 1;
-   public int intValue;
-   public IBlockState layerMaterial;
-   public int layerMinimumY;
+    public int layerCount = 1;
+    public Block block;
+    public int layerFillBlockMeta;
+    public int layerMinimumY;
 
-   public FlatLayerInfo(int n, Block block) {
-      this(3, n, block);
-   }
+    public FlatLayerInfo(int n, Block block) {
+        this.layerCount = n;
+        this.block = block;
+    }
 
-   public FlatLayerInfo(int n, int height, Block layerMaterialIn) {
-      this.intValue = n;
-      this.layerCount = height;
-      this.layerMaterial = layerMaterialIn.getDefaultState();
-   }
+    public FlatLayerInfo(int n, Block block, int n2) {
+        this(n, block);
+        this.layerFillBlockMeta = n2;
+    }
 
-   public FlatLayerInfo(int n, int n2, Block block, int n3) {
-      this(n, n2, block);
-      this.layerMaterial = block.getStateFromMeta(n3);
-   }
+    public int getLayerCount() {
+        return this.layerCount;
+    }
 
-   public int getLayerCount() {
-      return this.layerCount;
-   }
+    public Block getBlock() {
+        return this.block;
+    }
 
-   public IBlockState getLayerMaterial() {
-      return this.layerMaterial;
-   }
+    public int getFillBlockMeta() {
+        return this.layerFillBlockMeta;
+    }
 
-   public Block getLayerMaterialBlock() {
-      return this.layerMaterial.getBlock();
-   }
+    public int getMinY() {
+        return this.layerMinimumY;
+    }
 
-   public int getFillBlockMeta() {
-      return this.layerMaterial.getBlock().getMetaFromState(this.layerMaterial);
-   }
+    public void setMinY(int n) {
+        this.layerMinimumY = n;
+    }
 
-   public int getMinY() {
-      return this.layerMinimumY;
-   }
-
-   public void setMinY(int minY) {
-      this.layerMinimumY = minY;
-   }
-
-   @Override
-   public String toString() {
-      String str;
-      if (this.intValue >= 3) {
-         ResourceLocation nameForObject = Block.blockRegistry.getNameForObject(this.getLayerMaterialBlock());
-         str = nameForObject == null ? "null" : nameForObject.toString();
-         if (this.layerCount > 1) {
-            str = this.layerCount + "*" + str;
-         }
-      } else {
-         str = Integer.toString(Block.getIdFromBlock(this.getLayerMaterialBlock()));
-         if (this.layerCount > 1) {
+    @Override
+    public String toString() {
+        String str = Integer.toString(Block.getIdFromBlock(this.block));
+        if (this.layerCount > 1) {
             str = this.layerCount + "x" + str;
-         }
-      }
+        }
 
-      int fillBlockMeta = this.getFillBlockMeta();
-      if (fillBlockMeta > 0) {
-         str = str + ":" + fillBlockMeta;
-      }
+        if (this.layerFillBlockMeta > 0) {
+            str = str + ":" + this.layerFillBlockMeta;
+        }
 
-      return str;
-   }
+        return str;
+    }
 }

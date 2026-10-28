@@ -2,178 +2,189 @@ package net.minecraft.block;
 
 import java.util.Random;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.item.EnumDyeColor;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumWorldBlockLayer;
+import net.minecraft.util.Direction;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockCocoa extends BlockDirectional implements IGrowable {
-   public static PropertyInteger AGE = PropertyInteger.create("age", 0, 2);
+    public IIcon[] iIconArray;
 
-   public BlockCocoa() {
-      super(Material.plants);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(AGE, 0));
-      this.setTickRandomly(true);
-   }
+    public BlockCocoa() {
+        super(Material.plants);
+        this.setTickRandomly(true);
+    }
 
-   @Override
-   public void updateTick(World worldIn, BlockPos pos, IBlockState state, Random rand) {
-      if (!this.canBlockStay(worldIn, pos, state)) {
-         this.dropBlock(worldIn, pos, state);
-      } else if (worldIn.rand.nextInt(5) == 0) {
-         int value = state.getValue(AGE);
-         if (value < 2) {
-            worldIn.setBlockState(pos, state.withProperty(AGE, value + 1), 2);
-         }
-      }
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return this.iIconArray[2];
+    }
 
-   public boolean canBlockStay(World worldIn, BlockPos pos, IBlockState state) {
-      pos = pos.offset(state.getValue(FACING));
-      IBlockState blockState = worldIn.getBlockState(pos);
-      return blockState.getBlock() == Blocks.log && blockState.getValue(BlockPlanks.VARIANT) == BlockPlanks.EnumType.JUNGLE;
-   }
+    public IIcon getCocoaIcon(int n) {
+        if (n < 0 || n >= this.iIconArray.length) {
+            n = this.iIconArray.length - 1;
+        }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+        return this.iIconArray[n];
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public void updateTick(World worldIn, int x, int y, int z, Random random) {
+        if (!this.canBlockStay(worldIn, x, y, z)) {
+            this.dropBlockAsItem(worldIn, x, y, z, worldIn.getBlockMetadata(x, y, z), 0);
+            worldIn.setBlock(x, y, z, getBlockById(0), 0, 2);
+        } else if (worldIn.rand.nextInt(5) == 0) {
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            int computeInt2 = computeInt(blockMetadata);
+            if (computeInt2 < 2) {
+                worldIn.setBlockMetadataWithNotify(x, y, z, ++computeInt2 << 2 | getDirection(blockMetadata), 2);
+            }
+        }
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.getCollisionBoundingBox(worldIn, pos, state);
-   }
+    @Override
+    public boolean canBlockStay(World worldIn, int x, int y, int z) {
+        int direction = getDirection(worldIn.getBlockMetadata(x, y, z));
+        x += Direction.offsetX[direction];
+        z += Direction.offsetZ[direction];
+        Block block = worldIn.getBlock(x, y, z);
+        return block == Blocks.log && BlockLog.computeInt4(worldIn.getBlockMetadata(x, y, z)) == 3;
+    }
 
-   @Override
-   public AxisAlignedBB getSelectedBoundingBox(World worldIn, BlockPos pos) {
-      this.setBlockBoundsBasedOnState(worldIn, pos);
-      return super.getSelectedBoundingBox(worldIn, pos);
-   }
+    @Override
+    public int getRenderType() {
+        return 28;
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      IBlockState blockState = worldIn.getBlockState(pos);
-      EnumFacing value = blockState.getValue(FACING);
-      int value2 = blockState.getValue(AGE);
-      int n = 4 + value2 * 2;
-      int n2 = 5 + value2 * 2;
-      float f = n / 2.0F;
-      switch (value) {
-         case SOUTH:
-            this.setBlockBounds((8.0F - f) / 16.0F, (12.0F - n2) / 16.0F, (15.0F - n) / 16.0F, (8.0F + f) / 16.0F, 0.75F, 0.9375F);
-            break;
-         case NORTH:
-            this.setBlockBounds((8.0F - f) / 16.0F, (12.0F - n2) / 16.0F, 0.0625F, (8.0F + f) / 16.0F, 0.75F, (1.0F + n) / 16.0F);
-            break;
-         case WEST:
-            this.setBlockBounds(0.0625F, (12.0F - n2) / 16.0F, (8.0F - f) / 16.0F, (1.0F + n) / 16.0F, 0.75F, (8.0F + f) / 16.0F);
-            break;
-         case EAST:
-            this.setBlockBounds((15.0F - n) / 16.0F, (12.0F - n2) / 16.0F, (8.0F - f) / 16.0F, 0.9375F, 0.75F, (8.0F + f) / 16.0F);
-      }
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public void onBlockPlacedBy(World worldIn, BlockPos pos, IBlockState state, EntityLivingBase placer, ItemStack stack) {
-      EnumFacing fromAngle = EnumFacing.fromAngle(placer.rotationYaw);
-      worldIn.setBlockState(pos, state.withProperty(FACING, fromAngle), 2);
-   }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      if (!facing.getAxis().isHorizontal()) {
-         facing = EnumFacing.NORTH;
-      }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.getCollisionBoundingBoxFromPool(worldIn, x, y, z);
+    }
 
-      return this.getDefaultState().withProperty(FACING, facing.getOpposite()).withProperty(AGE, 0);
-   }
+    @Override
+    public AxisAlignedBB getSelectedBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        this.setBlockBoundsBasedOnState(worldIn, x, y, z);
+        return super.getSelectedBoundingBoxFromPool(worldIn, x, y, z);
+    }
 
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!this.canBlockStay(worldIn, pos, state)) {
-         this.dropBlock(worldIn, pos, state);
-      }
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        int direction = getDirection(blockMetadata);
+        int computeInt2 = computeInt(blockMetadata);
+        int n = 4 + computeInt2 * 2;
+        int n2 = 5 + computeInt2 * 2;
+        float f = n / 2.0F;
+        switch (direction) {
+            case 0:
+                this.setBlockBounds((8.0F - f) / 16.0F, (12.0F - n2) / 16.0F, (15.0F - n) / 16.0F, (8.0F + f) / 16.0F, 0.75F, 0.9375F);
+                break;
+            case 1:
+                this.setBlockBounds(0.0625F, (12.0F - n2) / 16.0F, (8.0F - f) / 16.0F, (1.0F + n) / 16.0F, 0.75F, (8.0F + f) / 16.0F);
+                break;
+            case 2:
+                this.setBlockBounds((8.0F - f) / 16.0F, (12.0F - n2) / 16.0F, 0.0625F, (8.0F + f) / 16.0F, 0.75F, (1.0F + n) / 16.0F);
+                break;
+            case 3:
+                this.setBlockBounds((15.0F - n) / 16.0F, (12.0F - n2) / 16.0F, (8.0F - f) / 16.0F, 0.9375F, 0.75F, (8.0F + f) / 16.0F);
+        }
+    }
 
-   public void dropBlock(World worldIn, BlockPos pos, IBlockState state) {
-      worldIn.setBlockState(pos, Blocks.air.getDefaultState(), 3);
-      this.dropBlockAsItem(worldIn, pos, state, 0);
-   }
+    @Override
+    public void onBlockPlacedBy(World worldIn, int x, int y, int z, EntityLivingBase placer, ItemStack itemIn) {
+        int n = ((MathHelper.floor_double(placer.rotationYaw * 4.0F / 360.0F + 0.5) & 3) + 0) % 4;
+        worldIn.setBlockMetadataWithNotify(x, y, z, n, 2);
+    }
 
-   @Override
-   public void dropBlockAsItemWithChance(World worldIn, BlockPos pos, IBlockState state, float chance, int fortune) {
-      int value = state.getValue(AGE);
-      byte b = 1;
-      if (value >= 2) {
-         b = 3;
-      }
+    @Override
+    public int onBlockPlaced(World worldIn, int x, int y, int z, int side, float subX, float subY, float subZ, int meta) {
+        if (side == 1 || side == 0) {
+            side = 2;
+        }
 
-      for (int i = 0; i < b; i++) {
-         spawnAsEntity(worldIn, pos, new ItemStack(Items.dye, 1, EnumDyeColor.BROWN.getDyeDamage()));
-      }
-   }
+        return Direction.rotateOpposite[Direction.facingToDirection[side]];
+    }
 
-   @Override
-   public Item getItem(World worldIn, BlockPos pos) {
-      return Items.dye;
-   }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!this.canBlockStay(worldIn, x, y, z)) {
+            this.dropBlockAsItem(worldIn, x, y, z, worldIn.getBlockMetadata(x, y, z), 0);
+            worldIn.setBlock(x, y, z, getBlockById(0), 0, 2);
+        }
+    }
 
-   @Override
-   public int getDamageValue(World worldIn, BlockPos pos) {
-      return EnumDyeColor.BROWN.getDyeDamage();
-   }
+    public static int computeInt(int n) {
+        return (n & 12) >> 2;
+    }
 
-   @Override
-   public boolean canGrow(World worldIn, BlockPos pos, IBlockState state, boolean isClient) {
-      return state.getValue(AGE) < 2;
-   }
+    @Override
+    public void dropBlockAsItemWithChance(World worldIn, int x, int y, int z, int meta, float chance, int fortune) {
+        int computeInt2 = computeInt(meta);
+        byte b = 1;
+        if (computeInt2 >= 2) {
+            b = 3;
+        }
 
-   @Override
-   public boolean canUseBonemeal(World worldIn, Random rand, BlockPos pos, IBlockState state) {
-      return true;
-   }
+        for (int i = 0; i < b; i++) {
+            this.dropBlockAsItem(worldIn, x, y, z, new ItemStack(Items.dye, 1, 3));
+        }
+    }
 
-   @Override
-   public void grow(World worldIn, Random rand, BlockPos pos, IBlockState state) {
-      worldIn.setBlockState(pos, state.withProperty(AGE, state.getValue(AGE) + 1), 2);
-   }
+    @Override
+    public Item getItem(World worldIn, int x, int y, int z) {
+        return Items.dye;
+    }
 
-   @Override
-   public EnumWorldBlockLayer getBlockLayer() {
-      return EnumWorldBlockLayer.CUTOUT;
-   }
+    @Override
+    public int getDamageValue(World worldIn, int x, int y, int z) {
+        return 3;
+    }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(FACING, EnumFacing.getHorizontal(meta)).withProperty(AGE, (meta & 15) >> 2);
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+        this.iIconArray = new IIcon[3];
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(FACING).getHorizontalIndex();
-      return n | state.getValue(AGE) << 2;
-   }
+        for (int i = 0; i < this.iIconArray.length; i++) {
+            this.iIconArray[i] = reg.registerIcon(this.getTextureName() + "_stage_" + i);
+        }
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, AGE);
-   }
+    @Override
+    public boolean canFertilize(World worldIn, int x, int y, int z, boolean isClient) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        int computeInt2 = computeInt(blockMetadata);
+        return computeInt2 < 2;
+    }
+
+    @Override
+    public boolean shouldFertilize(World worldIn, Random random, int x, int y, int z) {
+        return true;
+    }
+
+    @Override
+    public void fertilize(World worldIn, Random random, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        int direction = BlockDirectional.getDirection(blockMetadata);
+        int computeInt2 = computeInt(blockMetadata);
+        worldIn.setBlockMetadataWithNotify(x, y, z, ++computeInt2 << 2 | direction, 2);
+    }
 }

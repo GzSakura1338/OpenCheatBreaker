@@ -1,22 +1,22 @@
 package net.minecraft.util;
 
 public class TupleIntJsonSerializable {
-   public int integerValue;
-   public IJsonSerializable jsonSerializableValue;
+    public int integerValue;
+    public IJsonSerializable jsonSerializableValue;
 
-   public int getIntegerValue() {
-      return this.integerValue;
-   }
+    public int getIntegerValue() {
+        return this.integerValue;
+    }
 
-   public void setIntegerValue(int integerValueIn) {
-      this.integerValue = integerValueIn;
-   }
+    public void setIntegerValue(int n) {
+        this.integerValue = n;
+    }
 
-   public <T extends IJsonSerializable> T getJsonSerializableValue() {
-      return (T)this.jsonSerializableValue;
-   }
+    public IJsonSerializable getJsonSerializableValue() {
+        return this.jsonSerializableValue;
+    }
 
-   public void setJsonSerializableValue(IJsonSerializable jsonSerializableValueIn) {
-      this.jsonSerializableValue = jsonSerializableValueIn;
-   }
+    public void setJsonSerializableValue(IJsonSerializable jsonSerializable) {
+        this.jsonSerializableValue = jsonSerializable;
+    }
 }

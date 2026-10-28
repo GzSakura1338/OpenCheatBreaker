@@ -1,62 +1,73 @@
 package net.minecraft.network.play.client;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayServer;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 
-public class C07PacketPlayerDigging implements Packet<INetHandlerPlayServer> {
-   public C07PacketPlayerDigging.Action status;
-   public BlockPos position;
-   public EnumFacing facing;
+public class C07PacketPlayerDigging extends Packet {
+    public int status;
+    public int diggedBlockX;
+    public int diggedBlockY;
+    public int diggedBlockZ;
+    public int diggingBlockFace;
 
-   public C07PacketPlayerDigging() {
-   }
+    public C07PacketPlayerDigging() {
+    }
 
-   public C07PacketPlayerDigging(C07PacketPlayerDigging.Action statusIn, BlockPos posIn, EnumFacing facingIn) {
-      this.status = statusIn;
-      this.position = posIn;
-      this.facing = facingIn;
-   }
+    public C07PacketPlayerDigging(int n, int n2, int n3, int n4, int n5) {
+        this.status = n;
+        this.diggedBlockX = n2;
+        this.diggedBlockY = n3;
+        this.diggedBlockZ = n4;
+        this.diggingBlockFace = n5;
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.status = buf.readEnumValue(C07PacketPlayerDigging.Action.class);
-      this.position = buf.readBlockPos();
-      this.facing = EnumFacing.getFront(buf.readUnsignedByte());
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.status = data.readUnsignedByte();
+        this.diggedBlockX = data.readInt();
+        this.diggedBlockY = data.readUnsignedByte();
+        this.diggedBlockZ = data.readInt();
+        this.diggingBlockFace = data.readUnsignedByte();
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeEnumValue(this.status);
-      buf.writeBlockPos(this.position);
-      buf.writeByte(this.facing.getIndex());
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeByte(this.status);
+        data.writeInt(this.diggedBlockX);
+        data.writeByte(this.diggedBlockY);
+        data.writeInt(this.diggedBlockZ);
+        data.writeByte(this.diggingBlockFace);
+    }
 
-   public void processPacket(INetHandlerPlayServer handler) {
-      handler.processPlayerDigging(this);
-   }
+    public void processPacket(INetHandlerPlayServer handler) {
+        handler.processPlayerDigging(this);
+    }
 
-   public BlockPos getPosition() {
-      return this.position;
-   }
+    public int getDiggedBlockX() {
+        return this.diggedBlockX;
+    }
 
-   public EnumFacing getFacing() {
-      return this.facing;
-   }
+    public int getDiggedBlockY() {
+        return this.diggedBlockY;
+    }
 
-   public C07PacketPlayerDigging.Action getStatus() {
-      return this.status;
-   }
+    public int getDiggedBlockZ() {
+        return this.diggedBlockZ;
+    }
 
-   public enum Action {
-      START_DESTROY_BLOCK,
-      ABORT_DESTROY_BLOCK,
-      STOP_DESTROY_BLOCK,
-      DROP_ALL_ITEMS,
-      DROP_ITEM,
-      RELEASE_USE_ITEM;
-   }
+    public int getDiggingBlockFace() {
+        return this.diggingBlockFace;
+    }
+
+    public int getDiggedBlockStatus() {
+        return this.status;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayServer)netHandler);
+    }
 }

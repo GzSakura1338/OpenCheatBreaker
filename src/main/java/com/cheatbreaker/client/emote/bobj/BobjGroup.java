@@ -5,35 +5,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BobjGroup {
-   public List<BobjChannel> channels = new ArrayList<>();
-   public String boneName;
+    public List<BobjChannel> channels = new ArrayList<>();
+    public String boneName;
 
-   public void apply(Bone bone, float f) {
-      for (BobjChannel bobjChannel : this.channels) {
-         bobjChannel.apply(bone, f);
-      }
-   }
+    public int getLength() {
+        int n = 0;
 
-   public BobjGroup(String str) {
-      this.boneName = str;
-   }
+        for (BobjChannel bobjChannel : this.channels) {
+            int size = bobjChannel.keyframes.size();
+            if (size > 0) {
+                n = Math.max(n, bobjChannel.keyframes.get(size - 1).frame);
+            }
+        }
 
-   public int getLength() {
-      int n = 0;
+        return n;
+    }
 
-      for (BobjChannel bobjChannel : this.channels) {
-         int size = bobjChannel.keyframes.size();
-         if (size > 0) {
-            n = Math.max(n, bobjChannel.keyframes.get(size - 1).frame);
-         }
-      }
+    public BobjGroup(String str) {
+        this.boneName = str;
+    }
 
-      return n;
-   }
+    public void apply(Bone bone, float f) {
+        for (BobjChannel bobjChannel : this.channels) {
+            bobjChannel.apply(bone, f);
+        }
+    }
 
-   public void applyBlended(Bone bone, float f, float f2) {
-      for (BobjChannel bobjChannel : this.channels) {
-         bobjChannel.applyBlended(bone, f, f2);
-      }
-   }
+    public void applyBlended(Bone bone, float f, float f2) {
+        for (BobjChannel bobjChannel : this.channels) {
+            bobjChannel.applyBlended(bone, f, f2);
+        }
+    }
 }

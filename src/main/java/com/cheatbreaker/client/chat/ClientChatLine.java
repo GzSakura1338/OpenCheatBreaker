@@ -4,30 +4,30 @@ import net.minecraft.client.gui.ChatLine;
 import net.minecraft.util.IChatComponent;
 
 public class ClientChatLine extends ChatLine {
-   public boolean hasIcon;
-   public boolean highlighted;
+    public boolean highlighted;
+    public boolean hasIcon;
 
-   public void setHighlighted(boolean flag) {
-      this.highlighted = flag;
-   }
+    public static ClientChatLine from(ChatLine chatLine) {
+        return new ClientChatLine(chatLine.getUpdatedCounter(), chatLine.getChatComponent(), chatLine.getChatLineID());
+    }
 
-   public void setHasIcon(boolean flag) {
-      this.hasIcon = flag;
-   }
+    public void setHasIcon(boolean flag) {
+        this.hasIcon = flag;
+    }
 
-   public static ClientChatLine from(ChatLine chatLine) {
-      return new ClientChatLine(chatLine.getUpdatedCounter(), chatLine.getChatComponent(), chatLine.getChatLineID());
-   }
+    public ClientChatLine(int n, IChatComponent chatComponent, int n2) {
+        super(n, chatComponent, n2);
+    }
 
-   public boolean hasIcon() {
-      return this.hasIcon;
-   }
+    public boolean hasIcon() {
+        return this.hasIcon;
+    }
 
-   public ClientChatLine(int n, IChatComponent chatComponent, int n2) {
-      super(n, chatComponent, n2);
-   }
+    public boolean isHighlighted() {
+        return this.highlighted;
+    }
 
-   public boolean isHighlighted() {
-      return this.highlighted;
-   }
+    public void setHighlighted(boolean flag) {
+        this.highlighted = flag;
+    }
 }

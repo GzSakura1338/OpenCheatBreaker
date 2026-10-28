@@ -1,6 +1,6 @@
 package net.minecraft.world.gen.structure;
 
-import com.google.common.collect.Maps;
+import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
@@ -8,86 +8,84 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class MapGenStructureIO {
-   public static Logger logger = LogManager.getLogger();
-   public static Map<String, Class<? extends StructureStart>> startNameToClassMap = Maps.newHashMap();
-   public static Map<Class<? extends StructureStart>, String> startClassToNameMap = Maps.newHashMap();
-   public static Map<String, Class<? extends StructureComponent>> componentNameToClassMap = Maps.newHashMap();
-   public static Map<Class<? extends StructureComponent>, String> componentClassToNameMap = Maps.newHashMap();
+    public static Logger logger = LogManager.getLogger();
+    public static Map configIdMap = new HashMap();
+    public static Map configClassMap = new HashMap();
+    public static Map pieceIdMap = new HashMap();
+    public static Map pieceClassMap = new HashMap();
 
-   public static void registerStructure(Class<? extends StructureStart> startClass, String structureName) {
-      startNameToClassMap.put(structureName, startClass);
-      startClassToNameMap.put(startClass, structureName);
-   }
+    public static void registerStructure(Class clazz, String str) {
+        configIdMap.put(str, clazz);
+        configClassMap.put(clazz, str);
+    }
 
-   public static void registerStructureComponent(Class<? extends StructureComponent> componentClass, String componentName) {
-      componentNameToClassMap.put(componentName, componentClass);
-      componentClassToNameMap.put(componentClass, componentName);
-   }
+    public static void registerStructureComponent(Class clazz, String str) {
+        pieceIdMap.put(str, clazz);
+        pieceClassMap.put(clazz, str);
+    }
 
-   public static String getStructureStartName(StructureStart start) {
-      return startClassToNameMap.get(start.getClass());
-   }
+    public static String getId(StructureStart structureStart) {
+        return (String)configClassMap.get(structureStart.getClass());
+    }
 
-   public static String getStructureComponentName(StructureComponent component) {
-      return componentClassToNameMap.get(component.getClass());
-   }
+    public static String getId(StructureComponent structureComponent) {
+        return (String)pieceClassMap.get(structureComponent.getClass());
+    }
 
-   public static StructureStart getStructureStart(NBTTagCompound tagCompound, World worldIn) {
-      StructureStart structureStart = null;
+    public static StructureStart getGeneratorConfigFromNbt(NBTTagCompound nbttagCompound, World world) {
+        StructureStart structureStart = null;
 
-      try {
-         Class clazz = startNameToClassMap.get(tagCompound.getString("id"));
-         if (clazz != null) {
-            structureStart = (StructureStart)clazz.newInstance();
-         }
-      } catch (Exception e) {
-         logger.warn("Failed Start with id " + tagCompound.getString("id"));
-         e.printStackTrace();
-      }
+        try {
+            Class clazz = (Class)configIdMap.get(nbttagCompound.getString("id"));
+            if (clazz != null) {
+                structureStart = (StructureStart)clazz.newInstance();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed Start with id " + nbttagCompound.getString("id"));
+            e.printStackTrace();
+        }
 
-      if (structureStart != null) {
-         structureStart.readStructureComponentsFromNBT(worldIn, tagCompound);
-      } else {
-         logger.warn("Skipping Structure with id " + tagCompound.getString("id"));
-      }
+        if (structureStart != null) {
+            structureStart.fromNbt(world, nbttagCompound);
+        } else {
+            logger.warn("Skipping Structure with id " + nbttagCompound.getString("id"));
+        }
 
-      return structureStart;
-   }
+        return structureStart;
+    }
 
-   public static StructureComponent getStructureComponent(NBTTagCompound tagCompound, World worldIn) {
-      StructureComponent structureComponent = null;
+    public static StructureComponent getStructurePieceFromNbt(NBTTagCompound nbttagCompound, World world) {
+        StructureComponent structureComponent = null;
 
-      try {
-         Class clazz = componentNameToClassMap.get(tagCompound.getString("id"));
-         if (clazz != null) {
-            structureComponent = (StructureComponent)clazz.newInstance();
-         }
-      } catch (Exception e) {
-         logger.warn("Failed Piece with id " + tagCompound.getString("id"));
-         e.printStackTrace();
-      }
+        try {
+            Class clazz = (Class)pieceIdMap.get(nbttagCompound.getString("id"));
+            if (clazz != null) {
+                structureComponent = (StructureComponent)clazz.newInstance();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed Piece with id " + nbttagCompound.getString("id"));
+            e.printStackTrace();
+        }
 
-      if (structureComponent != null) {
-         structureComponent.readStructureBaseNBT(worldIn, tagCompound);
-      } else {
-         logger.warn("Skipping Piece with id " + tagCompound.getString("id"));
-      }
+        if (structureComponent != null) {
+            structureComponent.fromNbt(world, nbttagCompound);
+        } else {
+            logger.warn("Skipping Piece with id " + nbttagCompound.getString("id"));
+        }
 
-      return structureComponent;
-   }
+        return structureComponent;
+    }
 
-   static {
-      registerStructure(StructureMineshaftStart.class, "Mineshaft");
-      registerStructure(MapGenVillage.Start.class, "Village");
-      registerStructure(MapGenNetherBridge.Start.class, "Fortress");
-      registerStructure(MapGenStronghold.Start.class, "Stronghold");
-      registerStructure(MapGenScatteredFeature.Start.class, "Temple");
-      registerStructure(StructureOceanMonument.StartMonument.class, "Monument");
-      StructureMineshaftPieces.registerStructurePieces();
-      StructureVillagePieces.registerVillagePieces();
-      StructureNetherBridgePieces.registerNetherFortressPieces();
-      StructureStrongholdPieces.registerStrongholdPieces();
-      ComponentScatteredFeaturePieces.registerScatteredFeaturePieces();
-      StructureOceanMonumentPieces.registerOceanMonumentPieces();
-   }
+    static {
+        registerStructure(StructureMineshaftStart.class, "Mineshaft");
+        registerStructure(net.minecraft.world.gen.structure.MapGenVillage.Start.class, "Village");
+        registerStructure(net.minecraft.world.gen.structure.MapGenNetherBridge.Start.class, "Fortress");
+        registerStructure(net.minecraft.world.gen.structure.MapGenStronghold.Start.class, "Stronghold");
+        registerStructure(net.minecraft.world.gen.structure.MapGenScatteredFeature.Start.class, "Temple");
+        StructureMineshaftPieces.registerStructurePieces();
+        StructureVillagePieces.registerVillagePieces();
+        StructureNetherBridgePieces.registerNetherFortressPieces();
+        StructureStrongholdPieces.registerStrongholdPieces();
+        ComponentScatteredFeaturePieces.registerScatteredFeaturePieces();
+    }
 }

@@ -7,30 +7,30 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
 import java.util.Set;
 
-public class JsonSerializableSet extends ForwardingSet<String> implements IJsonSerializable {
-   public Set<String> underlyingSet = Sets.newHashSet();
+public class JsonSerializableSet extends ForwardingSet implements IJsonSerializable {
+    public Set underlyingSet = Sets.newHashSet();
 
-   @Override
-   public void fromJson(JsonElement json) {
-      if (json.isJsonArray()) {
-         for (JsonElement jsonElement : json.getAsJsonArray()) {
-            this.add(jsonElement.getAsString());
-         }
-      }
-   }
+    @Override
+    public void read(JsonElement jsonElement) {
+        if (jsonElement.isJsonArray()) {
+            for (JsonElement jsonElement2 : jsonElement.getAsJsonArray()) {
+                this.add(jsonElement2.getAsString());
+            }
+        }
+    }
 
-   @Override
-   public JsonElement getSerializableElement() {
-      JsonArray jsonArray = new JsonArray();
+    @Override
+    public JsonElement getSerializableElement() {
+        JsonArray jsonArray = new JsonArray();
 
-      for (String str : this) {
-         jsonArray.add(new JsonPrimitive(str));
-      }
+        for (String str : (Iterable<String>)this) {
+            jsonArray.add(new JsonPrimitive(str));
+        }
 
-      return jsonArray;
-   }
+        return jsonArray;
+    }
 
-   public Set<String> delegate() {
-      return this.underlyingSet;
-   }
+    public Set delegate() {
+        return this.underlyingSet;
+    }
 }

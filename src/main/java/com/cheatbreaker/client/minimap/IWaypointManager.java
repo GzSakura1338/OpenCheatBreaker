@@ -3,27 +3,27 @@ package com.cheatbreaker.client.minimap;
 import java.util.ArrayList;
 
 public interface IWaypointManager {
-   void setDimensionFilter(int n);
+    void setSubworldHash(String str);
 
-   void setSubworldName(String str);
+    void addWaypoint(Waypoint waypoint);
 
-   void updateDeathpoints();
+    void saveWaypoints();
 
-   String getCurrentSubworld();
+    void onWorldChange();
 
-   void deleteWaypoint(Waypoint waypoint);
+    String getCurrentSubworld();
 
-   ArrayList<Waypoint> getWaypoints();
+    void setDimensionFilter(int n);
 
-   void addWaypoint(Waypoint waypoint);
+    void updateEntityContainer();
 
-   void saveWaypoints();
+    void setSubworldName(String str);
 
-   void updateEntityContainer();
+    ArrayList<Waypoint> getWaypoints();
 
-   void handleDeath();
+    void handleDeath();
 
-   void setSubworldHash(String str);
+    void deleteWaypoint(Waypoint waypoint);
 
-   void onWorldChange();
+    void updateDeathpoints();
 }

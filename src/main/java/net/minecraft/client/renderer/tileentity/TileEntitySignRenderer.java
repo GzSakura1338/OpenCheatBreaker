@@ -1,137 +1,78 @@
 package net.minecraft.client.renderer.tileentity;
 
-import java.util.List;
 import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiUtilRenderComponents;
-import net.minecraft.client.gui.inventory.GuiEditSign;
 import net.minecraft.client.model.ModelSign;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.entity.Entity;
 import net.minecraft.init.Blocks;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
-import net.minecraft.util.IChatComponent;
 import net.minecraft.util.ResourceLocation;
-import net.optifine.Config;
-import net.optifine.CustomColors;
-import net.optifine.shaders.Shaders;
 import org.lwjgl.opengl.GL11;
 
-public class TileEntitySignRenderer extends TileEntitySpecialRenderer<TileEntitySign> {
-   public static ResourceLocation SIGN_TEXTURE = new ResourceLocation("textures/entity/sign.png");
-   public ModelSign model = new ModelSign();
-   public static double textRenderDistanceSq = 4096.0;
+public class TileEntitySignRenderer extends TileEntitySpecialRenderer {
+    public static ResourceLocation TEXTURE = new ResourceLocation("textures/entity/sign.png");
+    public ModelSign model = new ModelSign();
 
-   public void renderTileEntityAt(TileEntitySign te, double x, double y, double z, float partialTicks, int destroyStage) {
-      Block blockType = te.getBlockType();
-      GlStateManager.pushMatrix();
-      float f = 0.6666667F;
-      if (blockType == Blocks.standing_sign) {
-         GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F * f, (float)z + 0.5F);
-         float f2 = te.getBlockMetadata() * 360 / 16.0F;
-         GlStateManager.rotate(-f2, 0.0F, 1.0F, 0.0F);
-         this.model.signStick.showModel = true;
-      } else {
-         int blockMetadata = te.getBlockMetadata();
-         float f2 = 0.0F;
-         if (blockMetadata == 2) {
-            f2 = 180.0F;
-         }
-
-         if (blockMetadata == 4) {
-            f2 = 90.0F;
-         }
-
-         if (blockMetadata == 5) {
-            f2 = -90.0F;
-         }
-
-         GlStateManager.translate((float)x + 0.5F, (float)y + 0.75F * f, (float)z + 0.5F);
-         GlStateManager.rotate(-f2, 0.0F, 1.0F, 0.0F);
-         GlStateManager.translate(0.0F, -0.3125F, -0.4375F);
-         this.model.signStick.showModel = false;
-      }
-
-      if (destroyStage >= 0) {
-         this.bindTexture(DESTROY_STAGES[destroyStage]);
-         GlStateManager.matrixMode(5890);
-         GlStateManager.pushMatrix();
-         GlStateManager.scale(4.0F, 2.0F, 1.0F);
-         GlStateManager.translate(0.0625F, 0.0625F, 0.0625F);
-         GlStateManager.matrixMode(5888);
-      } else {
-         this.bindTexture(SIGN_TEXTURE);
-      }
-
-      GlStateManager.enableRescaleNormal();
-      GlStateManager.pushMatrix();
-      GlStateManager.scale(f, -f, -f);
-      this.model.renderSign();
-      GlStateManager.popMatrix();
-      if (isRenderText(te)) {
-         FontRenderer fontRenderer = this.getFontRenderer();
-         float f2 = 0.015625F * f;
-         GlStateManager.translate(0.0F, 0.5F * f, 0.07F * f);
-         GlStateManager.scale(f2, -f2, f2);
-         GL11.glNormal3f(0.0F, 0.0F, -1.0F * f2);
-         GlStateManager.depthMask(false);
-         int n = 0;
-         if (Config.isCustomColors()) {
-            n = CustomColors.getSignTextColor(n);
-         }
-
-         if (destroyStage < 0) {
-            for (int i = 0; i < te.signText.length; i++) {
-               if (te.signText[i] != null) {
-                  IChatComponent chatComponent = te.signText[i];
-                  List splitText = GuiUtilRenderComponents.splitText(chatComponent, 90, fontRenderer, false, true);
-                  String str = splitText != null && splitText.size() > 0 ? ((IChatComponent)splitText.get(0)).getFormattedText() : "";
-                  if (i == te.lineBeingEdited) {
-                     str = "> " + str + " <";
-                     fontRenderer.drawString(str, -fontRenderer.getStringWidth(str) / 2, i * 10 - te.signText.length * 5, n);
-                  } else {
-                     fontRenderer.drawString(str, -fontRenderer.getStringWidth(str) / 2, i * 10 - te.signText.length * 5, n);
-                  }
-               }
+    public void renderTileEntityAt(TileEntitySign tileEntitySign, double d, double d2, double d3, float f) {
+        Block blockType = tileEntitySign.getBlockType();
+        GL11.glPushMatrix();
+        float f2 = 0.6666667F;
+        if (blockType == Blocks.standing_sign) {
+            GL11.glTranslatef((float)d + 0.5F, (float)d2 + 0.75F * f2, (float)d3 + 0.5F);
+            float f3 = tileEntitySign.getBlockMetadata() * 360 / 16.0F;
+            GL11.glRotatef(-f3, 0.0F, 1.0F, 0.0F);
+            this.model.signStick.showModel = true;
+        } else {
+            int blockMetadata = tileEntitySign.getBlockMetadata();
+            float f3 = 0.0F;
+            if (blockMetadata == 2) {
+                f3 = 180.0F;
             }
-         }
-      }
 
-      GlStateManager.depthMask(true);
-      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-      GlStateManager.popMatrix();
-      if (destroyStage >= 0) {
-         GlStateManager.matrixMode(5890);
-         GlStateManager.popMatrix();
-         GlStateManager.matrixMode(5888);
-      }
-   }
+            if (blockMetadata == 4) {
+                f3 = 90.0F;
+            }
 
-   public static boolean isRenderText(TileEntitySign tileEntitySign) {
-      if (Shaders.isShadowPass) {
-         return false;
-      }
+            if (blockMetadata == 5) {
+                f3 = -90.0F;
+            }
 
-      if (Config.getMinecraft().currentScreen instanceof GuiEditSign) {
-         return true;
-      }
+            GL11.glTranslatef((float)d + 0.5F, (float)d2 + 0.75F * f2, (float)d3 + 0.5F);
+            GL11.glRotatef(-f3, 0.0F, 1.0F, 0.0F);
+            GL11.glTranslatef(0.0F, -0.3125F, -0.4375F);
+            this.model.signStick.showModel = false;
+        }
 
-      if (!Config.zoomMode && tileEntitySign.lineBeingEdited < 0) {
-         Entity renderViewEntity = Config.getMinecraft().getRenderViewEntity();
-         double distanceSq = tileEntitySign.getDistanceSq(renderViewEntity.posX, renderViewEntity.posY, renderViewEntity.posZ);
-         if (distanceSq > textRenderDistanceSq) {
-            return false;
-         }
-      }
+        this.bindTexture(TEXTURE);
+        GL11.glPushMatrix();
+        GL11.glScalef(f2, -f2, -f2);
+        this.model.renderSign();
+        GL11.glPopMatrix();
+        FontRenderer textRenderer = this.getTextRenderer();
+        float f3 = 0.016666668F * f2;
+        GL11.glTranslatef(0.0F, 0.5F * f2, 0.07F * f2);
+        GL11.glScalef(f3, -f3, f3);
+        GL11.glNormal3f(0.0F, 0.0F, -1.0F * f3);
+        GL11.glDepthMask(false);
+        byte b = 0;
 
-      return true;
-   }
+        for (int i = 0; i < tileEntitySign.signText.length; i++) {
+            String str = tileEntitySign.signText[i];
+            if (i == tileEntitySign.lineBeingEdited) {
+                str = "> " + str + " <";
+                textRenderer.drawString(str, -textRenderer.getStringWidth(str) / 2, i * 10 - tileEntitySign.signText.length * 5, b);
+            } else {
+                textRenderer.drawString(str, -textRenderer.getStringWidth(str) / 2, i * 10 - tileEntitySign.signText.length * 5, b);
+            }
+        }
 
-   public static void updateTextRenderDistance() {
-      Minecraft minecraft = Config.getMinecraft();
-      double limit = Config.limit(minecraft.gameSettings.fovSetting, 1.0F, 120.0F);
-      double max = Math.max(1.5 * minecraft.displayHeight / limit, 16.0);
-      textRenderDistanceSq = max * max;
-   }
+        GL11.glDepthMask(true);
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glPopMatrix();
+    }
+
+    @Override
+    public void renderTileEntityAt(TileEntity tileEntity, double d, double d2, double d3, float f) {
+        this.renderTileEntityAt((TileEntitySign)tileEntity, d, d2, d3, f);
+    }
 }

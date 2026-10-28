@@ -1,16 +1,16 @@
 package com.cheatbreaker.client.cosmetic;
 
 public enum SkinModel {
-   STEVE("classic"),
-   ALEX("slim");
+    STEVE("classic"),
+    ALEX("slim");
 
-   public String text;
+    public String modelName;
 
-   SkinModel(String str) {
-      this.text = str;
-   }
+    SkinModel(String str) {
+        this.modelName = str;
+    }
 
-   public String getText() {
-      return this.text;
-   }
+    public String getModelName() {
+        return this.modelName;
+    }
 }

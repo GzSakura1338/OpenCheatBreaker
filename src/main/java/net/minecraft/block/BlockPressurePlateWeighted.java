@@ -1,67 +1,41 @@
 package net.minecraft.block;
 
-import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyInteger;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.BlockPos;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 
 public class BlockPressurePlateWeighted extends BlockBasePressurePlate {
-   public static PropertyInteger POWER = PropertyInteger.create("power", 0, 15);
-   public int weight;
+    public int weight;
 
-   public BlockPressurePlateWeighted(Material material, int n) {
-      this(material, n, material.getMaterialMapColor());
-   }
+    public BlockPressurePlateWeighted(String str, Material material, int n) {
+        super(str, material);
+        this.weight = n;
+    }
 
-   public BlockPressurePlateWeighted(Material material, int n, MapColor mapColor) {
-      super(material, mapColor);
-      this.setDefaultState(this.blockState.getBaseState().withProperty(POWER, 0));
-      this.weight = n;
-   }
+    @Override
+    public int getPlateState(World world, int n, int n2, int n3) {
+        int min = Math.min(world.getEntitiesWithinAABB(Entity.class, this.getSensitiveAABB(n, n2, n3)).size(), this.weight);
+        if (min <= 0) {
+            return 0;
+        }
 
-   @Override
-   public int computeRedstoneStrength(World worldIn, BlockPos pos) {
-      int min = Math.min(worldIn.getEntitiesWithinAABB(Entity.class, this.getSensitiveAABB(pos)).size(), this.weight);
-      if (min > 0) {
-         float f = (float)Math.min(this.weight, min) / this.weight;
-         return MathHelper.ceiling_float_int(f * 15.0F);
-      } else {
-         return 0;
-      }
-   }
+        float f = (float)Math.min(this.weight, min) / this.weight;
+        return MathHelper.ceiling_float_int(f * 15.0F);
+    }
 
-   @Override
-   public int getRedstoneStrength(IBlockState state) {
-      return state.getValue(POWER);
-   }
+    @Override
+    public int getPowerFromMeta(int n) {
+        return n;
+    }
 
-   @Override
-   public IBlockState setRedstoneStrength(IBlockState state, int strength) {
-      return state.withProperty(POWER, strength);
-   }
+    @Override
+    public int getMetaFromPower(int n) {
+        return n;
+    }
 
-   @Override
-   public int tickRate(World worldIn) {
-      return 10;
-   }
-
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState().withProperty(POWER, meta);
-   }
-
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      return state.getValue(POWER);
-   }
-
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, POWER);
-   }
+    @Override
+    public int tickRate(World worldIn) {
+        return 10;
+    }
 }

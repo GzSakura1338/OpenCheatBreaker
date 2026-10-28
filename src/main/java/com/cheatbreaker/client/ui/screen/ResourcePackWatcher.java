@@ -15,50 +15,50 @@ import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public class ResourcePackWatcher {
-   public WatchService watchService;
+    public WatchService watchService;
 
-   public ResourcePackWatcher(Path path) {
-      try {
-         this.watchService = FileSystems.getDefault().newWatchService();
-         Files.walkFileTree(
-            path,
-            new SimpleFileVisitor<Path>() {
-               public FileVisitResult preVisitDirectory(Path path2, BasicFileAttributes basicFileAttributes) throws IOException {
-                  File toFile = path2.toFile();
-                  if (ResourcePackScanner.checkFile(toFile)) {
-                     path2.register(
-                        ResourcePackWatcher.this.watchService,
-                        StandardWatchEventKinds.ENTRY_CREATE,
-                        StandardWatchEventKinds.ENTRY_MODIFY,
-                        StandardWatchEventKinds.ENTRY_DELETE
-                     );
-                     return FileVisitResult.CONTINUE;
-                  } else {
-                     return ResourcePackScanner.checkFile2(toFile) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
-                  }
-               }
+    public boolean pollChanges() {
+        boolean flag = false;
+        WatchKey watchKey;
+        if (this.watchService != null && (watchKey = this.watchService.poll()) != null) {
+            for (WatchEvent watchEvent : watchKey.pollEvents()) {
+                File toFile = ((Path)watchKey.watchable()).resolve(watchEvent.context().toString()).toFile();
+                if (ResourcePackScanner.isValidZipPack(toFile) || ResourcePackScanner.checkFile(toFile)) {
+                    flag = true;
+                    break;
+                }
             }
-         );
-      } catch (IOException e) {
-         CheatBreaker.getInstance().getLogger().error("Failed to create watch service", e);
-      }
-   }
 
-   public boolean check() {
-      boolean flag = false;
-      WatchKey watchKey;
-      if (this.watchService != null && (watchKey = this.watchService.poll()) != null) {
-         for (WatchEvent watchEvent : watchKey.pollEvents()) {
-            File toFile = ((Path)watchKey.watchable()).resolve(watchEvent.context().toString()).toFile();
-            if (ResourcePackScanner.checkFile2(toFile) || ResourcePackScanner.checkFile(toFile)) {
-               flag = true;
-               break;
-            }
-         }
+            watchKey.reset();
+        }
 
-         watchKey.reset();
-      }
+        return flag;
+    }
 
-      return flag;
-   }
+    public ResourcePackWatcher(Path path) {
+        try {
+            this.watchService = FileSystems.getDefault().newWatchService();
+            Files.walkFileTree(
+                path,
+                new SimpleFileVisitor<Path>() {
+                    public FileVisitResult preVisitDirectory(Path path2, BasicFileAttributes basicFileAttributes) throws IOException {
+                        File toFile = path2.toFile();
+                        if (ResourcePackScanner.checkFile(toFile)) {
+                            path2.register(
+                                ResourcePackWatcher.this.watchService,
+                                StandardWatchEventKinds.ENTRY_CREATE,
+                                StandardWatchEventKinds.ENTRY_MODIFY,
+                                StandardWatchEventKinds.ENTRY_DELETE
+                            );
+                            return FileVisitResult.CONTINUE;
+                        } else {
+                            return ResourcePackScanner.isValidZipPack(toFile) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
+                        }
+                    }
+                }
+            );
+        } catch (IOException e) {
+            CheatBreaker.getInstance().getLogger().error("Failed to create watch service", e);
+        }
+    }
 }

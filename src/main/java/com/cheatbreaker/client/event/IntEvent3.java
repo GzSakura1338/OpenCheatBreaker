@@ -1,17 +1,17 @@
 package com.cheatbreaker.client.event;
 
 public class IntEvent3 extends CancellableEvent {
-   public int intValue;
+    public int intValue;
 
-   public void setIntValue(int n) {
-      this.intValue = n;
-   }
+    public IntEvent3(int n) {
+        this.intValue = n;
+    }
 
-   public IntEvent3(int n) {
-      this.intValue = n;
-   }
+    public void setIntValue(int n) {
+        this.intValue = n;
+    }
 
-   public int getIntValue() {
-      return this.intValue;
-   }
+    public int getIntValue() {
+        return this.intValue;
+    }
 }

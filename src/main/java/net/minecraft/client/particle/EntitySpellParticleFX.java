@@ -1,127 +1,65 @@
 package net.minecraft.client.particle;
 
-import java.util.Random;
-import net.minecraft.client.renderer.WorldRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.MathHelper;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.world.World;
 
 public class EntitySpellParticleFX extends EntityFX {
-   public static Random RANDOM = new Random();
-   public int baseSpellTextureIndex = 128;
+    public int baseSpellTextureIndex = 128;
 
-   public EntitySpellParticleFX(World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double d, double d2, double d3) {
-      super(worldIn, xCoordIn, yCoordIn, zCoordIn, 0.5 - RANDOM.nextDouble(), d2, 0.5 - RANDOM.nextDouble());
-      this.motionY *= 0.2F;
-      if (d == 0.0 && d3 == 0.0) {
-         this.motionX *= 0.1F;
-         this.motionZ *= 0.1F;
-      }
+    public EntitySpellParticleFX(World world, double d, double d2, double d3, double d4, double d5, double d6) {
+        super(world, d, d2, d3, d4, d5, d6);
+        this.motionY *= 0.2F;
+        if (d4 == 0.0 && d6 == 0.0) {
+            this.motionX *= 0.1F;
+            this.motionZ *= 0.1F;
+        }
 
-      this.particleScale *= 0.75F;
-      this.particleMaxAge = (int)(8.0 / (Math.random() * 0.8 + 0.2));
-      this.noClip = false;
-   }
+        this.particleScale *= 0.75F;
+        this.particleMaxAge = (int)(8.0 / (Math.random() * 0.8 + 0.2));
+        this.noClip = false;
+    }
 
-   @Override
-   public void renderParticle(
-      WorldRenderer worldRendererIn,
-      Entity entityIn,
-      float partialTicks,
-      float rotationX,
-      float rotationZ,
-      float rotationYZ,
-      float rotationXY,
-      float rotationXZ
-   ) {
-      float f = (this.particleAge + partialTicks) / this.particleMaxAge * 32.0F;
-      f = MathHelper.clamp_float(f, 0.0F, 1.0F);
-      super.renderParticle(worldRendererIn, entityIn, partialTicks, rotationX, rotationZ, rotationYZ, rotationXY, rotationXZ);
-   }
+    @Override
+    public void renderParticle(Tessellator tessellator, float f, float f2, float f3, float f4, float f5, float f6) {
+        float f7 = (this.particleAge + f) / this.particleMaxAge * 32.0F;
+        if (f7 < 0.0F) {
+            f7 = 0.0F;
+        }
 
-   @Override
-   public void onUpdate() {
-      this.prevPosX = this.posX;
-      this.prevPosY = this.posY;
-      this.prevPosZ = this.posZ;
-      if (this.particleAge++ >= this.particleMaxAge) {
-         this.setDead();
-      }
+        if (f7 > 1.0F) {
+            f7 = 1.0F;
+        }
 
-      this.setParticleTextureIndex(this.baseSpellTextureIndex + (7 - this.particleAge * 8 / this.particleMaxAge));
-      this.motionY += 0.004;
-      this.moveEntity(this.motionX, this.motionY, this.motionZ);
-      if (this.posY == this.prevPosY) {
-         this.motionX *= 1.1;
-         this.motionZ *= 1.1;
-      }
+        super.renderParticle(tessellator, f, f2, f3, f4, f5, f6);
+    }
 
-      this.motionX *= 0.96F;
-      this.motionY *= 0.96F;
-      this.motionZ *= 0.96F;
-      if (this.onGround) {
-         this.motionX *= 0.7F;
-         this.motionZ *= 0.7F;
-      }
-   }
+    @Override
+    public void onUpdate() {
+        this.prevPosX = this.posX;
+        this.prevPosY = this.posY;
+        this.prevPosZ = this.posZ;
+        if (this.particleAge++ >= this.particleMaxAge) {
+            this.setDead();
+        }
 
-   public void setBaseSpellTextureIndex(int baseSpellTextureIndexIn) {
-      this.baseSpellTextureIndex = baseSpellTextureIndexIn;
-   }
+        this.setParticleTextureIndex(this.baseSpellTextureIndex + (7 - this.particleAge * 8 / this.particleMaxAge));
+        this.motionY += 0.004;
+        this.moveEntity(this.motionX, this.motionY, this.motionZ);
+        if (this.posY == this.prevPosY) {
+            this.motionX *= 1.1;
+            this.motionZ *= 1.1;
+        }
 
-   public static class AmbientMobFactory implements IParticleFactory {
-      @Override
-      public EntityFX getEntityFX(
-         int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... ints
-      ) {
-         EntitySpellParticleFX entitySpellParticleFX = new EntitySpellParticleFX(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-         entitySpellParticleFX.setAlphaF(0.15F);
-         entitySpellParticleFX.setRBGColorF((float)xSpeedIn, (float)ySpeedIn, (float)zSpeedIn);
-         return entitySpellParticleFX;
-      }
-   }
+        this.motionX *= 0.96F;
+        this.motionY *= 0.96F;
+        this.motionZ *= 0.96F;
+        if (this.onGround) {
+            this.motionX *= 0.7F;
+            this.motionZ *= 0.7F;
+        }
+    }
 
-   public static class Factory implements IParticleFactory {
-      @Override
-      public EntityFX getEntityFX(
-         int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... ints
-      ) {
-         return new EntitySpellParticleFX(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-      }
-   }
-
-   public static class InstantFactory implements IParticleFactory {
-      @Override
-      public EntityFX getEntityFX(
-         int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... ints
-      ) {
-         EntitySpellParticleFX entitySpellParticleFX = new EntitySpellParticleFX(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-         entitySpellParticleFX.setBaseSpellTextureIndex(144);
-         return entitySpellParticleFX;
-      }
-   }
-
-   public static class MobFactory implements IParticleFactory {
-      @Override
-      public EntityFX getEntityFX(
-         int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... ints
-      ) {
-         EntitySpellParticleFX entitySpellParticleFX = new EntitySpellParticleFX(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-         entitySpellParticleFX.setRBGColorF((float)xSpeedIn, (float)ySpeedIn, (float)zSpeedIn);
-         return entitySpellParticleFX;
-      }
-   }
-
-   public static class WitchFactory implements IParticleFactory {
-      @Override
-      public EntityFX getEntityFX(
-         int particleID, World worldIn, double xCoordIn, double yCoordIn, double zCoordIn, double xSpeedIn, double ySpeedIn, double zSpeedIn, int... ints
-      ) {
-         EntitySpellParticleFX entitySpellParticleFX = new EntitySpellParticleFX(worldIn, xCoordIn, yCoordIn, zCoordIn, xSpeedIn, ySpeedIn, zSpeedIn);
-         entitySpellParticleFX.setBaseSpellTextureIndex(144);
-         float f = worldIn.rand.nextFloat() * 0.5F + 0.35F;
-         entitySpellParticleFX.setRBGColorF(1.0F * f, 0.0F * f, 1.0F * f);
-         return entitySpellParticleFX;
-      }
-   }
+    public void setBaseSpellTextureIndex(int n) {
+        this.baseSpellTextureIndex = n;
+    }
 }

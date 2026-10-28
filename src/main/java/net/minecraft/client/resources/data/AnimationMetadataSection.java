@@ -6,64 +6,58 @@ import java.util.List;
 import java.util.Set;
 
 public class AnimationMetadataSection implements IMetadataSection {
-   public List<AnimationFrame> animationFrames;
-   public int frameWidth;
-   public int frameHeight;
-   public int frameTime;
-   public boolean interpolate;
+    public List animationFrames;
+    public int frameWidth;
+    public int frameHeight;
+    public int frameTime;
 
-   public AnimationMetadataSection(List<AnimationFrame> list, int n, int n2, int n3, boolean flag) {
-      this.animationFrames = list;
-      this.frameWidth = n;
-      this.frameHeight = n2;
-      this.frameTime = n3;
-      this.interpolate = flag;
-   }
+    public AnimationMetadataSection(List list, int n, int n2, int n3) {
+        this.animationFrames = list;
+        this.frameWidth = n;
+        this.frameHeight = n2;
+        this.frameTime = n3;
+    }
 
-   public int getFrameHeight() {
-      return this.frameHeight;
-   }
+    public int getFrameHeight() {
+        return this.frameHeight;
+    }
 
-   public int getFrameWidth() {
-      return this.frameWidth;
-   }
+    public int getFrameWidth() {
+        return this.frameWidth;
+    }
 
-   public int getFrameCount() {
-      return this.animationFrames.size();
-   }
+    public int getFrameCount() {
+        return this.animationFrames.size();
+    }
 
-   public int getFrameTime() {
-      return this.frameTime;
-   }
+    public int getFrameTime() {
+        return this.frameTime;
+    }
 
-   public boolean isInterpolate() {
-      return this.interpolate;
-   }
+    public AnimationFrame getAnimationFrame(int n) {
+        return (AnimationFrame)this.animationFrames.get(n);
+    }
 
-   public AnimationFrame getAnimationFrame(int n) {
-      return this.animationFrames.get(n);
-   }
+    public int getFrameTimeSingle(int n) {
+        AnimationFrame animationFrame = this.getAnimationFrame(n);
+        return animationFrame.hasNoTime() ? this.frameTime : animationFrame.getFrameTime();
+    }
 
-   public int getFrameTimeSingle(int n) {
-      AnimationFrame animationFrame = this.getAnimationFrame(n);
-      return animationFrame.hasNoTime() ? this.frameTime : animationFrame.getFrameTime();
-   }
+    public boolean frameHasTime(int n) {
+        return !((AnimationFrame)this.animationFrames.get(n)).hasNoTime();
+    }
 
-   public boolean frameHasTime(int n) {
-      return !this.animationFrames.get(n).hasNoTime();
-   }
+    public int getFrameIndex(int n) {
+        return ((AnimationFrame)this.animationFrames.get(n)).getFrameIndex();
+    }
 
-   public int getFrameIndex(int n) {
-      return this.animationFrames.get(n).getFrameIndex();
-   }
+    public Set getFrameIndexSet() {
+        HashSet newHashSet = Sets.newHashSet();
 
-   public Set<Integer> getFrameIndexSet() {
-      HashSet newHashSet = Sets.newHashSet();
+        for (AnimationFrame animationFrame : (Iterable<AnimationFrame>)this.animationFrames) {
+            newHashSet.add(animationFrame.getFrameIndex());
+        }
 
-      for (AnimationFrame animationFrame : this.animationFrames) {
-         newHashSet.add(animationFrame.getFrameIndex());
-      }
-
-      return newHashSet;
-   }
+        return newHashSet;
+    }
 }

@@ -1,11 +1,11 @@
 package net.minecraft.command;
 
 public class NumberInvalidException extends CommandException {
-   public NumberInvalidException() {
-      this("commands.generic.num.invalid");
-   }
+    public NumberInvalidException() {
+        this("commands.generic.num.invalid");
+    }
 
-   public NumberInvalidException(String message, Object... replacements) {
-      super(message, replacements);
-   }
+    public NumberInvalidException(String str, Object... objs) {
+        super(str, objs);
+    }
 }

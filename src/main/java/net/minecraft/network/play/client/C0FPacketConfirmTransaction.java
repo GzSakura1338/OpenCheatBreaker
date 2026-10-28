@@ -1,47 +1,58 @@
 package net.minecraft.network.play.client;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayServer;
 
-public class C0FPacketConfirmTransaction implements Packet<INetHandlerPlayServer> {
-   public int windowId;
-   public short uid;
-   public boolean accepted;
+public class C0FPacketConfirmTransaction extends Packet {
+    public int id;
+    public short uid;
+    public boolean accepted;
 
-   public C0FPacketConfirmTransaction() {
-   }
+    public C0FPacketConfirmTransaction() {
+    }
 
-   public C0FPacketConfirmTransaction(int windowId, short uid, boolean accepted) {
-      this.windowId = windowId;
-      this.uid = uid;
-      this.accepted = accepted;
-   }
+    public C0FPacketConfirmTransaction(int n, short s, boolean flag) {
+        this.id = n;
+        this.uid = s;
+        this.accepted = flag;
+    }
 
-   public void processPacket(INetHandlerPlayServer handler) {
-      handler.processConfirmTransaction(this);
-   }
+    public void processPacket(INetHandlerPlayServer handler) {
+        handler.processConfirmTransaction(this);
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.windowId = buf.readByte();
-      this.uid = buf.readShort();
-      this.accepted = buf.readByte() != 0;
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.id = data.readByte();
+        this.uid = data.readShort();
+        this.accepted = data.readByte() != 0;
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeByte(this.windowId);
-      buf.writeShort(this.uid);
-      buf.writeByte(this.accepted ? 1 : 0);
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeByte(this.id);
+        data.writeShort(this.uid);
+        data.writeByte(this.accepted ? 1 : 0);
+    }
 
-   public int getWindowId() {
-      return this.windowId;
-   }
+    @Override
+    public String serialize() {
+        return String.format("id=%d, uid=%d, accepted=%b", this.id, this.uid, this.accepted);
+    }
 
-   public short getUid() {
-      return this.uid;
-   }
+    public int getId() {
+        return this.id;
+    }
+
+    public short getUid() {
+        return this.uid;
+    }
+
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayServer)netHandler);
+    }
 }

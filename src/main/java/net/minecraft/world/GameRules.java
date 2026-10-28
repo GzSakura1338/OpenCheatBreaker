@@ -1,150 +1,115 @@
 package net.minecraft.world;
 
-import java.util.Set;
 import java.util.TreeMap;
 import net.minecraft.nbt.NBTTagCompound;
 
 public class GameRules {
-   public TreeMap<String, GameRules.Value> theGameRules = new TreeMap<>();
+    public TreeMap theGameRules = new TreeMap();
 
-   public GameRules() {
-      this.addGameRule("doFireTick", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("mobGriefing", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("keepInventory", "false", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("doMobSpawning", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("doMobLoot", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("doTileDrops", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("doEntityDrops", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("commandBlockOutput", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("naturalRegeneration", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("doDaylightCycle", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("logAdminCommands", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("showDeathMessages", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("randomTickSpeed", "3", GameRules.ValueType.NUMERICAL_VALUE);
-      this.addGameRule("sendCommandFeedback", "true", GameRules.ValueType.BOOLEAN_VALUE);
-      this.addGameRule("reducedDebugInfo", "false", GameRules.ValueType.BOOLEAN_VALUE);
-   }
+    public GameRules() {
+        this.addGameRule("doFireTick", "true");
+        this.addGameRule("mobGriefing", "true");
+        this.addGameRule("keepInventory", "false");
+        this.addGameRule("doMobSpawning", "true");
+        this.addGameRule("doMobLoot", "true");
+        this.addGameRule("doTileDrops", "true");
+        this.addGameRule("commandBlockOutput", "true");
+        this.addGameRule("naturalRegeneration", "true");
+        this.addGameRule("doDaylightCycle", "true");
+    }
 
-   public void addGameRule(String key, String value, GameRules.ValueType type) {
-      this.theGameRules.put(key, new GameRules.Value(value, type));
-   }
+    public void addGameRule(String str, String str2) {
+        this.theGameRules.put(str, new GameRules.Value(str2));
+    }
 
-   public void setOrCreateGameRule(String key, String ruleValue) {
-      GameRules.Value value = this.theGameRules.get(key);
-      if (value != null) {
-         value.setValue(ruleValue);
-      } else {
-         this.addGameRule(key, ruleValue, GameRules.ValueType.ANY_VALUE);
-      }
-   }
+    public void setOrCreateGameRule(String str, String str2) {
+        GameRules.Value value = (GameRules.Value)this.theGameRules.get(str);
+        if (value != null) {
+            value.setValue(str2);
+        } else {
+            this.addGameRule(str, str2);
+        }
+    }
 
-   public String getString(String name) {
-      GameRules.Value value = this.theGameRules.get(name);
-      return value != null ? value.getString() : "";
-   }
+    public String getGameRuleStringValue(String str) {
+        GameRules.Value value = (GameRules.Value)this.theGameRules.get(str);
+        return value != null ? value.getGameRuleStringValue() : "";
+    }
 
-   public boolean getBoolean(String name) {
-      GameRules.Value value = this.theGameRules.get(name);
-      return value != null ? value.getBoolean() : false;
-   }
+    public boolean getGameRuleBooleanValue(String str) {
+        GameRules.Value value = (GameRules.Value)this.theGameRules.get(str);
+        return value != null ? value.getGameRuleBooleanValue() : false;
+    }
 
-   public int getInt(String name) {
-      GameRules.Value value = this.theGameRules.get(name);
-      return value != null ? value.getInt() : 0;
-   }
+    public NBTTagCompound writeGameRulesToNBT() {
+        NBTTagCompound nbttagCompound = new NBTTagCompound();
 
-   public NBTTagCompound writeToNBT() {
-      NBTTagCompound nbttagCompound = new NBTTagCompound();
+        for (String str : (Iterable<String>)this.theGameRules.keySet()) {
+            GameRules.Value value = (GameRules.Value)this.theGameRules.get(str);
+            nbttagCompound.setString(str, value.getGameRuleStringValue());
+        }
 
-      for (String str : this.theGameRules.keySet()) {
-         GameRules.Value value = this.theGameRules.get(str);
-         nbttagCompound.setString(str, value.getString());
-      }
+        return nbttagCompound;
+    }
 
-      return nbttagCompound;
-   }
+    public void readGameRulesFromNBT(NBTTagCompound nbttagCompound) {
+        for (String str : (Iterable<String>)nbttagCompound.getKeySet()) {
+            String string = nbttagCompound.getString(str);
+            this.setOrCreateGameRule(str, string);
+        }
+    }
 
-   public void readFromNBT(NBTTagCompound nbt) {
-      for (String str : nbt.getKeySet()) {
-         String string = nbt.getString(str);
-         this.setOrCreateGameRule(str, string);
-      }
-   }
+    public String[] getRules() {
+        return (String[])this.theGameRules.keySet().toArray(new String[0]);
+    }
 
-   public String[] getRules() {
-      Set keySet = this.theGameRules.keySet();
-      return (String[])keySet.toArray(new String[keySet.size()]);
-   }
+    public boolean hasRule(String str) {
+        return this.theGameRules.containsKey(str);
+    }
 
-   public boolean hasRule(String name) {
-      return this.theGameRules.containsKey(name);
-   }
+    static class Value {
+        public String valueString;
+        public boolean valueBoolean;
+        public int valueInteger;
+        public double valueDouble;
 
-   public boolean areSameType(String key, GameRules.ValueType otherValue) {
-      GameRules.Value value = this.theGameRules.get(key);
-      return value != null && (value.getType() == otherValue || otherValue == GameRules.ValueType.ANY_VALUE);
-   }
+        public Value(String str) {
+            this.setValue(str);
+        }
 
-   static class Value {
-      public String valueString;
-      public boolean valueBoolean;
-      public int valueInteger;
-      public double valueDouble;
-      public GameRules.ValueType type;
+        public void setValue(String str) {
+            this.valueString = str;
+            if (str != null) {
+                if (str.equals("false")) {
+                    this.valueBoolean = false;
+                    return;
+                }
 
-      public Value(String value, GameRules.ValueType type) {
-         this.type = type;
-         this.setValue(value);
-      }
-
-      public void setValue(String value) {
-         this.valueString = value;
-         if (value != null) {
-            if (value.equals("false")) {
-               this.valueBoolean = false;
-               return;
+                if (str.equals("true")) {
+                    this.valueBoolean = true;
+                    return;
+                }
             }
 
-            if (value.equals("true")) {
-               this.valueBoolean = true;
-               return;
+            this.valueBoolean = Boolean.parseBoolean(str);
+
+            try {
+                this.valueInteger = Integer.parseInt(str);
+            } catch (NumberFormatException e) {
             }
-         }
 
-         this.valueBoolean = Boolean.parseBoolean(value);
-         this.valueInteger = this.valueBoolean ? 1 : 0;
+            try {
+                this.valueDouble = Double.parseDouble(str);
+            } catch (NumberFormatException e) {
+            }
+        }
 
-         try {
-            this.valueInteger = Integer.parseInt(value);
-         } catch (NumberFormatException e) {
-         }
+        public String getGameRuleStringValue() {
+            return this.valueString;
+        }
 
-         try {
-            this.valueDouble = Double.parseDouble(value);
-         } catch (NumberFormatException e) {
-         }
-      }
-
-      public String getString() {
-         return this.valueString;
-      }
-
-      public boolean getBoolean() {
-         return this.valueBoolean;
-      }
-
-      public int getInt() {
-         return this.valueInteger;
-      }
-
-      public GameRules.ValueType getType() {
-         return this.type;
-      }
-   }
-
-   public enum ValueType {
-      ANY_VALUE,
-      BOOLEAN_VALUE,
-      NUMERICAL_VALUE;
-   }
+        public boolean getGameRuleBooleanValue() {
+            return this.valueBoolean;
+        }
+    }
 }

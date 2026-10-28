@@ -3,23 +3,23 @@ package net.minecraft.util;
 import net.minecraft.crash.CrashReport;
 
 public class ReportedException extends RuntimeException {
-   public CrashReport theReportedExceptionCrashReport;
+    public CrashReport theReportedExceptionCrashReport;
 
-   public ReportedException(CrashReport report) {
-      this.theReportedExceptionCrashReport = report;
-   }
+    public ReportedException(CrashReport crashReport) {
+        this.theReportedExceptionCrashReport = crashReport;
+    }
 
-   public CrashReport getCrashReport() {
-      return this.theReportedExceptionCrashReport;
-   }
+    public CrashReport getCrashReport() {
+        return this.theReportedExceptionCrashReport;
+    }
 
-   @Override
-   public Throwable getCause() {
-      return this.theReportedExceptionCrashReport.getCrashCause();
-   }
+    @Override
+    public Throwable getCause() {
+        return this.theReportedExceptionCrashReport.getCrashCause();
+    }
 
-   @Override
-   public String getMessage() {
-      return this.theReportedExceptionCrashReport.getDescription();
-   }
+    @Override
+    public String getMessage() {
+        return this.theReportedExceptionCrashReport.getDescription();
+    }
 }

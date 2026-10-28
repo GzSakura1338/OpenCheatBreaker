@@ -1,217 +1,365 @@
 package net.minecraft.pathfinding;
 
-import java.util.List;
+import net.minecraft.block.Block;
+import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
+import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.entity.passive.EntityChicken;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
 
-public abstract class PathNavigate {
-   public Vec3 lastPosCheck = new Vec3(0.0, 0.0, 0.0);
-   public float heightRequirement = 1.0F;
-   public PathEntity currentPath;
-   public double speed;
-   public EntityLiving theEntity;
-   public int totalTicks;
-   public int ticksAtLastPos;
-   public World worldObj;
-   public IAttributeInstance pathSearchRange;
-   public PathFinder pathFinder;
+public class PathNavigate {
+    public Vec3 lastPosCheck = Vec3.createVectorHelper(0.0, 0.0, 0.0);
+    public boolean canPassOpenWoodenDoors = true;
+    public PathEntity currentPath;
+    public double speed;
+    public EntityLiving theEntity;
+    public boolean avoidSun;
+    public int totalTicks;
+    public int ticksAtLastPos;
+    public World worldObj;
+    public IAttributeInstance pathSearchRange;
+    public boolean canPassClosedWoodenDoors;
+    public boolean avoidsWater;
+    public boolean canSwim;
 
-   public PathNavigate(EntityLiving entitylivingIn, World worldIn) {
-      this.theEntity = entitylivingIn;
-      this.worldObj = worldIn;
-      this.pathSearchRange = entitylivingIn.getEntityAttribute(SharedMonsterAttributes.followRange);
-      this.pathFinder = this.getPathFinder();
-   }
+    public PathNavigate(EntityLiving entityLiving, World world) {
+        this.theEntity = entityLiving;
+        this.worldObj = world;
+        this.pathSearchRange = entityLiving.getEntityAttribute(SharedMonsterAttributes.followRange);
+    }
 
-   public abstract PathFinder getPathFinder();
+    public void setAvoidsWater(boolean flag) {
+        this.avoidsWater = flag;
+    }
 
-   public void setSpeed(double speedIn) {
-      this.speed = speedIn;
-   }
+    public boolean getAvoidsWater() {
+        return this.avoidsWater;
+    }
 
-   public float getPathSearchRange() {
-      return (float)this.pathSearchRange.getAttributeValue();
-   }
+    public void setBreakDoors(boolean flag) {
+        this.canPassClosedWoodenDoors = flag;
+    }
 
-   public PathEntity getPathToXYZ(double x, double y, double z) {
-      return this.getPathToPos(new BlockPos(MathHelper.floor_double(x), (int)y, MathHelper.floor_double(z)));
-   }
+    public void setEnterDoors(boolean flag) {
+        this.canPassOpenWoodenDoors = flag;
+    }
 
-   public PathEntity getPathToPos(BlockPos pos) {
-      if (!this.canNavigate()) {
-         return null;
-      }
+    public boolean getCanBreakDoors() {
+        return this.canPassClosedWoodenDoors;
+    }
 
-      float pathSearchRange = this.getPathSearchRange();
-      this.worldObj.theProfiler.startSection("pathfind");
-      BlockPos blockPos = new BlockPos(this.theEntity);
-      int n = (int)(pathSearchRange + 8.0F);
-      ChunkCache chunkCache = new ChunkCache(this.worldObj, blockPos.add(-n, -n, -n), blockPos.add(n, n, n), 0);
-      PathEntity createEntityPathTo = this.pathFinder.createEntityPathTo(chunkCache, this.theEntity, pos, pathSearchRange);
-      this.worldObj.theProfiler.endSection();
-      return createEntityPathTo;
-   }
+    public void setAvoidSun(boolean flag) {
+        this.avoidSun = flag;
+    }
 
-   public boolean tryMoveToXYZ(double x, double y, double z, double speedIn) {
-      PathEntity pathToXYZ = this.getPathToXYZ(MathHelper.floor_double(x), (int)y, MathHelper.floor_double(z));
-      return this.setPath(pathToXYZ, speedIn);
-   }
+    public void setSpeed(double d) {
+        this.speed = d;
+    }
 
-   public void setHeightRequirement(float jumpHeight) {
-      this.heightRequirement = jumpHeight;
-   }
+    public void setCanSwim(boolean flag) {
+        this.canSwim = flag;
+    }
 
-   public PathEntity getPathToEntityLiving(Entity entityIn) {
-      if (!this.canNavigate()) {
-         return null;
-      }
+    public float getPathSearchRange() {
+        return (float)this.pathSearchRange.getAttributeValue();
+    }
 
-      float pathSearchRange = this.getPathSearchRange();
-      this.worldObj.theProfiler.startSection("pathfind");
-      BlockPos up = new BlockPos(this.theEntity).up();
-      int n = (int)(pathSearchRange + 16.0F);
-      ChunkCache chunkCache = new ChunkCache(this.worldObj, up.add(-n, -n, -n), up.add(n, n, n), 0);
-      PathEntity createEntityPathTo = this.pathFinder.createEntityPathTo(chunkCache, this.theEntity, entityIn, pathSearchRange);
-      this.worldObj.theProfiler.endSection();
-      return createEntityPathTo;
-   }
+    public PathEntity getPathToXYZ(double d, double d2, double d3) {
+        return !this.canNavigate()
+            ? null
+            : this.worldObj
+                .getEntityPathToXYZ(
+                    this.theEntity,
+                    MathHelper.floor_double(d),
+                    (int)d2,
+                    MathHelper.floor_double(d3),
+                    this.getPathSearchRange(),
+                    this.canPassOpenWoodenDoors,
+                    this.canPassClosedWoodenDoors,
+                    this.avoidsWater,
+                    this.canSwim
+                );
+    }
 
-   public boolean tryMoveToEntityLiving(Entity entityIn, double speedIn) {
-      PathEntity pathToEntityLiving = this.getPathToEntityLiving(entityIn);
-      return pathToEntityLiving != null ? this.setPath(pathToEntityLiving, speedIn) : false;
-   }
+    public boolean tryMoveToXYZ(double d, double d2, double d3, double d4) {
+        PathEntity pathToXYZ = this.getPathToXYZ(MathHelper.floor_double(d), (int)d2, MathHelper.floor_double(d3));
+        return this.setPath(pathToXYZ, d4);
+    }
 
-   public boolean setPath(PathEntity pathentityIn, double speedIn) {
-      if (pathentityIn == null) {
-         this.currentPath = null;
-         return false;
-      }
+    public PathEntity getPathToEntityLiving(Entity entity) {
+        return !this.canNavigate()
+            ? null
+            : this.worldObj
+                .getPathEntityToEntity(
+                    this.theEntity, entity, this.getPathSearchRange(), this.canPassOpenWoodenDoors, this.canPassClosedWoodenDoors, this.avoidsWater, this.canSwim
+                );
+    }
 
-      if (!pathentityIn.isSamePath(this.currentPath)) {
-         this.currentPath = pathentityIn;
-      }
+    public boolean tryMoveToEntityLiving(Entity entity, double d) {
+        PathEntity pathToEntityLiving = this.getPathToEntityLiving(entity);
+        return pathToEntityLiving != null && this.setPath(pathToEntityLiving, d);
+    }
 
-      this.removeSunnyPath();
-      if (this.currentPath.getCurrentPathLength() == 0) {
-         return false;
-      }
+    public boolean setPath(PathEntity pathEntity, double d) {
+        if (pathEntity == null) {
+            this.currentPath = null;
+            return false;
+        }
 
-      this.speed = speedIn;
-      Vec3 entityPosition = this.getEntityPosition();
-      this.ticksAtLastPos = this.totalTicks;
-      this.lastPosCheck = entityPosition;
-      return true;
-   }
+        if (!pathEntity.isSamePath(this.currentPath)) {
+            this.currentPath = pathEntity;
+        }
 
-   public PathEntity getPath() {
-      return this.currentPath;
-   }
+        if (this.avoidSun) {
+            this.removeSunnyPath();
+        }
 
-   public void onUpdateNavigation() {
-      this.totalTicks++;
-      if (!this.noPath()) {
-         if (this.canNavigate()) {
-            this.pathFollow();
-         } else if (this.currentPath != null && this.currentPath.getCurrentPathIndex() < this.currentPath.getCurrentPathLength()) {
-            Vec3 entityPosition = this.getEntityPosition();
-            Vec3 vectorFromIndex = this.currentPath.getVectorFromIndex(this.theEntity, this.currentPath.getCurrentPathIndex());
-            if (entityPosition.yCoord > vectorFromIndex.yCoord
-               && !this.theEntity.onGround
-               && MathHelper.floor_double(entityPosition.xCoord) == MathHelper.floor_double(vectorFromIndex.xCoord)
-               && MathHelper.floor_double(entityPosition.zCoord) == MathHelper.floor_double(vectorFromIndex.zCoord)) {
-               this.currentPath.setCurrentPathIndex(this.currentPath.getCurrentPathIndex() + 1);
+        if (this.currentPath.getCurrentPathLength() == 0) {
+            return false;
+        }
+
+        this.speed = d;
+        Vec3 entityPosition = this.getEntityPosition();
+        this.ticksAtLastPos = this.totalTicks;
+        this.lastPosCheck.xCoord = entityPosition.xCoord;
+        this.lastPosCheck.yCoord = entityPosition.yCoord;
+        this.lastPosCheck.zCoord = entityPosition.zCoord;
+        return true;
+    }
+
+    public PathEntity getPath() {
+        return this.currentPath;
+    }
+
+    public void onUpdateNavigation() {
+        this.totalTicks++;
+        if (!this.noPath()) {
+            if (this.canNavigate()) {
+                this.pathFollow();
             }
-         }
 
-         if (!this.noPath()) {
-            Vec3 position = this.currentPath.getPosition(this.theEntity);
-            if (position != null) {
-               AxisAlignedBB expand = new AxisAlignedBB(position.xCoord, position.yCoord, position.zCoord, position.xCoord, position.yCoord, position.zCoord).expand(0.5, 0.5, 0.5);
-               List collidingBoundingBoxes = this.worldObj.getCollidingBoundingBoxes(this.theEntity, expand.addCoord(0.0, -1.0, 0.0));
-               double d = -1.0;
-               expand = expand.offset(0.0, 1.0, 0.0);
-
-               for (AxisAlignedBB axisAlignedBB : (Iterable<AxisAlignedBB>)collidingBoundingBoxes) {
-                  d = axisAlignedBB.calculateYOffset(expand, d);
-               }
-
-               this.theEntity.getMoveHelper().setMoveTo(position.xCoord, position.yCoord + d, position.zCoord, this.speed);
+            if (!this.noPath()) {
+                Vec3 position = this.currentPath.getPosition(this.theEntity);
+                if (position != null) {
+                    this.theEntity.getMoveHelper().setMoveTo(position.xCoord, position.yCoord, position.zCoord, this.speed);
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
-   public void pathFollow() {
-      Vec3 entityPosition = this.getEntityPosition();
-      int currentPathLength = this.currentPath.getCurrentPathLength();
+    public void pathFollow() {
+        Vec3 entityPosition = this.getEntityPosition();
+        int currentPathLength = this.currentPath.getCurrentPathLength();
 
-      for (int currentPathIndex = this.currentPath.getCurrentPathIndex(); currentPathIndex < this.currentPath.getCurrentPathLength(); currentPathIndex++) {
-         if (this.currentPath.getPathPointFromIndex(currentPathIndex).yCoord != (int)entityPosition.yCoord) {
-            currentPathLength = currentPathIndex;
-            break;
-         }
-      }
+        for (int currentPathIndex = this.currentPath.getCurrentPathIndex(); currentPathIndex < this.currentPath.getCurrentPathLength(); currentPathIndex++) {
+            if (this.currentPath.getPathPointFromIndex(currentPathIndex).yCoord != (int)entityPosition.yCoord) {
+                currentPathLength = currentPathIndex;
+                break;
+            }
+        }
 
-      float f = this.theEntity.width * this.theEntity.width * this.heightRequirement;
+        float f = this.theEntity.width * this.theEntity.width;
 
-      for (int currentPathIndex = this.currentPath.getCurrentPathIndex(); currentPathIndex < currentPathLength; currentPathIndex++) {
-         Vec3 vectorFromIndex = this.currentPath.getVectorFromIndex(this.theEntity, currentPathIndex);
-         if (entityPosition.squareDistanceTo(vectorFromIndex) < f) {
-            this.currentPath.setCurrentPathIndex(currentPathIndex + 1);
-         }
-      }
+        for (int currentPathIndex = this.currentPath.getCurrentPathIndex(); currentPathIndex < currentPathLength; currentPathIndex++) {
+            if (entityPosition.squareDistanceTo(this.currentPath.getVectorFromIndex(this.theEntity, currentPathIndex)) < f) {
+                this.currentPath.setCurrentPathIndex(currentPathIndex + 1);
+            }
+        }
 
-      int n = MathHelper.ceiling_float_int(this.theEntity.width);
-      int n2 = (int)this.theEntity.height + 1;
-      int n3 = n;
+        int n = MathHelper.ceiling_float_int(this.theEntity.width);
+        int n2 = (int)this.theEntity.height + 1;
+        int n3 = n;
 
-      for (int i = currentPathLength - 1; i >= this.currentPath.getCurrentPathIndex(); i--) {
-         if (this.isDirectPathBetweenPoints(entityPosition, this.currentPath.getVectorFromIndex(this.theEntity, i), n, n2, n3)) {
-            this.currentPath.setCurrentPathIndex(i);
-            break;
-         }
-      }
+        for (int i = currentPathLength - 1; i >= this.currentPath.getCurrentPathIndex(); i--) {
+            if (this.isDirectPathBetweenPoints(entityPosition, this.currentPath.getVectorFromIndex(this.theEntity, i), n, n2, n3)) {
+                this.currentPath.setCurrentPathIndex(i);
+                break;
+            }
+        }
 
-      this.checkForStuck(entityPosition);
-   }
+        if (this.totalTicks - this.ticksAtLastPos > 100) {
+            if (entityPosition.squareDistanceTo(this.lastPosCheck) < 2.25) {
+                this.clearPathEntity();
+            }
 
-   public void checkForStuck(Vec3 positionVec3) {
-      if (this.totalTicks - this.ticksAtLastPos > 100) {
-         if (positionVec3.squareDistanceTo(this.lastPosCheck) < 2.25) {
-            this.clearPathEntity();
-         }
+            this.ticksAtLastPos = this.totalTicks;
+            this.lastPosCheck.xCoord = entityPosition.xCoord;
+            this.lastPosCheck.yCoord = entityPosition.yCoord;
+            this.lastPosCheck.zCoord = entityPosition.zCoord;
+        }
+    }
 
-         this.ticksAtLastPos = this.totalTicks;
-         this.lastPosCheck = positionVec3;
-      }
-   }
+    public boolean noPath() {
+        return this.currentPath == null || this.currentPath.isFinished();
+    }
 
-   public boolean noPath() {
-      return this.currentPath == null || this.currentPath.isFinished();
-   }
+    public void clearPathEntity() {
+        this.currentPath = null;
+    }
 
-   public void clearPathEntity() {
-      this.currentPath = null;
-   }
+    public Vec3 getEntityPosition() {
+        return Vec3.createVectorHelper(this.theEntity.posX, this.getPathableYPos(), this.theEntity.posZ);
+    }
 
-   public abstract Vec3 getEntityPosition();
+    public int getPathableYPos() {
+        if (this.theEntity.isInWater() && this.canSwim) {
+            int minY = (int)this.theEntity.boundingBox.minY;
+            Block block = this.worldObj.getBlock(MathHelper.floor_double(this.theEntity.posX), minY, MathHelper.floor_double(this.theEntity.posZ));
+            int n = 0;
 
-   public abstract boolean canNavigate();
+            while (block == Blocks.flowing_water || block == Blocks.water) {
+                block = this.worldObj.getBlock(MathHelper.floor_double(this.theEntity.posX), ++minY, MathHelper.floor_double(this.theEntity.posZ));
+                if (++n > 16) {
+                    return (int)this.theEntity.boundingBox.minY;
+                }
+            }
 
-   public boolean isInLiquid() {
-      return this.theEntity.isInWater() || this.theEntity.isInLava();
-   }
+            return minY;
+        } else {
+            return (int)(this.theEntity.boundingBox.minY + 0.5);
+        }
+    }
 
-   public void removeSunnyPath() {
-   }
+    public boolean canNavigate() {
+        return this.theEntity.onGround
+            || this.canSwim && this.isInLiquid()
+            || this.theEntity.isRiding() && this.theEntity instanceof EntityZombie && this.theEntity.ridingEntity instanceof EntityChicken;
+    }
 
-   public abstract boolean isDirectPathBetweenPoints(Vec3 vec3, Vec3 vec32, int n, int n2, int n3);
+    public boolean isInLiquid() {
+        return this.theEntity.isInWater() || this.theEntity.handleLavaMovement();
+    }
+
+    public void removeSunnyPath() {
+        if (!this.worldObj
+            .canBlockSeeTheSky(
+                MathHelper.floor_double(this.theEntity.posX), (int)(this.theEntity.boundingBox.minY + 0.5), MathHelper.floor_double(this.theEntity.posZ)
+            )) {
+            for (int i = 0; i < this.currentPath.getCurrentPathLength(); i++) {
+                PathPoint pathPointFromIndex = this.currentPath.getPathPointFromIndex(i);
+                if (this.worldObj.canBlockSeeTheSky(pathPointFromIndex.xCoord, pathPointFromIndex.yCoord, pathPointFromIndex.zCoord)) {
+                    this.currentPath.setCurrentPathLength(i - 1);
+                    return;
+                }
+            }
+        }
+    }
+
+    public boolean isDirectPathBetweenPoints(Vec3 vec3, Vec3 vec32, int n, int n2, int n3) {
+        int n4 = MathHelper.floor_double(vec3.xCoord);
+        int n5 = MathHelper.floor_double(vec3.zCoord);
+        double d = vec32.xCoord - vec3.xCoord;
+        double d2 = vec32.zCoord - vec3.zCoord;
+        double d3 = d * d + d2 * d2;
+        if (d3 < 1.0E-8) {
+            return false;
+        }
+
+        double d4 = 1.0 / Math.sqrt(d3);
+        d *= d4;
+        d2 *= d4;
+        n += 2;
+        n3 += 2;
+        if (!this.isSafeToStandAt(n4, (int)vec3.yCoord, n5, n, n2, n3, vec3, d, d2)) {
+            return false;
+        }
+
+        n -= 2;
+        n3 -= 2;
+        double d5 = 1.0 / Math.abs(d);
+        double d6 = 1.0 / Math.abs(d2);
+        double d7 = n4 * 1 - vec3.xCoord;
+        double d8 = n5 * 1 - vec3.zCoord;
+        if (d >= 0.0) {
+            d7++;
+        }
+
+        if (d2 >= 0.0) {
+            d8++;
+        }
+
+        d7 /= d;
+        d8 /= d2;
+        int n6 = d < 0.0 ? -1 : 1;
+        int n7 = d2 < 0.0 ? -1 : 1;
+        int n8 = MathHelper.floor_double(vec32.xCoord);
+        int n9 = MathHelper.floor_double(vec32.zCoord);
+        int n10 = n8 - n4;
+        int n11 = n9 - n5;
+
+        while (n10 * n6 > 0 || n11 * n7 > 0) {
+            if (d7 < d8) {
+                d7 += d5;
+                n4 += n6;
+                n10 = n8 - n4;
+            } else {
+                d8 += d6;
+                n5 += n7;
+                n11 = n9 - n5;
+            }
+
+            if (!this.isSafeToStandAt(n4, (int)vec3.yCoord, n5, n, n2, n3, vec3, d, d2)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean isSafeToStandAt(int n, int n2, int n3, int n4, int n5, int n6, Vec3 vec3, double d, double d2) {
+        int n7 = n - n4 / 2;
+        int n8 = n3 - n6 / 2;
+        if (!this.isPositionClear(n7, n2, n8, n4, n5, n6, vec3, d, d2)) {
+            return false;
+        }
+
+        for (int i = n7; i < n7 + n4; i++) {
+            for (int j = n8; j < n8 + n6; j++) {
+                double d3 = i + 0.5 - vec3.xCoord;
+                double d4 = j + 0.5 - vec3.zCoord;
+                if (d3 * d + d4 * d2 >= 0.0) {
+                    Block block = this.worldObj.getBlock(i, n2 - 1, j);
+                    Material material = block.getMaterial();
+                    if (material == Material.air) {
+                        return false;
+                    }
+
+                    if (material == Material.water && !this.theEntity.isInWater()) {
+                        return false;
+                    }
+
+                    if (material == Material.lava) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    public boolean isPositionClear(int n, int n2, int n3, int n4, int n5, int n6, Vec3 vec3, double d, double d2) {
+        for (int i = n; i < n + n4; i++) {
+            for (int j = n2; j < n2 + n5; j++) {
+                for (int k = n3; k < n3 + n6; k++) {
+                    double d3 = i + 0.5 - vec3.xCoord;
+                    double d4 = k + 0.5 - vec3.zCoord;
+                    if (d3 * d + d4 * d2 >= 0.0) {
+                        Block block = this.worldObj.getBlock(i, j, k);
+                        if (!block.isPassable(this.worldObj, i, j, k)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
 }

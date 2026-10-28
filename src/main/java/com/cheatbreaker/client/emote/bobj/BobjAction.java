@@ -4,20 +4,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BobjAction {
-   public Map<Object, BobjGroup> groups = new HashMap<>();
-   public String name;
+    public Map<Object, BobjGroup> groups = new HashMap<>();
+    public String name;
 
-   public int getLength() {
-      int n = 0;
+    public int getLength() {
+        int n = 0;
 
-      for (BobjGroup bobjGroup : this.groups.values()) {
-         n = Math.max(n, bobjGroup.getLength());
-      }
+        for (BobjGroup bobjGroup : this.groups.values()) {
+            n = Math.max(n, bobjGroup.getLength());
+        }
 
-      return n;
-   }
+        return n;
+    }
 
-   public BobjAction(String str) {
-      this.name = str;
-   }
+    public BobjAction(String str) {
+        this.name = str;
+    }
 }

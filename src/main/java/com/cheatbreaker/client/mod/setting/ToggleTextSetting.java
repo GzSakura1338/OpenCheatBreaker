@@ -4,41 +4,37 @@ import com.cheatbreaker.client.mod.AbstractMod;
 import java.util.List;
 
 public class ToggleTextSetting extends Setting {
-   public String offText2 = "OFF";
-   public String onText2 = "ON";
+    public String customOffText = "OFF";
+    public String customOnText = "ON";
 
-   public void setOffText2(String str) {
-      this.offText2 = str;
-   }
+    public ToggleTextSetting(AbstractMod abstractMod, String str) {
+        super(abstractMod, str);
+    }
 
-   public String getOffText2() {
-      return this.offText2;
-   }
+    public String getCustomOnText() {
+        return this.customOnText;
+    }
 
-   public String getOnText2() {
-      return this.onText2;
-   }
+    @Override
+    public Setting setToggleTexts(String str, String str2) {
+        this.customOffText = str;
+        this.customOnText = str2;
+        return this;
+    }
 
-   @Override
-   public Setting setToggleTexts(String str, String str2) {
-      this.offText2 = str;
-      this.onText2 = str2;
-      return this;
-   }
+    public void setCustomOffText(String str) {
+        this.customOffText = str;
+    }
 
-   public boolean isEnabled() {
-      return (Boolean)this.value;
-   }
+    public ToggleTextSetting(List<Setting> list, String str) {
+        super(list, str);
+    }
 
-   public ToggleTextSetting(AbstractMod abstractMod, String str) {
-      super(abstractMod, str);
-   }
+    public String getCustomOffText() {
+        return this.customOffText;
+    }
 
-   public ToggleTextSetting(List<Setting> list, String str) {
-      super(list, str);
-   }
-
-   public void setOnText2(String str) {
-      this.onText2 = str;
-   }
+    public void setCustomOnText(String str) {
+        this.customOnText = str;
+    }
 }

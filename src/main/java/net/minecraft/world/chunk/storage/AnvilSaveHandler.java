@@ -10,40 +10,40 @@ import net.minecraft.world.storage.ThreadedFileIOBase;
 import net.minecraft.world.storage.WorldInfo;
 
 public class AnvilSaveHandler extends SaveHandler {
-   public AnvilSaveHandler(File savesDirectory, String directoryName, boolean storePlayerdata) {
-      super(savesDirectory, directoryName, storePlayerdata);
-   }
+    public AnvilSaveHandler(File file, String str, boolean flag) {
+        super(file, str, flag);
+    }
 
-   @Override
-   public IChunkLoader getChunkLoader(WorldProvider provider) {
-      File worldDirectory = this.getWorldDirectory();
-      if (provider instanceof WorldProviderHell) {
-         File file = new File(worldDirectory, "DIM-1");
-         file.mkdirs();
-         return new AnvilChunkLoader(file);
-      } else if (provider instanceof WorldProviderEnd) {
-         File file = new File(worldDirectory, "DIM1");
-         file.mkdirs();
-         return new AnvilChunkLoader(file);
-      } else {
-         return new AnvilChunkLoader(worldDirectory);
-      }
-   }
+    @Override
+    public IChunkLoader getChunkLoader(WorldProvider worldProvider) {
+        File worldDirectory = this.getWorldDirectory();
+        if (worldProvider instanceof WorldProviderHell) {
+            File file = new File(worldDirectory, "DIM-1");
+            file.mkdirs();
+            return new AnvilChunkLoader(file);
+        } else if (worldProvider instanceof WorldProviderEnd) {
+            File file = new File(worldDirectory, "DIM1");
+            file.mkdirs();
+            return new AnvilChunkLoader(file);
+        } else {
+            return new AnvilChunkLoader(worldDirectory);
+        }
+    }
 
-   @Override
-   public void saveWorldInfoWithPlayer(WorldInfo worldInformation, NBTTagCompound tagCompound) {
-      worldInformation.setSaveVersion(19133);
-      super.saveWorldInfoWithPlayer(worldInformation, tagCompound);
-   }
+    @Override
+    public void saveWorldInfoWithPlayer(WorldInfo worldInfo, NBTTagCompound nbttagCompound) {
+        worldInfo.setSaveVersion(19133);
+        super.saveWorldInfoWithPlayer(worldInfo, nbttagCompound);
+    }
 
-   @Override
-   public void flush() {
-      try {
-         ThreadedFileIOBase.getThreadedIOInstance().waitForFinish();
-      } catch (InterruptedException e) {
-         e.printStackTrace();
-      }
+    @Override
+    public void flush() {
+        try {
+            ThreadedFileIOBase.threadedIOInstance.waitForFinish();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
-      RegionFileCache.clearRegionFileReferences();
-   }
+        RegionFileCache.clearRegionFileReferences();
+    }
 }

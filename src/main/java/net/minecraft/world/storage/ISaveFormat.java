@@ -5,27 +5,27 @@ import net.minecraft.client.AnvilConverterException;
 import net.minecraft.util.IProgressUpdate;
 
 public interface ISaveFormat {
-   String getName();
+    String constantText();
 
-   ISaveHandler getSaveLoader(String str, boolean flag);
+    ISaveHandler getSaveLoader(String str, boolean flag);
 
-   List<SaveFormatComparator> getSaveList() throws AnvilConverterException;
+    List getSaveList() throws AnvilConverterException;
 
-   void flushCache();
+    void flushCache();
 
-   WorldInfo getWorldInfo(String str);
+    WorldInfo getWorldInfo(String str);
 
-   boolean deleteWorldDirectory(String str);
+    boolean deleteWorldDirectory(String str);
 
-   void renameWorld(String str, String str2);
+    void renameWorld(String str, String str2);
 
-   boolean isOldMapFormat(String str);
+    boolean isOldMapFormat(String str);
 
-   boolean convertMapFormat(String str, IProgressUpdate progressUpdate);
+    boolean convertMapFormat(String str, IProgressUpdate progressUpdate) throws java.io.IOException;
 
-   boolean canLoadWorld(String str);
+    boolean canLoadWorld(String str);
 
-   boolean isNewLevelIdAcceptable(String str);
+    boolean checkString(String str);
 
-   boolean isConvertible(String str);
+    boolean checkString2(String str);
 }

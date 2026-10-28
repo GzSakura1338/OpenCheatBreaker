@@ -6,39 +6,39 @@ import com.cheatbreaker.client.network.PacketHandler;
 import com.cheatbreaker.client.network.WebsocketPacketHandler;
 
 public class EncryptionRequestPacket extends AbstractPacket {
-   public byte[] publicKey;
-   public byte[] verifyToken;
+    public byte[] publicKey;
+    public byte[] verifyToken;
 
-   public byte[] getVerifyToken() {
-      return this.verifyToken;
-   }
+    @Override
+    public void read(PacketBuffer packetBuffer) {
+        this.publicKey = this.readByteArray(packetBuffer);
+        this.verifyToken = this.readByteArray(packetBuffer);
+    }
 
-   public EncryptionRequestPacket(byte[] bytes, byte[] bytes2) {
-      this.publicKey = bytes;
-      this.verifyToken = bytes2;
-   }
+    public byte[] getPublicKey() {
+        return this.publicKey;
+    }
 
-   @Override
-   public void read(PacketBuffer packetBuffer) {
-      this.publicKey = this.readByteArray(packetBuffer);
-      this.verifyToken = this.readByteArray(packetBuffer);
-   }
+    @Override
+    public void handle(PacketHandler packetHandler) {
+        ((WebsocketPacketHandler)packetHandler).handleEncryptionRequest(this);
+    }
 
-   public EncryptionRequestPacket() {
-   }
+    public EncryptionRequestPacket(byte[] bytes, byte[] bytes2) {
+        this.publicKey = bytes;
+        this.verifyToken = bytes2;
+    }
 
-   @Override
-   public void write(PacketBuffer packetBuffer) {
-      this.writeByteArray(packetBuffer, this.publicKey);
-      this.writeByteArray(packetBuffer, this.verifyToken);
-   }
+    public EncryptionRequestPacket() {
+    }
 
-   public byte[] getPublicKey() {
-      return this.publicKey;
-   }
+    public byte[] getVerifyToken() {
+        return this.verifyToken;
+    }
 
-   @Override
-   public void handle(PacketHandler packetHandler) {
-      ((WebsocketPacketHandler)packetHandler).handleEncryptionRequest(this);
-   }
+    @Override
+    public void write(PacketBuffer packetBuffer) {
+        this.writeByteArray(packetBuffer, this.publicKey);
+        this.writeByteArray(packetBuffer, this.verifyToken);
+    }
 }

@@ -6,58 +6,57 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class NBTTagByteArray extends NBTBase {
-   public byte[] data;
+    public byte[] byteArray;
 
-   public NBTTagByteArray() {
-   }
+    public NBTTagByteArray() {
+    }
 
-   public NBTTagByteArray(byte[] data) {
-      this.data = data;
-   }
+    public NBTTagByteArray(byte[] bytes) {
+        this.byteArray = bytes;
+    }
 
-   @Override
-   public void write(DataOutput output) throws IOException {
-      output.writeInt(this.data.length);
-      output.write(this.data);
-   }
+    @Override
+    public void write(DataOutput output) throws IOException {
+        output.writeInt(this.byteArray.length);
+        output.write(this.byteArray);
+    }
 
-   @Override
-   public void read(DataInput input, int depth, NBTSizeTracker sizeTracker) throws IOException {
-      sizeTracker.read(192L);
-      int readInt = input.readInt();
-      sizeTracker.read(8 * readInt);
-      this.data = new byte[readInt];
-      input.readFully(this.data);
-   }
+    @Override
+    public void read(DataInput input, int depth, NBTSizeTracker sizeTracker) throws IOException {
+        int readInt = input.readInt();
+        sizeTracker.addSpaceRead(8 * readInt);
+        this.byteArray = new byte[readInt];
+        input.readFully(this.byteArray);
+    }
 
-   @Override
-   public byte getId() {
-      return 7;
-   }
+    @Override
+    public byte getId() {
+        return 7;
+    }
 
-   @Override
-   public String toString() {
-      return "[" + this.data.length + " bytes]";
-   }
+    @Override
+    public String toString() {
+        return "[" + this.byteArray.length + " bytes]";
+    }
 
-   @Override
-   public NBTBase copy() {
-      byte[] bytes = new byte[this.data.length];
-      System.arraycopy(this.data, 0, bytes, 0, this.data.length);
-      return new NBTTagByteArray(bytes);
-   }
+    @Override
+    public NBTBase copy() {
+        byte[] bytes = new byte[this.byteArray.length];
+        System.arraycopy(this.byteArray, 0, bytes, 0, this.byteArray.length);
+        return new NBTTagByteArray(bytes);
+    }
 
-   @Override
-   public boolean equals(Object obj) {
-      return super.equals(obj) ? Arrays.equals(this.data, ((NBTTagByteArray)obj).data) : false;
-   }
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj) && Arrays.equals(this.byteArray, ((NBTTagByteArray)obj).byteArray);
+    }
 
-   @Override
-   public int hashCode() {
-      return super.hashCode() ^ Arrays.hashCode(this.data);
-   }
+    @Override
+    public int hashCode() {
+        return super.hashCode() ^ Arrays.hashCode(this.byteArray);
+    }
 
-   public byte[] getByteArray() {
-      return this.data;
-   }
+    public byte[] getByteArray() {
+        return this.byteArray;
+    }
 }

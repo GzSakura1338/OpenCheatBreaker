@@ -6,95 +6,94 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.EnumChatFormatting;
 import net.minecraft.util.IChatComponent;
-import net.minecraft.util.IJsonSerializable;
 import net.minecraft.util.StatCollector;
 
 public class Achievement extends StatBase {
-   public ItemStack theItemStack;
-   public String achievementDescription;
-   public int displayColumn;
-   public int displayRow;
-   public IStatStringFormat statStringFormatter;
-   public Achievement parentAchievement;
-   public boolean isSpecial;
+    public ItemStack theItemStack;
+    public String achievementDescription;
+    public int displayColumn;
+    public int displayRow;
+    public IStatStringFormat statStringFormatter;
+    public Achievement parentAchievement;
+    public boolean isSpecial;
 
-   public Achievement(String statIdIn, String unlocalizedName, int column, int row, Item itemIn, Achievement parent) {
-      this(statIdIn, unlocalizedName, column, row, new ItemStack(itemIn), parent);
-   }
+    public Achievement(String str, String str2, int n, int n2, Item item, Achievement achievement) {
+        this(str, str2, n, n2, new ItemStack(item), achievement);
+    }
 
-   public Achievement(String statIdIn, String unlocalizedName, int column, int row, Block blockIn, Achievement parent) {
-      this(statIdIn, unlocalizedName, column, row, new ItemStack(blockIn), parent);
-   }
+    public Achievement(String str, String str2, int n, int n2, Block block, Achievement achievement) {
+        this(str, str2, n, n2, new ItemStack(block), achievement);
+    }
 
-   public Achievement(String statIdIn, String unlocalizedName, int column, int row, ItemStack stack, Achievement parent) {
-      super(statIdIn, new ChatComponentTranslation("achievement." + unlocalizedName));
-      this.theItemStack = stack;
-      this.achievementDescription = "achievement." + unlocalizedName + ".desc";
-      this.displayColumn = column;
-      this.displayRow = row;
-      if (column < AchievementList.minDisplayColumn) {
-         AchievementList.minDisplayColumn = column;
-      }
+    public Achievement(String str, String str2, int n, int n2, ItemStack itemStack, Achievement achievement) {
+        super(str, new ChatComponentTranslation("achievement." + str2));
+        this.theItemStack = itemStack;
+        this.achievementDescription = "achievement." + str2 + ".desc";
+        this.displayColumn = n;
+        this.displayRow = n2;
+        if (n < AchievementList.minDisplayColumn) {
+            AchievementList.minDisplayColumn = n;
+        }
 
-      if (row < AchievementList.minDisplayRow) {
-         AchievementList.minDisplayRow = row;
-      }
+        if (n2 < AchievementList.minDisplayRow) {
+            AchievementList.minDisplayRow = n2;
+        }
 
-      if (column > AchievementList.maxDisplayColumn) {
-         AchievementList.maxDisplayColumn = column;
-      }
+        if (n > AchievementList.maxDisplayColumn) {
+            AchievementList.maxDisplayColumn = n;
+        }
 
-      if (row > AchievementList.maxDisplayRow) {
-         AchievementList.maxDisplayRow = row;
-      }
+        if (n2 > AchievementList.maxDisplayRow) {
+            AchievementList.maxDisplayRow = n2;
+        }
 
-      this.parentAchievement = parent;
-   }
+        this.parentAchievement = achievement;
+    }
 
-   public Achievement initIndependentStat() {
-      this.isIndependent = true;
-      return this;
-   }
+    public Achievement initIndependentStat() {
+        this.isIndependent = true;
+        return this;
+    }
 
-   public Achievement setSpecial() {
-      this.isSpecial = true;
-      return this;
-   }
+    public Achievement setSpecial() {
+        this.isSpecial = true;
+        return this;
+    }
 
-   public Achievement registerStat() {
-      super.registerStat();
-      AchievementList.achievementList.add(this);
-      return this;
-   }
+    public Achievement registerStat() {
+        super.registerStat();
+        AchievementList.achievementList.add(this);
+        return this;
+    }
 
-   @Override
-   public boolean isAchievement() {
-      return true;
-   }
+    @Override
+    public boolean isAchievement() {
+        return true;
+    }
 
-   @Override
-   public IChatComponent getStatName() {
-      IChatComponent statName = super.getStatName();
-      statName.getChatStyle().setColor(this.getSpecial() ? EnumChatFormatting.DARK_PURPLE : EnumChatFormatting.GREEN);
-      return statName;
-   }
+    @Override
+    public IChatComponent getStatName() {
+        IChatComponent statName = super.getStatName();
+        statName.getChatStyle().setColor(this.getSpecial() ? EnumChatFormatting.DARK_PURPLE : EnumChatFormatting.GREEN);
+        return statName;
+    }
 
-   public Achievement setJsonElementProvider(Class<? extends IJsonSerializable> clazz) {
-      return (Achievement)super.setJsonElementProvider(clazz);
-   }
+    public Achievement setJsonElementProvider(Class clazz) {
+        return (Achievement)super.setJsonElementProvider(clazz);
+    }
 
-   public String getDescription() {
-      return this.statStringFormatter != null
-         ? this.statStringFormatter.formatString(StatCollector.translateToLocal(this.achievementDescription))
-         : StatCollector.translateToLocal(this.achievementDescription);
-   }
+    public String getDescription() {
+        return this.statStringFormatter != null
+            ? this.statStringFormatter.formatString(StatCollector.translateToLocal(this.achievementDescription))
+            : StatCollector.translateToLocal(this.achievementDescription);
+    }
 
-   public Achievement setStatStringFormatter(IStatStringFormat statStringFormatterIn) {
-      this.statStringFormatter = statStringFormatterIn;
-      return this;
-   }
+    public Achievement setStatStringFormatter(IStatStringFormat statStringFormat) {
+        this.statStringFormatter = statStringFormat;
+        return this;
+    }
 
-   public boolean getSpecial() {
-      return this.isSpecial;
-   }
+    public boolean getSpecial() {
+        return this.isSpecial;
+    }
 }

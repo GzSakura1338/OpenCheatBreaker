@@ -25,48 +25,7 @@ public class ServerTransferHandler {
     public Minecraft mc = Minecraft.getMinecraft();
     public OldServerPinger oldServerPinger = new OldServerPinger();
 
-    public void handleServerData(ServerData serverData) {
-        if (this.mc.getCurrentServerData() != null && this.mc.theWorld != null) {
-            this.mc.theWorld.sendQuittingDisconnectingPacket();
-            this.mc.loadWorld(null);
-        }
-        this.mc.displayGuiScreen(new GuiConnecting(new ClassicMainMenuScreen(), this.mc, serverData));
-    }
-
-    public ServerTransferHandler() {
-        CheatBreaker.getInstance().getEventBus().checkClass2(SimpleEvent26.class, this::onSimpleEvent26);
-        CheatBreaker.getInstance().getEventBus().checkClass2(StringByteArrayEvent.class, this::onStringByteArrayEvent);
-    }
-
-    public void write(boolean bl) {
-        ByteBuf byteBuf = Unpooled.buffer();
-        byteBuf.writeByte(1);
-        byteBuf.writeByte(bl ? 1 : 0);
-        this.mc.getNetHandler().addToSendQueue(new C17PacketCustomPayload("transfer:channel", new PacketBuffer(byteBuf)));
-    }
-
-    public void onSimpleEvent26(SimpleEvent26 simpleEvent26) {
-        PacketBuffer packetBuffer = new PacketBuffer(Unpooled.buffer());
-        packetBuffer.writeBytes("transfer:channel".getBytes(Charsets.UTF_8));
-        if (this.mc.getNetHandler() != null && this.mc.getCurrentServerData() != null && this.mc.getCurrentServerData().flag3) {
-            this.mc.getNetHandler().addToSendQueue(new C17PacketCustomPayload("REGISTER", packetBuffer));
-        }
-    }
-
-    public String formatText(ByteBuffer byteBuffer) {
-        int n = byteBuffer.getInt();
-        if (n > 1024) {
-            throw new DecoderException("The received encoded string buffer length is longer than maximum allowed (" + n + " > 1024)");
-        }
-        if (n < 0) {
-            throw new DecoderException("The received encoded string buffer length is less than zero! Weird string!");
-        }
-        byte[] byArray = new byte[n];
-        byteBuffer.get(byArray);
-        return new String(byArray, StandardCharsets.UTF_8);
-    }
-
-    public boolean checkString(String string) {
+    public boolean isLocalAddress(String string) {
         try {
             try {
                 InetAddress inetAddress = InetAddress.getByName(string);
@@ -81,20 +40,32 @@ public class ServerTransferHandler {
         }
     }
 
+    public ServerTransferHandler() {
+        CheatBreaker.getInstance().getEventBus().checkClass2(SimpleEvent26.class, this::onSimpleEvent26);
+        CheatBreaker.getInstance().getEventBus().checkClass2(StringByteArrayEvent.class, this::onStringByteArrayEvent);
+    }
+
+    public void write(boolean bl) {
+        ByteBuf byteBuf = Unpooled.buffer();
+        byteBuf.writeByte(1);
+        byteBuf.writeByte(bl ? 1 : 0);
+        this.mc.getNetHandler().addToSendQueue(new C17PacketCustomPayload("transfer:channel", new PacketBuffer(byteBuf)));
+    }
+
     public void onStringByteArrayEvent(StringByteArrayEvent stringByteArrayEvent) {
         try {
             if (stringByteArrayEvent.getText().equals("transfer:channel")) {
                 ByteBuffer byteBuffer = ByteBuffer.wrap(stringByteArrayEvent.getBytes());
                 byte by = byteBuffer.get();
                 if (by == 0) {
-                    String string = this.formatText(byteBuffer);
+                    String string = this.readString(byteBuffer);
                     if (string.equals(this.mc.getCurrentServerData().serverIP)) {
                         return;
                     }
                     if (this.mc.getCurrentServerData().flag3) {
                         this.write(true);
                         System.out.println("Connecting to IP: " + string);
-                        this.handleServerData(new ServerData(true, string, string, false));
+                        this.handleServerData(new ServerData(true, string, string));
                     } else {
                         this.write(false);
                     }
@@ -106,11 +77,11 @@ public class ServerTransferHandler {
                     new Thread(() -> {
                         HashMap<String, Long> hashMap = new HashMap<String, Long>();
                         for (int i = 0; i < n; ++i) {
-                            String string2 = this.formatText(byteBuffer);
-                            if (this.checkString(string2)) continue;
-                            ServerData serverData = new ServerData(true, string2, string2, false);
+                            String string2 = this.readString(byteBuffer);
+                            if (this.isLocalAddress(string2)) continue;
+                            ServerData serverData = new ServerData(true, string2, string2);
                             try {
-                                this.oldServerPinger.ping(serverData);
+                                this.oldServerPinger.pingWithCallback(serverData, l -> hashMap.put(string2, (Long)l));
                                 continue;
                             }
                             catch (UnknownHostException unknownHostException) {
@@ -147,5 +118,34 @@ public class ServerTransferHandler {
         catch (Exception exception) {
             // empty catch block
         }
+    }
+
+    public String readString(ByteBuffer byteBuffer) {
+        int n = byteBuffer.getInt();
+        if (n > 1024) {
+            throw new DecoderException("The received encoded string buffer length is longer than maximum allowed (" + n + " > 1024)");
+        }
+        if (n < 0) {
+            throw new DecoderException("The received encoded string buffer length is less than zero! Weird string!");
+        }
+        byte[] byArray = new byte[n];
+        byteBuffer.get(byArray);
+        return new String(byArray, StandardCharsets.UTF_8);
+    }
+
+    public void onSimpleEvent26(SimpleEvent26 simpleEvent26) {
+        PacketBuffer packetBuffer = new PacketBuffer(Unpooled.buffer());
+        packetBuffer.writeBytes("transfer:channel".getBytes(Charsets.UTF_8));
+        if (this.mc.getNetHandler() != null && this.mc.getCurrentServerData() != null && this.mc.getCurrentServerData().flag3) {
+            this.mc.getNetHandler().addToSendQueue(new C17PacketCustomPayload("REGISTER", packetBuffer));
+        }
+    }
+
+    public void handleServerData(ServerData serverData) throws java.io.IOException {
+        if (this.mc.getCurrentServerData() != null && this.mc.theWorld != null) {
+            this.mc.theWorld.sendQuittingDisconnectingPacket();
+            this.mc.loadWorld(null);
+        }
+        this.mc.displayGuiScreen(new GuiConnecting(new ClassicMainMenuScreen(), this.mc, serverData));
     }
 }

@@ -1,54 +1,37 @@
 package net.minecraft.world.chunk;
 
 public class NibbleArray {
-   public byte[] data;
+    public byte[] data;
+    public int depthBits;
+    public int depthBitsPlusFour;
 
-   public NibbleArray() {
-      this.data = new byte[2048];
-   }
+    public NibbleArray(int n, int n2) {
+        this.data = new byte[n >> 1];
+        this.depthBits = n2;
+        this.depthBitsPlusFour = n2 + 4;
+    }
 
-   public NibbleArray(byte[] storageArray) {
-      this.data = storageArray;
-      if (storageArray.length != 2048) {
-         throw new IllegalArgumentException("ChunkNibbleArrays should be 2048 bytes not: " + storageArray.length);
-      }
-   }
+    public NibbleArray(byte[] bytes, int n) {
+        this.data = bytes;
+        this.depthBits = n;
+        this.depthBitsPlusFour = n + 4;
+    }
 
-   public int get(int x, int y, int z) {
-      return this.getFromIndex(this.getCoordinateIndex(x, y, z));
-   }
+    public int get(int n, int n2, int n3) {
+        int n4 = n2 << this.depthBitsPlusFour | n3 << this.depthBits | n;
+        int n5 = n4 >> 1;
+        int n6 = n4 & 1;
+        return n6 == 0 ? this.data[n5] & 15 : this.data[n5] >> 4 & 15;
+    }
 
-   public void set(int x, int y, int z, int value) {
-      this.setIndex(this.getCoordinateIndex(x, y, z), value);
-   }
-
-   public int getCoordinateIndex(int x, int y, int z) {
-      return y << 8 | z << 4 | x;
-   }
-
-   public int getFromIndex(int index) {
-      int nibbleIndex = this.getNibbleIndex(index);
-      return this.isLowerNibble(index) ? this.data[nibbleIndex] & 15 : this.data[nibbleIndex] >> 4 & 15;
-   }
-
-   public void setIndex(int index, int value) {
-      int nibbleIndex = this.getNibbleIndex(index);
-      if (this.isLowerNibble(index)) {
-         this.data[nibbleIndex] = (byte)(this.data[nibbleIndex] & 240 | value & 15);
-      } else {
-         this.data[nibbleIndex] = (byte)(this.data[nibbleIndex] & 15 | (value & 15) << 4);
-      }
-   }
-
-   public boolean isLowerNibble(int index) {
-      return (index & 1) == 0;
-   }
-
-   public int getNibbleIndex(int index) {
-      return index >> 1;
-   }
-
-   public byte[] getData() {
-      return this.data;
-   }
+    public void set(int n, int n2, int n3, int n4) {
+        int n5 = n2 << this.depthBitsPlusFour | n3 << this.depthBits | n;
+        int n6 = n5 >> 1;
+        int n7 = n5 & 1;
+        if (n7 == 0) {
+            this.data[n6] = (byte)(this.data[n6] & 240 | n4 & 15);
+        } else {
+            this.data[n6] = (byte)(this.data[n6] & 15 | (n4 & 15) << 4);
+        }
+    }
 }

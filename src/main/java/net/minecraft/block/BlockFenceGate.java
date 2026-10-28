@@ -1,168 +1,128 @@
 package net.minecraft.block;
 
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.state.BlockState;
-import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Axis;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 public class BlockFenceGate extends BlockDirectional {
-   public static PropertyBool OPEN = PropertyBool.create("open");
-   public static PropertyBool POWERED = PropertyBool.create("powered");
-   public static PropertyBool IN_WALL = PropertyBool.create("in_wall");
+    public BlockFenceGate() {
+        super(Material.wood);
+        this.setCreativeTab(CreativeTabs.tabRedstone);
+    }
 
-   public BlockFenceGate(BlockPlanks.EnumType enumType) {
-      super(Material.wood, enumType.getMapColor());
-      this.setDefaultState(this.blockState.getBaseState().withProperty(OPEN, false).withProperty(POWERED, false).withProperty(IN_WALL, false));
-      this.setCreativeTab(CreativeTabs.tabRedstone);
-   }
+    @Override
+    public IIcon getIcon(int side, int meta) {
+        return Blocks.planks.getBlockTextureFromSide(side);
+    }
 
-   @Override
-   public IBlockState getActualState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
-      Axis axis = state.getValue(FACING).getAxis();
-      if (axis == Axis.Z
-            && (
-               worldIn.getBlockState(pos.west()).getBlock() == Blocks.cobblestone_wall
-                  || worldIn.getBlockState(pos.east()).getBlock() == Blocks.cobblestone_wall
-            )
-         || axis == Axis.X
-            && (
-               worldIn.getBlockState(pos.north()).getBlock() == Blocks.cobblestone_wall
-                  || worldIn.getBlockState(pos.south()).getBlock() == Blocks.cobblestone_wall
-            )) {
-         state = state.withProperty(IN_WALL, true);
-      }
+    @Override
+    public boolean canPlaceBlockAt(World worldIn, int x, int y, int z) {
+        return worldIn.getBlock(x, y - 1, z).getMaterial().isSolid() && super.canPlaceBlockAt(worldIn, x, y, z);
+    }
 
-      return state;
-   }
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World worldIn, int x, int y, int z) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        return isFenceGateOpen(blockMetadata)
+            ? null
+            : (
+                blockMetadata != 2 && blockMetadata != 0
+                    ? AxisAlignedBB.getBoundingBox(x + 0.375F, y, z, x + 0.625F, y + 1.5F, z + 1)
+                    : AxisAlignedBB.getBoundingBox(x, y, z + 0.375F, x + 1, y + 1.5F, z + 0.625F)
+            );
+    }
 
-   @Override
-   public boolean canPlaceBlockAt(World worldIn, BlockPos pos) {
-      return worldIn.getBlockState(pos.down()).getBlock().getMaterial().isSolid() ? super.canPlaceBlockAt(worldIn, pos) : false;
-   }
+    @Override
+    public void setBlockBoundsBasedOnState(IBlockAccess worldIn, int x, int y, int z) {
+        int direction = getDirection(worldIn.getBlockMetadata(x, y, z));
+        if (direction != 2 && direction != 0) {
+            this.setBlockBounds(0.375F, 0.0F, 0.0F, 0.625F, 1.0F, 1.0F);
+        } else {
+            this.setBlockBounds(0.0F, 0.0F, 0.375F, 1.0F, 1.0F, 0.625F);
+        }
+    }
 
-   @Override
-   public AxisAlignedBB getCollisionBoundingBox(World worldIn, BlockPos pos, IBlockState state) {
-      if (state.getValue(OPEN)) {
-         return null;
-      }
+    @Override
+    public boolean isOpaqueCube() {
+        return false;
+    }
 
-      Axis axis = state.getValue(FACING).getAxis();
-      return axis == Axis.Z
-         ? new AxisAlignedBB(pos.getX(), pos.getY(), pos.getZ() + 0.375F, pos.getX() + 1, pos.getY() + 1.5F, pos.getZ() + 0.625F)
-         : new AxisAlignedBB(pos.getX() + 0.375F, pos.getY(), pos.getZ(), pos.getX() + 0.625F, pos.getY() + 1.5F, pos.getZ() + 1);
-   }
+    @Override
+    public boolean renderAsNormalBlock() {
+        return false;
+    }
 
-   @Override
-   public void setBlockBoundsBasedOnState(IBlockAccess worldIn, BlockPos pos) {
-      Axis axis = worldIn.getBlockState(pos).getValue(FACING).getAxis();
-      if (axis == Axis.Z) {
-         this.setBlockBounds(0.0F, 0.0F, 0.375F, 1.0F, 1.0F, 0.625F);
-      } else {
-         this.setBlockBounds(0.375F, 0.0F, 0.0F, 0.625F, 1.0F, 1.0F);
-      }
-   }
+    @Override
+    public boolean isPassable(IBlockAccess worldIn, int x, int y, int z) {
+        return isFenceGateOpen(worldIn.getBlockMetadata(x, y, z));
+    }
 
-   @Override
-   public boolean isOpaqueCube() {
-      return false;
-   }
+    @Override
+    public int getRenderType() {
+        return 21;
+    }
 
-   @Override
-   public boolean isFullCube() {
-      return false;
-   }
+    @Override
+    public void onBlockPlacedBy(World worldIn, int x, int y, int z, EntityLivingBase placer, ItemStack itemIn) {
+        int n = (MathHelper.floor_double(placer.rotationYaw * 4.0F / 360.0F + 0.5) & 3) % 4;
+        worldIn.setBlockMetadataWithNotify(x, y, z, n, 2);
+    }
 
-   @Override
-   public boolean isPassable(IBlockAccess worldIn, BlockPos pos) {
-      return worldIn.getBlockState(pos).getValue(OPEN);
-   }
-
-   @Override
-   public IBlockState onBlockPlaced(World worldIn, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-      return this.getDefaultState()
-         .withProperty(FACING, placer.getHorizontalFacing())
-         .withProperty(OPEN, false)
-         .withProperty(POWERED, false)
-         .withProperty(IN_WALL, false);
-   }
-
-   @Override
-   public boolean onBlockActivated(World worldIn, BlockPos pos, IBlockState state, EntityPlayer playerIn, EnumFacing side, float hitX, float hitY, float hitZ) {
-      if (state.getValue(OPEN)) {
-         state = state.withProperty(OPEN, false);
-         worldIn.setBlockState(pos, state, 2);
-      } else {
-         EnumFacing fromAngle = EnumFacing.fromAngle(playerIn.rotationYaw);
-         if (state.getValue(FACING) == fromAngle.getOpposite()) {
-            state = state.withProperty(FACING, fromAngle);
-         }
-
-         state = state.withProperty(OPEN, true);
-         worldIn.setBlockState(pos, state, 2);
-      }
-
-      worldIn.playAuxSFXAtEntity(playerIn, state.getValue(OPEN) ? 1003 : 1006, pos, 0);
-      return true;
-   }
-
-   @Override
-   public void onNeighborBlockChange(World worldIn, BlockPos pos, IBlockState state, Block neighborBlock) {
-      if (!worldIn.isRemote) {
-         boolean isBlockPowered = worldIn.isBlockPowered(pos);
-         if (isBlockPowered || neighborBlock.canProvidePower()) {
-            if (isBlockPowered && !state.getValue(OPEN) && !state.getValue(POWERED)) {
-               worldIn.setBlockState(pos, state.withProperty(OPEN, true).withProperty(POWERED, true), 2);
-               worldIn.playAuxSFXAtEntity((EntityPlayer)null, 1003, pos, 0);
-            } else if (!isBlockPowered && state.getValue(OPEN) && state.getValue(POWERED)) {
-               worldIn.setBlockState(pos, state.withProperty(OPEN, false).withProperty(POWERED, false), 2);
-               worldIn.playAuxSFXAtEntity((EntityPlayer)null, 1006, pos, 0);
-            } else if (isBlockPowered != state.getValue(POWERED)) {
-               worldIn.setBlockState(pos, state.withProperty(POWERED, isBlockPowered), 2);
+    @Override
+    public boolean onBlockActivated(World worldIn, int x, int y, int z, EntityPlayer player, int side, float subX, float subY, float subZ) {
+        int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+        if (isFenceGateOpen(blockMetadata)) {
+            worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata & -5, 2);
+        } else {
+            int n = (MathHelper.floor_double(player.rotationYaw * 4.0F / 360.0F + 0.5) & 3) % 4;
+            int direction = getDirection(blockMetadata);
+            if (direction == (n + 2) % 4) {
+                blockMetadata = n;
             }
-         }
-      }
-   }
 
-   @Override
-   public boolean shouldSideBeRendered(IBlockAccess worldIn, BlockPos pos, EnumFacing side) {
-      return true;
-   }
+            worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata | 4, 2);
+        }
 
-   @Override
-   public IBlockState getStateFromMeta(int meta) {
-      return this.getDefaultState()
-         .withProperty(FACING, EnumFacing.getHorizontal(meta))
-         .withProperty(OPEN, (meta & 4) != 0)
-         .withProperty(POWERED, (meta & 8) != 0);
-   }
+        worldIn.playAuxSFXAtEntity(player, 1003, x, y, z, 0);
+        return true;
+    }
 
-   @Override
-   public int getMetaFromState(IBlockState state) {
-      int n = 0;
-      n |= state.getValue(FACING).getHorizontalIndex();
-      if (state.getValue(POWERED)) {
-         n |= 8;
-      }
+    @Override
+    public void onNeighborBlockChange(World worldIn, int x, int y, int z, Block neighbor) {
+        if (!worldIn.isRemote) {
+            int blockMetadata = worldIn.getBlockMetadata(x, y, z);
+            boolean isBlockIndirectlyGettingPowered = worldIn.isBlockIndirectlyGettingPowered(x, y, z);
+            if (isBlockIndirectlyGettingPowered || neighbor.canProvidePower()) {
+                if (isBlockIndirectlyGettingPowered && !isFenceGateOpen(blockMetadata)) {
+                    worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata | 4, 2);
+                    worldIn.playAuxSFXAtEntity(null, 1003, x, y, z, 0);
+                } else if (!isBlockIndirectlyGettingPowered && isFenceGateOpen(blockMetadata)) {
+                    worldIn.setBlockMetadataWithNotify(x, y, z, blockMetadata & -5, 2);
+                    worldIn.playAuxSFXAtEntity(null, 1003, x, y, z, 0);
+                }
+            }
+        }
+    }
 
-      if (state.getValue(OPEN)) {
-         n |= 4;
-      }
+    public static boolean isFenceGateOpen(int n) {
+        return (n & 4) != 0;
+    }
 
-      return n;
-   }
+    @Override
+    public boolean shouldSideBeRendered(IBlockAccess worldIn, int x, int y, int z, int side) {
+        return true;
+    }
 
-   @Override
-   public BlockState createBlockState() {
-      return new BlockState(this, FACING, OPEN, POWERED, IN_WALL);
-   }
+    @Override
+    public void registerIcons(IIconRegister reg) {
+    }
 }

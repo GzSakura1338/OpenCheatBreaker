@@ -4,21 +4,21 @@ import com.cheatbreaker.client.emote.bobj.BobjArmature;
 import com.cheatbreaker.client.emote.bobj.PlayerMeshRenderer;
 import javax.vecmath.Vector4f;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.util.EnumParticleTypes;
 
 public class SneezeEmoteDefinition extends EmoteDefinition {
-   @Override
-   public void onTick(EntityLivingBase entityLivingBase, BobjArmature bobjArmature, PlayerMeshRenderer playerMeshRenderer, int n, float f) {
-      super.onTick(entityLivingBase, bobjArmature, playerMeshRenderer, n, f);
-      if (n == FrameTimeConverter.framesToTicks(121) - 1) {
-         for (int i = 0; i < 10; i++) {
-            Vector4f bonePosition = playerMeshRenderer.getBonePosition(entityLivingBase, bobjArmature.bonesByName.get("head"), 0.0F, 0.125F, 0.25F, f);
-            entityLivingBase.worldObj.spawnParticle(EnumParticleTypes.CLOUD, bonePosition.x, bonePosition.y, bonePosition.z, this.randomOffset(0.05F), -0.025F, this.randomOffset(0.05F));
-         }
-      }
-   }
+    @Override
+    public void onTick(EntityLivingBase entityLivingBase, BobjArmature bobjArmature, PlayerMeshRenderer playerMeshRenderer, int n, float f) {
+        super.onTick(entityLivingBase, bobjArmature, playerMeshRenderer, n, f);
+        if (n == FrameTimeConverter.framesToTicks(121) - 1) {
+            for (int i = 0; i < 10; i++) {
+                Vector4f bonePosition = playerMeshRenderer.getBonePosition(entityLivingBase, bobjArmature.bonesByName.get("head"), 0.0F, 0.125F, 0.25F, f);
+                bonePosition.y -= 1.5078125F;
+                entityLivingBase.worldObj.spawnParticle("cloud", bonePosition.x, bonePosition.y, bonePosition.z, this.randomOffset(0.05F), -0.025F, this.randomOffset(0.05F));
+            }
+        }
+    }
 
-   public SneezeEmoteDefinition(String str, int n, boolean flag) {
-      super(str, n, flag);
-   }
+    public SneezeEmoteDefinition(String str, int n, boolean flag) {
+        super(str, n, flag);
+    }
 }

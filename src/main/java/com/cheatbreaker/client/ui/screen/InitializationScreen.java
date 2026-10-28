@@ -2,120 +2,116 @@ package com.cheatbreaker.client.ui.screen;
 
 import com.cheatbreaker.client.font.CustomFontRenderer;
 import com.cheatbreaker.client.render.RenderUtils;
+import com.cheatbreaker.client.ui.screen.UIScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.ResourceLocation;
+import net.optifine.GlStateManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.opengl.GL11;
 
 public class InitializationScreen extends UIScreen {
-   public ResourceLocation logo108Png = new ResourceLocation("client/logo_108.png");
-   public CustomFontRenderer customFontRenderer = new CustomFontRenderer(new ResourceLocation("client/font/Ubuntu-M.ttf"), 14.0F);
-   public Logger logger = LogManager.getLogger("CheatBreaker Initialization");
-   public int intValue;
-   public String text;
-   public int intValue2;
-   public Framebuffer framebuffer;
+    public int phaseIndex;
+    public String currentPhase;
+    public ResourceLocation logo108Png = new ResourceLocation("client/logo_108.png");
+    public CustomFontRenderer customFontRenderer = new CustomFontRenderer(new ResourceLocation("client/font/Ubuntu-M.ttf"), 14.0f);
+    public Logger logger = LogManager.getLogger((String)"CheatBreaker Initialization");
+    public int phaseCount;
+    public Framebuffer framebuffer;
 
-   public void render() {
-      int scaleFactor = this.scaledResolution.getScaleFactor();
-      GL11.glDisable(2896);
-      GL11.glDisable(2912);
-      this.framebuffer.unbindFramebuffer();
-      this.framebuffer.framebufferRender(this.scaledResolution.getScaledWidth() * scaleFactor, this.scaledResolution.getScaledHeight() * scaleFactor);
-      GL11.glAlphaFunc(516, 0.1F);
-      GL11.glFlush();
-   }
+    public void advance() throws java.io.IOException {
+        ++this.phaseIndex;
+        if (this.phaseCount <= this.phaseIndex) {
+            this.phaseCount = this.phaseIndex + 1;
+        }
+        this.drawScreenScaled(0.0f, 0.0f);
+    }
 
-   @Override
-   public void mouseClickedScaled(float f, float f2, int n) {
-   }
+    public void beginFrame() {
+        try {
+            this.framebuffer.bindFramebuffer(false);
+            GlStateManager.matrixMode(5889);
+            GlStateManager.loadIdentity();
+            GL11.glOrtho((double)0.0, (double)this.scaledResolution.getScaledWidth(), (double)this.scaledResolution.getScaledHeight(), (double)0.0, (double)1000.0, (double)3000.0);
+            GlStateManager.matrixMode(5888);
+            GlStateManager.loadIdentity();
+            GL11.glTranslatef((float)0.0f, (float)0.0f, (float)-2000.0f);
+            GL11.glDisable((int)2896);
+            GL11.glDisable((int)2912);
+            GL11.glDisable((int)2929);
+            GL11.glEnable((int)3553);
+            GL11.glEnable((int)3008);
+        }
+        catch (RuntimeException runtimeException) {
+            // empty catch block
+        }
+    }
 
-   public void render2() {
-      try {
-         this.framebuffer.bindFramebuffer(false);
-         GL11.glMatrixMode(5889);
-         GL11.glLoadIdentity();
-         GL11.glOrtho(0.0, this.scaledResolution.getScaledWidth(), this.scaledResolution.getScaledHeight(), 0.0, 1000.0, 3000.0);
-         GL11.glMatrixMode(5888);
-         GL11.glLoadIdentity();
-         GL11.glTranslatef(0.0F, 0.0F, -2000.0F);
-         GL11.glDisable(2896);
-         GL11.glDisable(2912);
-         GL11.glDisable(2929);
-         GL11.glEnable(3553);
-         GL11.glEnable(3008);
-      } catch (RuntimeException e) {
-      }
-   }
+    public void drawLogo(float f, float f2) {
+        float f3 = 27.0f;
+        float f4 = f / 2.0f - f3;
+        float f5 = f2 / 2.0f - f3;
+        GlStateManager.color(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderUtils.drawSquareTexture(this.logo108Png, f3, f4, f5);
+    }
 
-   public void process3(float f, float f2) {
-      float f3 = 27.0F;
-      float f4 = f / 2.0F - f3;
-      float f5 = f2 / 2.0F - f3;
-      GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-      RenderUtils.drawSquareTexture(this.logo108Png, f3, f4, f5);
-   }
+    @Override
+    public void mouseClickedScaled(float f, float f2, int n) {
+    }
 
-   public InitializationScreen(int n) {
-      this.intValue2 = n;
-      this.mc = Minecraft.getMinecraft();
-      this.scaledResolution = new ScaledResolution(this.mc);
-      this.framebuffer = new Framebuffer(
-         this.scaledResolution.getScaledWidth() * this.scaledResolution.getScaleFactor(),
-         this.scaledResolution.getScaledHeight() * this.scaledResolution.getScaleFactor(),
-         true
-      );
-   }
+    public InitializationScreen(int n) throws java.io.IOException {
+        this.phaseCount = n;
+        this.mc = Minecraft.getMinecraft();
+        this.scaledResolution = new ScaledResolution(this.mc, this.mc.displayWidth, this.mc.displayHeight);
+        this.framebuffer = new Framebuffer(this.scaledResolution.getScaledWidth() * this.scaledResolution.getScaleFactor(), this.scaledResolution.getScaledHeight() * this.scaledResolution.getScaleFactor(), true);
+    }
 
-   public void handleString2(String str) {
-      if (this.text != null) {
-         this.logger.info("[PHASE] {} (Completed) -> {}", this.text, str);
-      } else {
-         this.logger.info("[PHASE] {}", str);
-      }
+    public void endFrame() {
+        int n = this.scaledResolution.getScaleFactor();
+        GL11.glDisable((int)2896);
+        GL11.glDisable((int)2912);
+        this.framebuffer.unbindFramebuffer();
+        this.framebuffer.framebufferRender(this.scaledResolution.getScaledWidth() * n, this.scaledResolution.getScaledHeight() * n);
+        GL11.glAlphaFunc((int)516, (float)0.1f);
+        GL11.glFlush();
+    }
 
-      this.text = str;
-      this.run11();
-   }
+    @Override
+    public void mouseReleasedScaled(float f, float f2, int n) {
+    }
 
-   @Override
-   public void mouseReleasedScaled(float f, float f2, int n) {
-   }
+    public void setPhase(String string) throws java.io.IOException {
+        if (this.currentPhase != null) {
+            this.logger.info("[PHASE] {} (Completed) -> {}", (Object)this.currentPhase, (Object)string);
+        } else {
+            this.logger.info("[PHASE] {}", (Object)string);
+        }
+        this.currentPhase = string;
+        this.advance();
+    }
 
-   @Override
-   public void drawScreenScaled(float f, float f2) {
-      this.render2();
-      float uiScale = this.getUiScale();
-      float f3 = this.scaledResolution.getScaledWidth() / uiScale;
-      float f4 = this.scaledResolution.getScaledHeight() / uiScale;
-      GL11.glScaled(uiScale, uiScale, uiScale);
-      Gui.drawRect(0.0F, 0.0F, f3, f4, -15987700);
-      this.process3(f3, f4);
-      float f5 = 160.0F;
-      float f6 = f3 / 2.0F - 80.0F;
-      float f7 = f4 - 40.0F;
-      RenderUtils.drawRoundedRectFilledPrecise(f6, f7, f6 + f5, f7 + 10.0F, 8.0, -15395563);
-      float f8 = f5 * ((float)this.intValue / this.intValue2);
-      if (this.text != null) {
-         this.customFontRenderer.drawCenteredString(this.text.toLowerCase(), f3 / 2.0F, f7 - 11.0F, -3092272);
-      }
-
-      RenderUtils.drawRoundedRectFilledPrecise(f6, f7, f6 + Math.max(f8, 8.0F), f7 + 10.0F, 8.0, -2473389);
-      this.render();
-      this.mc.updateDisplay();
-   }
-
-   public void run11() {
-      this.intValue++;
-      if (this.intValue2 <= this.intValue) {
-         this.intValue2 = this.intValue + 1;
-      }
-
-      this.drawScreenScaled(0.0F, 0.0F);
-   }
+    @Override
+    public void drawScreenScaled(float f, float f2) throws java.io.IOException {
+        this.beginFrame();
+        float f3 = this.getUiScale();
+        float f4 = (float)this.scaledResolution.getScaledWidth() / f3;
+        float f5 = (float)this.scaledResolution.getScaledHeight() / f3;
+        GL11.glScaled((double)f3, (double)f3, (double)f3);
+        Gui.drawRect(0.0f, 0.0f, f4, f5, -15987700);
+        this.drawLogo(f4, f5);
+        float f6 = 160.0f;
+        float f7 = f4 / 2.0f - 80.0f;
+        float f8 = f5 - 40.0f;
+        RenderUtils.drawRoundedRectFilledPrecise(f7, f8, f7 + f6, f8 + 10.0f, 8.0, -15395563);
+        float f9 = f6 * ((float)this.phaseIndex / (float)this.phaseCount);
+        if (this.currentPhase != null) {
+            this.customFontRenderer.drawCenteredString(this.currentPhase.toLowerCase(), f4 / 2.0f, f8 - 11.0f, -3092272);
+        }
+        RenderUtils.drawRoundedRectFilledPrecise(f7, f8, f7 + Math.max(f9, 8.0f), f8 + 10.0f, 8.0, -2473389);
+        this.endFrame();
+        this.mc.resetSize();
+    }
 }

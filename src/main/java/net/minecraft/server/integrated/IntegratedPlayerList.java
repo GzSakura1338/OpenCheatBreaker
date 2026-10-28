@@ -7,36 +7,36 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.management.ServerConfigurationManager;
 
 public class IntegratedPlayerList extends ServerConfigurationManager {
-   public NBTTagCompound hostPlayerData;
+    public NBTTagCompound hostPlayerData;
 
-   public IntegratedPlayerList(IntegratedServer server) {
-      super(server);
-      this.setViewDistance(10);
-   }
+    public IntegratedPlayerList(IntegratedServer integratedServer) {
+        super(integratedServer);
+        this.setViewDistance(10);
+    }
 
-   @Override
-   public void writePlayerData(EntityPlayerMP playerIn) {
-      if (playerIn.getName().equals(this.getServerInstance().getServerOwner())) {
-         this.hostPlayerData = new NBTTagCompound();
-         playerIn.writeToNBT(this.hostPlayerData);
-      }
+    @Override
+    public void writePlayerData(EntityPlayerMP player) {
+        if (player.getCommandSenderName().equals(this.getServerInstance().getServerOwner())) {
+            this.hostPlayerData = new NBTTagCompound();
+            player.writeToNBT(this.hostPlayerData);
+        }
 
-      super.writePlayerData(playerIn);
-   }
+        super.writePlayerData(player);
+    }
 
-   @Override
-   public String allowUserToConnect(SocketAddress address, GameProfile profile) {
-      return profile.getName().equalsIgnoreCase(this.getServerInstance().getServerOwner()) && this.getPlayerByUsername(profile.getName()) != null
-         ? "That name is already taken."
-         : super.allowUserToConnect(address, profile);
-   }
+    @Override
+    public String allowUserToConnect(SocketAddress address, GameProfile profile) {
+        return profile.getName().equalsIgnoreCase(this.getServerInstance().getServerOwner()) && this.getPlayerByUsername(profile.getName()) != null
+            ? "That name is already taken."
+            : super.allowUserToConnect(address, profile);
+    }
 
-   public IntegratedServer getServerInstance() {
-      return (IntegratedServer)super.getServerInstance();
-   }
+    public IntegratedServer getServerInstance() {
+        return (IntegratedServer)super.getServerInstance();
+    }
 
-   @Override
-   public NBTTagCompound getHostPlayerData() {
-      return this.hostPlayerData;
-   }
+    @Override
+    public NBTTagCompound getHostPlayerData() {
+        return this.hostPlayerData;
+    }
 }

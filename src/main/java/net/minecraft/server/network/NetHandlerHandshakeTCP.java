@@ -10,41 +10,52 @@ import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.IChatComponent;
 
 public class NetHandlerHandshakeTCP implements INetHandlerHandshakeServer {
-   public MinecraftServer server;
-   public NetworkManager networkManager;
+    public MinecraftServer server;
+    public NetworkManager networkManager;
 
-   public NetHandlerHandshakeTCP(MinecraftServer serverIn, NetworkManager netManager) {
-      this.server = serverIn;
-      this.networkManager = netManager;
-   }
+    public NetHandlerHandshakeTCP(MinecraftServer serverIn, NetworkManager netManager) {
+        this.server = serverIn;
+        this.networkManager = netManager;
+    }
 
-   @Override
-   public void processHandshake(C00Handshake packetIn) {
-      switch (packetIn.getRequestedState()) {
-         case LOGIN:
-            this.networkManager.setConnectionState(EnumConnectionState.LOGIN);
-            if (packetIn.getProtocolVersion() > 47) {
-               ChatComponentText chatComponentText = new ChatComponentText("Outdated server! I'm still on 1.8.9");
-               this.networkManager.sendPacket(new S00PacketDisconnect(chatComponentText));
-               this.networkManager.closeChannel(chatComponentText);
-            } else if (packetIn.getProtocolVersion() < 47) {
-               ChatComponentText chatComponentText = new ChatComponentText("Outdated client! Please use 1.8.9");
-               this.networkManager.sendPacket(new S00PacketDisconnect(chatComponentText));
-               this.networkManager.closeChannel(chatComponentText);
-            } else {
-               this.networkManager.setNetHandler(new NetHandlerLoginServer(this.server, this.networkManager));
-            }
-            break;
-         case STATUS:
-            this.networkManager.setConnectionState(EnumConnectionState.STATUS);
-            this.networkManager.setNetHandler(new NetHandlerStatusServer(this.server, this.networkManager));
-            break;
-         default:
-            throw new UnsupportedOperationException("Invalid intention " + packetIn.getRequestedState());
-      }
-   }
+    @Override
+    public void processHandshake(C00Handshake packetIn) {
+        switch (packetIn.getRequestedState()) {
+            case LOGIN:
+                this.networkManager.setConnectionState(EnumConnectionState.LOGIN);
+                if (packetIn.getProtocolVersion() > 5) {
+                    ChatComponentText chatComponentText = new ChatComponentText("Outdated server! I'm still on 1.7.10");
+                    this.networkManager.scheduleOutboundPacket(new S00PacketDisconnect(chatComponentText));
+                    this.networkManager.closeChannel(chatComponentText);
+                } else if (packetIn.getProtocolVersion() < 5) {
+                    ChatComponentText chatComponentText = new ChatComponentText("Outdated client! Please use 1.7.10");
+                    this.networkManager.scheduleOutboundPacket(new S00PacketDisconnect(chatComponentText));
+                    this.networkManager.closeChannel(chatComponentText);
+                } else {
+                    this.networkManager.setNetHandler(new NetHandlerLoginServer(this.server, this.networkManager));
+                }
+                break;
+            case STATUS:
+                this.networkManager.setConnectionState(EnumConnectionState.STATUS);
+                this.networkManager.setNetHandler(new NetHandlerStatusServer(this.server, this.networkManager));
+                break;
+            default:
+                throw new UnsupportedOperationException("Invalid intention " + packetIn.getRequestedState());
+        }
+    }
 
-   @Override
-   public void onDisconnect(IChatComponent reason) {
-   }
+    @Override
+    public void onDisconnect(IChatComponent reason) {
+    }
+
+    @Override
+    public void onConnectionStateTransition(EnumConnectionState oldState, EnumConnectionState newState) {
+        if (newState != EnumConnectionState.LOGIN && newState != EnumConnectionState.STATUS) {
+            throw new UnsupportedOperationException("Invalid state " + newState);
+        }
+    }
+
+    @Override
+    public void onNetworkTick() {
+    }
 }

@@ -6,9 +6,9 @@ import java.util.Set;
 import net.minecraft.util.ResourceLocation;
 
 public interface IResourceManager {
-   Set<String> getResourceDomains();
+    Set getResourceDomains();
 
-   IResource getResource(ResourceLocation resourceLocation) throws IOException;
+    IResource getResource(ResourceLocation resourceLocation) throws IOException;
 
-   List<IResource> getAllResources(ResourceLocation resourceLocation) throws IOException;
+    List getAllResources(ResourceLocation resourceLocation) throws IOException;
 }

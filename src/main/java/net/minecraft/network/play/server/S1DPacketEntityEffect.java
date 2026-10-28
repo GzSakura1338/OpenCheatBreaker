@@ -1,77 +1,74 @@
 package net.minecraft.network.play.server;
 
 import java.io.IOException;
+import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.INetHandlerPlayClient;
 import net.minecraft.potion.PotionEffect;
 
-public class S1DPacketEntityEffect implements Packet<INetHandlerPlayClient> {
-   public int entityId;
-   public byte effectId;
-   public byte amplifier;
-   public int duration;
-   public byte hideParticles;
+public class S1DPacketEntityEffect extends Packet {
+    public int entityId;
+    public byte effectId;
+    public byte amplifier;
+    public short duration;
 
-   public S1DPacketEntityEffect() {
-   }
+    public S1DPacketEntityEffect() {
+    }
 
-   public S1DPacketEntityEffect(int entityIdIn, PotionEffect effect) {
-      this.entityId = entityIdIn;
-      this.effectId = (byte)(effect.getPotionID() & 0xFF);
-      this.amplifier = (byte)(effect.getAmplifier() & 0xFF);
-      if (effect.getDuration() > 32767) {
-         this.duration = 32767;
-      } else {
-         this.duration = effect.getDuration();
-      }
+    public S1DPacketEntityEffect(int n, PotionEffect potionEffect) {
+        this.entityId = n;
+        this.effectId = (byte)(potionEffect.getPotionID() & 0xFF);
+        this.amplifier = (byte)(potionEffect.getAmplifier() & 0xFF);
+        if (potionEffect.getDuration() > 32767) {
+            this.duration = 32767;
+        } else {
+            this.duration = (short)potionEffect.getDuration();
+        }
+    }
 
-      this.hideParticles = (byte)(effect.getIsShowParticles() ? 1 : 0);
-   }
+    @Override
+    public void readPacketData(PacketBuffer data) throws IOException {
+        this.entityId = data.readInt();
+        this.effectId = data.readByte();
+        this.amplifier = data.readByte();
+        this.duration = data.readShort();
+    }
 
-   @Override
-   public void readPacketData(PacketBuffer buf) throws IOException {
-      this.entityId = buf.readVarIntFromBuffer();
-      this.effectId = buf.readByte();
-      this.amplifier = buf.readByte();
-      this.duration = buf.readVarIntFromBuffer();
-      this.hideParticles = buf.readByte();
-   }
+    @Override
+    public void writePacketData(PacketBuffer data) throws IOException {
+        data.writeInt(this.entityId);
+        data.writeByte(this.effectId);
+        data.writeByte(this.amplifier);
+        data.writeShort(this.duration);
+    }
 
-   @Override
-   public void writePacketData(PacketBuffer buf) throws IOException {
-      buf.writeVarIntToBuffer(this.entityId);
-      buf.writeByte(this.effectId);
-      buf.writeByte(this.amplifier);
-      buf.writeVarIntToBuffer(this.duration);
-      buf.writeByte(this.hideParticles);
-   }
+    public boolean isPermanent() {
+        return this.duration == 32767;
+    }
 
-   public boolean isPermanent() {
-      return this.duration == 32767;
-   }
+    public void processPacket(INetHandlerPlayClient handler) {
+        handler.handleEntityEffect(this);
+    }
 
-   public void processPacket(INetHandlerPlayClient handler) {
-      handler.handleEntityEffect(this);
-   }
+    public int getEntityId() {
+        return this.entityId;
+    }
 
-   public int getEntityId() {
-      return this.entityId;
-   }
+    public byte getEffectId() {
+        return this.effectId;
+    }
 
-   public byte getEffectId() {
-      return this.effectId;
-   }
+    public byte getAmplifier() {
+        return this.amplifier;
+    }
 
-   public byte getAmplifier() {
-      return this.amplifier;
-   }
+    public short getDuration() {
+        return this.duration;
+    }
 
-   public int getDuration() {
-      return this.duration;
-   }
-
-   public boolean shouldShowParticles() {
-      return this.hideParticles != 0;
-   }
+    @Override
+    public void processPacket(INetHandler netHandler) {
+        this.processPacket((INetHandlerPlayClient)netHandler);
+    }
 }

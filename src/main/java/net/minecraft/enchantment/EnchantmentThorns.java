@@ -6,57 +6,53 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.ResourceLocation;
 
 public class EnchantmentThorns extends Enchantment {
-   public EnchantmentThorns(int n, ResourceLocation resourceLocation, int n2) {
-      super(n, resourceLocation, n2, EnumEnchantmentType.ARMOR_TORSO);
-      this.setName("thorns");
-   }
+    public EnchantmentThorns(int n, int n2) {
+        super(n, n2, EnumEnchantmentType.armor_torso);
+        this.setName("thorns");
+    }
 
-   @Override
-   public int getMinEnchantability(int enchantmentLevel) {
-      return 10 + 20 * (enchantmentLevel - 1);
-   }
+    @Override
+    public int getMinEnchantability(int n) {
+        return 10 + 20 * (n - 1);
+    }
 
-   @Override
-   public int getMaxEnchantability(int enchantmentLevel) {
-      return super.getMinEnchantability(enchantmentLevel) + 50;
-   }
+    @Override
+    public int getMaxEnchantability(int n) {
+        return super.getMinEnchantability(n) + 50;
+    }
 
-   @Override
-   public int getMaxLevel() {
-      return 3;
-   }
+    @Override
+    public int getMaxLevel() {
+        return 3;
+    }
 
-   @Override
-   public boolean canApply(ItemStack stack) {
-      return stack.getItem() instanceof ItemArmor ? true : super.canApply(stack);
-   }
+    @Override
+    public boolean canApply(ItemStack itemStack) {
+        return itemStack.getItem() instanceof ItemArmor || super.canApply(itemStack);
+    }
 
-   @Override
-   public void onUserHurt(EntityLivingBase user, Entity attacker, int level) {
-      Random rNG = user.getRNG();
-      ItemStack enchantedItem = EnchantmentHelper.getEnchantedItem(Enchantment.thorns, user);
-      if (shouldDamageAttacker(level, rNG)) {
-         if (attacker != null) {
-            attacker.attackEntityFrom(DamageSource.causeThornsDamage(user), getDamageAmount(level, rNG));
-            attacker.playSound("damage.thorns", 0.5F, 1.0F);
-         }
+    @Override
+    public void handleEntityLivingBase(EntityLivingBase entityLivingBase, Entity entity, int n) {
+        Random rNG = entityLivingBase.getRNG();
+        ItemStack chooseEquipmentWith = EnchantmentHelper.chooseEquipmentWith(Enchantment.thorns, entityLivingBase);
+        if (shouldDamageAttacker(n, rNG)) {
+            entity.attackEntityFrom(DamageSource.causeThornsDamage(entityLivingBase), getDamageAmount(n, rNG));
+            entity.playSound("damage.thorns", 0.5F, 1.0F);
+            if (chooseEquipmentWith != null) {
+                chooseEquipmentWith.damageItem(3, entityLivingBase);
+            }
+        } else if (chooseEquipmentWith != null) {
+            chooseEquipmentWith.damageItem(1, entityLivingBase);
+        }
+    }
 
-         if (enchantedItem != null) {
-            enchantedItem.damageItem(3, user);
-         }
-      } else if (enchantedItem != null) {
-         enchantedItem.damageItem(1, user);
-      }
-   }
+    public static boolean shouldDamageAttacker(int n, Random random) {
+        return n > 0 && random.nextFloat() < 0.15F * n;
+    }
 
-   public static boolean shouldDamageAttacker(int n, Random random) {
-      return n <= 0 ? false : random.nextFloat() < 0.15F * n;
-   }
-
-   public static int getDamageAmount(int n, Random random) {
-      return n > 10 ? n - 10 : 1 + random.nextInt(4);
-   }
+    public static int getDamageAmount(int n, Random random) {
+        return n > 10 ? n - 10 : 1 + random.nextInt(4);
+    }
 }

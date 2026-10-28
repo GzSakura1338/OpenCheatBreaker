@@ -4,42 +4,44 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.glu.GLU;
 
 public class GLAllocation {
-   public static synchronized int generateDisplayLists(int range) {
-      int glGenLists = GL11.glGenLists(range);
-      if (glGenLists == 0) {
-         int glGetError = GL11.glGetError();
-         String str = "No error code reported";
-         if (glGetError != 0) {
-            str = GLU.gluErrorString(glGetError);
-         }
+    public static Map mapDisplayLists = new HashMap();
+    public static List listDummy = new ArrayList();
 
-         throw new IllegalStateException("glGenLists returned an ID of 0 for a count of " + range + ", GL error (" + glGetError + "): " + str);
-      } else {
-         return glGenLists;
-      }
-   }
+    public static synchronized int generateDisplayLists(int n) {
+        int glGenLists = GL11.glGenLists(n);
+        mapDisplayLists.put(glGenLists, n);
+        return glGenLists;
+    }
 
-   public static synchronized void deleteDisplayLists(int list, int range) {
-      GL11.glDeleteLists(list, range);
-   }
+    public static synchronized void deleteDisplayLists(int n) {
+        GL11.glDeleteLists(n, (Integer)mapDisplayLists.remove(n));
+    }
 
-   public static synchronized void deleteDisplayLists(int list) {
-      GL11.glDeleteLists(list, 1);
-   }
+    public static synchronized void deleteTexturesAndDisplayLists() {
+        for (Entry entry : (Iterable<Entry>)mapDisplayLists.entrySet()) {
+            GL11.glDeleteLists((Integer)entry.getKey(), (Integer)entry.getValue());
+        }
 
-   public static synchronized ByteBuffer createDirectByteBuffer(int capacity) {
-      return ByteBuffer.allocateDirect(capacity).order(ByteOrder.nativeOrder());
-   }
+        mapDisplayLists.clear();
+    }
 
-   public static IntBuffer createDirectIntBuffer(int capacity) {
-      return createDirectByteBuffer(capacity << 2).asIntBuffer();
-   }
+    public static synchronized ByteBuffer createDirectByteBuffer(int n) {
+        return ByteBuffer.allocateDirect(n).order(ByteOrder.nativeOrder());
+    }
 
-   public static FloatBuffer createDirectFloatBuffer(int capacity) {
-      return createDirectByteBuffer(capacity << 2).asFloatBuffer();
-   }
+    public static IntBuffer createDirectIntBuffer(int n) {
+        return createDirectByteBuffer(n << 2).asIntBuffer();
+    }
+
+    public static FloatBuffer createDirectFloatBuffer(int n) {
+        return createDirectByteBuffer(n << 2).asFloatBuffer();
+    }
 }

@@ -1,46 +1,68 @@
 package net.minecraft.world.gen.feature;
 
 import java.util.Random;
+import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.init.Blocks;
-import net.minecraft.util.BlockPos;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
 
 public class WorldGenGlowStone2 extends WorldGenerator {
-   @Override
-   public boolean generate(World worldIn, Random rand, BlockPos position) {
-      if (!worldIn.isAirBlock(position)) {
-         return false;
-      }
+    @Override
+    public boolean generate(World world, Random random, int n, int n2, int n3) {
+        if (!world.isAirBlock(n, n2, n3)) {
+            return false;
+        }
 
-      if (worldIn.getBlockState(position.up()).getBlock() != Blocks.netherrack) {
-         return false;
-      }
+        if (world.getBlock(n, n2 + 1, n3) != Blocks.netherrack) {
+            return false;
+        }
 
-      worldIn.setBlockState(position, Blocks.glowstone.getDefaultState(), 2);
+        world.setBlock(n, n2, n3, Blocks.glowstone, 0, 2);
 
-      for (int i = 0; i < 1500; i++) {
-         BlockPos blockPos = position.add(rand.nextInt(8) - rand.nextInt(8), -rand.nextInt(12), rand.nextInt(8) - rand.nextInt(8));
-         if (worldIn.getBlockState(blockPos).getBlock().getMaterial() == Material.air) {
-            int n = 0;
+        for (int i = 0; i < 1500; i++) {
+            int n4 = n + random.nextInt(8) - random.nextInt(8);
+            int n5 = n2 - random.nextInt(12);
+            int n6 = n3 + random.nextInt(8) - random.nextInt(8);
+            if (world.getBlock(n4, n5, n6).getMaterial() == Material.air) {
+                int n7 = 0;
 
-            for (EnumFacing enumFacing : EnumFacing.values()) {
-               if (worldIn.getBlockState(blockPos.offset(enumFacing)).getBlock() == Blocks.glowstone) {
-                  n++;
-               }
+                for (int j = 0; j < 6; j++) {
+                    Block block = null;
+                    if (j == 0) {
+                        block = world.getBlock(n4 - 1, n5, n6);
+                    }
 
-               if (n > 1) {
-                  break;
-               }
+                    if (j == 1) {
+                        block = world.getBlock(n4 + 1, n5, n6);
+                    }
+
+                    if (j == 2) {
+                        block = world.getBlock(n4, n5 - 1, n6);
+                    }
+
+                    if (j == 3) {
+                        block = world.getBlock(n4, n5 + 1, n6);
+                    }
+
+                    if (j == 4) {
+                        block = world.getBlock(n4, n5, n6 - 1);
+                    }
+
+                    if (j == 5) {
+                        block = world.getBlock(n4, n5, n6 + 1);
+                    }
+
+                    if (block == Blocks.glowstone) {
+                        n7++;
+                    }
+                }
+
+                if (n7 == 1) {
+                    world.setBlock(n4, n5, n6, Blocks.glowstone, 0, 2);
+                }
             }
+        }
 
-            if (n == 1) {
-               worldIn.setBlockState(blockPos, Blocks.glowstone.getDefaultState(), 2);
-            }
-         }
-      }
-
-      return true;
-   }
+        return true;
+    }
 }
