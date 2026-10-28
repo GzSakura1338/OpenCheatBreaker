@@ -4,6 +4,8 @@
 
 <h1 align="center">OpenCheatBreaker</h1>
 
+This branch is the CheatBreaker 1.8.9 client. The CheatBreaker 1.7.10 client lives on the [`1.7.10`](https://github.com/GzSakura1338/OpenCheatBreaker/tree/1.7.10) branch.
+
 ## Build and run
 
 Requires JDK 25 and network access to Maven Central (test dependencies). The game's natives and assets are copied from an installed CheatBreaker launcher (`%APPDATA%/CheatBreaker/downloads`); run the launcher once, or pass `-Pcb.launcherDir=<launcher data dir>`.
